@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+<meta charset="utf-8" />
+<title>GENESIS BRAIN — kristalno staklo · zlatno jezgro</title>
+<style>
+  :root{
+    --gold:#ffd479; --gold2:#ffb43d; --ink:#eaf2ff; --muted:#8ea3c6;
+    --glass:rgba(255,255,255,.055); --stroke:rgba(190,220,255,.20);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#02040a}
+  body{font-family:"Segoe UI",Inter,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+
+  .stage{
+    position:relative; width:1600px; height:1080px; overflow:hidden;
+    background:
+      radial-gradient(1180px 760px at 50% 46%, rgba(255,186,70,.22), transparent 56%),
+      radial-gradient(720px 520px at 14% 16%, rgba(58,146,255,.20), transparent 62%),
+      radial-gradient(720px 520px at 88% 22%, rgba(120,255,205,.11), transparent 62%),
+      radial-gradient(900px 640px at 50% 110%, rgba(118,86,255,.18), transparent 62%),
+      linear-gradient(180deg,#05080f 0%,#02040a 58%,#010206 100%);
+  }
+  .stage::before{
+    content:"";position:absolute;inset:0;opacity:.32;
+    background-image:linear-gradient(rgba(130,180,255,.05) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(130,180,255,.05) 1px,transparent 1px);
+    background-size:52px 52px;
+    mask-image:radial-gradient(circle at 50% 44%, #000 28%, transparent 74%);
+  }
+  .stage::after{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(920px 640px at 50% 48%, transparent 38%, rgba(0,0,0,.6) 90%);
+  }
+  .grain{position:absolute;inset:0;opacity:.3;mix-blend-mode:overlay;pointer-events:none;z-index:9}
+
+  /* ══ luksuzni ram (dvostruka zlatna linija + gravirani uglovi) ══ */
+  .frame{position:absolute;inset:22px;border-radius:26px;pointer-events:none;z-index:9;
+    border:1px solid rgba(255,212,121,.34);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.05), inset 0 0 90px rgba(255,190,90,.06);}
+  .frame::before{content:"";position:absolute;inset:8px;border-radius:20px;border:1px solid rgba(255,212,121,.16)}
+  .corner{position:absolute;width:26px;height:26px;border:1.5px solid rgba(255,212,121,.6);z-index:10}
+  .c1{top:34px;left:34px;border-right:0;border-bottom:0;border-top-left-radius:6px}
+  .c2{top:34px;right:34px;border-left:0;border-bottom:0;border-top-right-radius:6px}
+  .c3{bottom:34px;left:34px;border-right:0;border-top:0;border-bottom-left-radius:6px}
+  .c4{bottom:34px;right:34px;border-left:0;border-top:0;border-bottom-right-radius:6px}
+
+  /* ══ naslov ══ */
+  .title{position:absolute;top:52px;left:0;right:0;text-align:center;z-index:6}
+  .title h1{margin:0;font-size:78px;font-weight:800;letter-spacing:4px;line-height:1;
+    background:linear-gradient(96deg,#fff 3%,var(--gold) 30%,#fff4d6 47%,var(--gold2) 66%,#fff 97%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 12px 48px rgba(255,180,60,.45));}
+  .title p{margin:15px 0 0;font-size:16.5px;letter-spacing:6px;text-transform:uppercase;color:#cfe0ff;opacity:.86}
+  .title .rule{width:460px;height:1px;margin:18px auto 0;background:linear-gradient(90deg,transparent,rgba(255,212,121,.8),transparent)}
+
+  /* ══ mozak ══ */
+  .brain{position:absolute;left:50%;top:200px;transform:translateX(-50%);width:1180px;height:740px;z-index:4}
+  .brain svg{width:100%;height:100%;overflow:visible}
+  /* animacija MORA sadržati translateX(-50%) — CSS transform inače pregazi centriranje */
+  .float-slow{animation:float 10s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-11px)}}
+  .core-pulse{transform-box:fill-box;transform-origin:center;animation:corePulse 5s ease-in-out infinite}
+  @keyframes corePulse{0%,100%{opacity:.92;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+  .threads path{stroke-dasharray:5 9;animation:flow 7s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-160}}
+  .rings{transform-box:view-box;transform-origin:590px 380px;animation:spin 52s linear infinite}
+  .rings2{transform-box:view-box;transform-origin:590px 380px;animation:spinBack 74s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes spinBack{to{transform:rotate(-360deg)}}
+  .spark{animation:spark 3.6s ease-in-out infinite}
+  @keyframes spark{0%,100%{opacity:.3}50%{opacity:.95}}
+  .bokeh{animation:bokeh 12s ease-in-out infinite}
+  @keyframes bokeh{0%,100%{opacity:.15;transform:translateY(0)}50%{opacity:.5;transform:translateY(-14px)}}
+
+  /* ══ stakleni paneli ══ */
+  .panel{position:absolute;z-index:7;width:326px;padding:16px 17px 15px;border-radius:20px;
+    border:1px solid var(--stroke);
+    background:linear-gradient(180deg, rgba(255,255,255,.085), rgba(255,255,255,.022) 55%, rgba(255,255,255,.045));
+    backdrop-filter:blur(22px) saturate(155%);
+    box-shadow:0 26px 60px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.32),
+      inset 0 -1px 0 rgba(255,255,255,.06), inset 0 0 44px rgba(255,214,140,.05);
+    overflow:hidden;}
+  .panel::before{content:"";position:absolute;top:-60%;left:-30%;width:70%;height:220%;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.17),transparent);transform:rotate(14deg);pointer-events:none}
+  .panel::after{content:"";position:absolute;left:14%;right:14%;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,212,121,.6),transparent)}
+  .panel h3{margin:0 0 4px;font-size:14.5px;letter-spacing:1.2px;color:#fff}
+  .panel .sub{margin:0 0 11px;font-size:11.3px;color:var(--muted);letter-spacing:.3px}
+  .panel ul{margin:0;padding:0;list-style:none}
+  .panel li{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.55;color:#d6e2f7;padding:5px 0;
+    border-bottom:1px dashed rgba(160,195,255,.12)}
+  .panel li:last-child{border-bottom:0}
+  .dot{width:7px;height:7px;border-radius:50%;margin-top:6px;flex:0 0 auto;background:var(--gold);box-shadow:0 0 12px rgba(255,196,90,.95)}
+  .dot.c{background:#8fe4ff;box-shadow:0 0 12px rgba(140,225,255,.95)}
+  .dot.g{background:#7df0b0;box-shadow:0 0 12px rgba(125,240,176,.95)}
+  .dot.v{background:#c2a8ff;box-shadow:0 0 12px rgba(194,168,255,.95)}
+  .p1{left:70px;top:236px} .p2{left:70px;top:474px}
+  .p3{right:70px;top:236px} .p4{right:70px;top:474px}
+
+  /* ══ dokazi + gravure ══ */
+  .proof{position:absolute;left:50%;bottom:46px;transform:translateX(-50%);z-index:8;
+    display:flex;gap:12px;align-items:center;padding:13px 20px;border-radius:999px;border:1px solid var(--stroke);
+    background:linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+    backdrop-filter:blur(18px) saturate(140%);
+    box-shadow:0 20px 46px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.3);}
+  .proof span{font-size:12.6px;color:#d9e6ff;letter-spacing:.4px;white-space:nowrap}
+  .proof span b{color:#fff}
+  .proof i{font-style:normal;color:var(--gold)}
+  .proof .sep{width:1px;height:18px;background:linear-gradient(180deg,transparent,rgba(255,212,121,.5),transparent)}
+  .engrave{position:absolute;z-index:8;font-size:10.6px;letter-spacing:3.2px;text-transform:uppercase;color:rgba(255,226,178,.55)}
+  .e1{left:56px;bottom:52px} .e2{right:56px;bottom:52px;text-align:right}
+  .tagline{position:absolute;left:0;right:0;bottom:124px;text-align:center;z-index:6;
+    font-size:13.5px;letter-spacing:3.6px;text-transform:uppercase;color:#a9bcdd;opacity:.9}
+</style>
+</head>
+<body>
+<div class="stage">
+  <svg class="grain" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#n)" opacity="0.5"/></svg>
+  <div class="frame"></div>
+  <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+
+  <div class="title">
+    <h1>GENESIS BRAIN</h1>
+    <p>kristalno staklo · zlatno jezgro · nmq robot v0.5.0</p>
+    <div class="rule"></div>
+  </div>
+
+  <div class="brain float-slow">
+    <svg viewBox="0 0 1180 740" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="glassFill" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0%"  stop-color="#f4fbff" stop-opacity=".30"/>
+          <stop offset="20%" stop-color="#b9e4ff" stop-opacity=".15"/>
+          <stop offset="46%" stop-color="#eaf6ff" stop-opacity=".06"/>
+          <stop offset="70%" stop-color="#8fc4ff" stop-opacity=".13"/>
+          <stop offset="100%" stop-color="#ffd479" stop-opacity=".20"/>
+        </linearGradient>
+        <linearGradient id="glassFill2" x1="0" y1="0" x2="0.6" y2="1">
+          <stop offset="0%" stop-color="#e7f6ff" stop-opacity=".24"/>
+          <stop offset="55%" stop-color="#9ed2ff" stop-opacity=".12"/>
+          <stop offset="100%" stop-color="#ffca7a" stop-opacity=".18"/>
+        </linearGradient>
+        <linearGradient id="edgeTop" x1="0" y1="0" x2="0.7" y2="1">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity=".95"/>
+          <stop offset="30%" stop-color="#d6efff" stop-opacity=".55"/>
+          <stop offset="70%" stop-color="#ffd479" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="#ffb43d" stop-opacity=".75"/>
+        </linearGradient>
+        <radialGradient id="innerGlow" cx="50%" cy="52%" r="60%">
+          <stop offset="0%" stop-color="#ffe8b4" stop-opacity=".60"/>
+          <stop offset="34%" stop-color="#ffc861" stop-opacity=".22"/>
+          <stop offset="70%" stop-color="#2b6cff" stop-opacity=".09"/>
+          <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff" stop-opacity=".36"/>
+          <stop offset="38%" stop-color="#fff" stop-opacity=".05"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </linearGradient>
+        <radialGradient id="caustic" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff" stop-opacity=".30"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="facet" x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stop-color="#ffffff" stop-opacity=".13"/>
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#fff4d2"/><stop offset="25%" stop-color="#ffd479"/>
+          <stop offset="56%" stop-color="#ffab21"/><stop offset="80%" stop-color="#c87d12"/>
+          <stop offset="100%" stop-color="#ffeec0"/>
+        </linearGradient>
+        <linearGradient id="goldDark" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0%" stop-color="#7a4c0c"/><stop offset="48%" stop-color="#ffc356"/><stop offset="100%" stop-color="#6b3f08"/>
+        </linearGradient>
+        <radialGradient id="coreBloom" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff8e6" stop-opacity=".98"/>
+          <stop offset="22%" stop-color="#ffd479" stop-opacity=".66"/>
+          <stop offset="55%" stop-color="#ff9d1c" stop-opacity=".26"/>
+          <stop offset="100%" stop-color="#ff8c00" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="soft" x="-45%" y="-45%" width="190%" height="190%"><feGaussianBlur stdDeviation="17"/></filter>
+        <filter id="soft2" x="-45%" y="-45%" width="190%" height="190%"><feGaussianBlur stdDeviation="8"/></filter>
+        <filter id="bloom" x="-70%" y="-70%" width="240%" height="240%">
+          <feGaussianBlur stdDeviation="24" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="groove" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2"/></filter>
+
+        <!-- obrisi (anatomija) -->
+        <path id="cerebrum" d="M590 96
+          C494 86 392 108 330 166
+          C274 218 258 296 274 356
+          C286 402 322 436 372 452
+          C398 460 428 464 456 464
+          C432 486 414 508 406 528
+          C398 552 406 574 428 584
+          C462 600 512 600 552 588
+          C566 584 578 578 590 570
+          L590 96 Z"/>
+        <clipPath id="brainClip">
+          <use href="#cerebrum"/>
+          <use href="#cerebrum" transform="translate(1180,0) scale(-1,1)"/>
+          <path d="M456 464 C432 486 414 508 406 528 C398 552 406 574 428 584 C462 600 512 600 552 588 C566 584 578 578 590 570 Z"/>
+          <path d="M724 464 C748 486 766 508 774 528 C782 552 774 574 752 584 C718 600 668 600 628 588 C614 584 602 578 590 570 Z"/>
+          <path d="M500 560 C466 566 430 578 420 596 C410 616 424 636 452 642 C486 650 528 646 552 634 C566 626 574 616 576 606 Z"/>
+          <path d="M680 560 C714 566 750 578 760 596 C770 616 756 636 728 642 C694 650 652 646 628 634 C614 626 606 616 604 606 Z"/>
+          <path d="M560 596 C548 626 542 656 550 682 C556 700 578 706 590 702 C602 706 624 700 630 682 C638 656 632 626 620 596 Z"/>
+        </clipPath>
+      </defs>
+
+      <!-- oreol -->
+      <ellipse cx="590" cy="360" rx="470" ry="316" fill="url(#innerGlow)" opacity=".55" filter="url(#soft)"/>
+      <ellipse cx="590" cy="700" rx="330" ry="52" fill="#000" opacity=".45" filter="url(#soft)"/>
+
+      <!-- bokeh čestice -->
+      <g class="bokeh" fill="#ffe9b0">
+        <circle cx="180" cy="250" r="2.6" opacity=".8"/><circle cx="240" cy="600" r="2" opacity=".6"/>
+        <circle cx="1010" cy="300" r="2.4" opacity=".7"/><circle cx="960" cy="640" r="1.8" opacity=".5"/>
+        <circle cx="400" cy="130" r="1.8" opacity=".6"/><circle cx="820" cy="120" r="2.2" opacity=".7"/>
+      </g>
+
+      <!-- orbite -->
+      <g class="rings" opacity=".8">
+        <ellipse cx="590" cy="380" rx="482" ry="272" fill="none" stroke="url(#gold)" stroke-width="1" stroke-opacity=".40"/>
+        <ellipse cx="590" cy="380" rx="482" ry="272" fill="none" stroke="url(#gold)" stroke-width="7" stroke-opacity=".05"/>
+        <path d="M108 380 A482 272 0 0 1 236 196" fill="none" stroke="#fff0cd" stroke-width="2.2" stroke-opacity=".8" stroke-linecap="round"/>
+        <path d="M1072 380 A482 272 0 0 1 944 564" fill="none" stroke="#ffd479" stroke-width="2.2" stroke-opacity=".62" stroke-linecap="round"/>
+      </g>
+      <g class="rings2" opacity=".62">
+        <ellipse cx="590" cy="380" rx="536" ry="314" fill="none" stroke="#9fd6ff" stroke-width="1" stroke-opacity=".24" stroke-dasharray="2 11"/>
+        <ellipse cx="590" cy="380" rx="420" ry="228" fill="none" stroke="#ffd479" stroke-width="1" stroke-opacity=".28" stroke-dasharray="15 17"/>
+      </g>
+
+      <!-- ══════════ TELO MOZGA ══════════ -->
+      <g>
+        <!-- sjaj iza stakla -->
+        <g filter="url(#soft2)" opacity=".38">
+          <use href="#cerebrum" fill="#bfe6ff"/>
+          <use href="#cerebrum" transform="translate(1180,0) scale(-1,1)" fill="#bfe6ff"/>
+        </g>
+
+        <!-- staklena masa: cerebrum (obje hemisfere), temporalni režnjevi, mali mozak, stablo -->
+        <g stroke="url(#edgeTop)" stroke-width="2.2">
+          <use href="#cerebrum" fill="url(#glassFill)"/>
+          <use href="#cerebrum" transform="translate(1180,0) scale(-1,1)" fill="url(#glassFill)"/>
+          <path d="M456 464 C432 486 414 508 406 528 C398 552 406 574 428 584 C462 600 512 600 552 588 C566 584 578 578 590 570 Z" fill="url(#glassFill2)"/>
+          <path d="M724 464 C748 486 766 508 774 528 C782 552 774 574 752 584 C718 600 668 600 628 588 C614 584 602 578 590 570 Z" fill="url(#glassFill2)"/>
+          <path d="M500 560 C466 566 430 578 420 596 C410 616 424 636 452 642 C486 650 528 646 552 634 C566 626 574 616 576 606 Z" fill="url(#glassFill2)"/>
+          <path d="M680 560 C714 566 750 578 760 596 C770 616 756 636 728 642 C694 650 652 646 628 634 C614 626 606 616 604 606 Z" fill="url(#glassFill2)"/>
+          <path d="M560 596 C548 626 542 656 550 682 C556 700 578 706 590 702 C602 706 624 700 630 682 C638 656 632 626 620 596 Z" fill="url(#glassFill2)"/>
+        </g>
+
+        <!-- unutrašnji sjaj + zlatna infuzija -->
+        <g clip-path="url(#brainClip)">
+          <rect x="0" y="0" width="1180" height="740" fill="url(#innerGlow)" opacity=".95"/>
+          <!-- kristalni faseti -->
+          <g fill="url(#facet)">
+            <path d="M330 166 L590 300 L456 464 L274 356 Z"/>
+            <path d="M850 166 L590 300 L724 464 L906 356 Z"/>
+            <path d="M590 96 L590 300 L330 166 Z"/>
+            <path d="M590 96 L850 166 L590 300 Z"/>
+          </g>
+          <!-- donja unutrašnja senka (debljina stakla) + hladna ivica pri dnu -->
+          <ellipse cx="590" cy="672" rx="470" ry="140" fill="#04101f" opacity=".30" filter="url(#groove)"/>
+          <ellipse cx="590" cy="640" rx="430" ry="90" fill="#7fd0ff" opacity=".10" filter="url(#groove)"/>
+          <ellipse cx="590" cy="120" rx="360" ry="80" fill="#ffffff" opacity=".12" filter="url(#groove)"/>
+          <!-- kristalne linije od jezgra (faseti) -->
+          <g stroke="#ffffff" stroke-opacity=".10" stroke-width="1.2">
+            <path d="M590 340 L330 166"/><path d="M590 340 L274 356"/><path d="M590 340 L456 464"/>
+            <path d="M590 340 L850 166"/><path d="M590 340 L906 356"/><path d="M590 340 L724 464"/>
+            <path d="M590 340 L590 96"/><path d="M590 340 L590 570"/>
+          </g>
+        </g>
+
+        <!-- ══ GIRI (nabori) — dvostruki potez: senka + staklena ivica ══ -->
+        <g clip-path="url(#brainClip)" fill="none" stroke-linecap="round">
+          <g stroke="#071528" stroke-opacity=".6" stroke-width="8" filter="url(#groove)">
+            <path d="M500 128 C420 140 356 182 336 240"/>
+            <path d="M470 186 C392 200 340 244 326 300"/>
+            <path d="M456 246 C392 264 352 306 344 356"/>
+            <path d="M330 200 C306 246 306 306 326 352"/>
+            <path d="M330 416 C296 430 262 432 236 420"/>
+            <path d="M470 330 C432 336 400 352 378 378"/>
+            <path d="M480 400 C452 420 432 448 424 478"/>
+            <path d="M680 128 C760 140 824 182 844 240"/>
+            <path d="M710 186 C788 200 840 244 854 300"/>
+            <path d="M724 246 C788 264 828 306 836 356"/>
+            <path d="M850 200 C874 246 874 306 854 352"/>
+            <path d="M850 416 C884 430 918 432 944 420"/>
+            <path d="M710 330 C748 336 780 352 802 378"/>
+            <path d="M700 400 C728 420 748 448 756 478"/>
+            <path d="M520 600 C500 614 486 630 480 646"/>
+            <path d="M660 600 C680 614 694 630 700 646"/>
+          </g>
+          <g stroke="#eaf6ff" stroke-opacity=".46" stroke-width="1.6">
+            <path d="M500 128 C420 140 356 182 336 240"/>
+            <path d="M470 186 C392 200 340 244 326 300"/>
+            <path d="M456 246 C392 264 352 306 344 356"/>
+            <path d="M330 200 C306 246 306 306 326 352"/>
+            <path d="M330 416 C296 430 262 432 236 420"/>
+            <path d="M470 330 C432 336 400 352 378 378"/>
+            <path d="M480 400 C452 420 432 448 424 478"/>
+            <path d="M680 128 C760 140 824 182 844 240"/>
+            <path d="M710 186 C788 200 840 244 854 300"/>
+            <path d="M724 246 C788 264 828 306 836 356"/>
+            <path d="M850 200 C874 246 874 306 854 352"/>
+            <path d="M850 416 C884 430 918 432 944 420"/>
+            <path d="M710 330 C748 336 780 352 802 378"/>
+            <path d="M700 400 C728 420 748 448 756 478"/>
+            <path d="M520 600 C500 614 486 630 480 646"/>
+            <path d="M660 600 C680 614 694 630 700 646"/>
+          </g>
+          <!-- koncentrični nabori pri vrhu (kao prstenovi) -->
+          <g stroke="#ffffff" stroke-opacity=".20" stroke-width="1.3">
+            <path d="M470 150 C430 160 400 178 380 200"/>
+            <path d="M520 132 C468 140 424 158 396 182"/>
+            <path d="M710 150 C750 160 780 178 800 200"/>
+            <path d="M660 132 C712 140 756 158 784 182"/>
+            <path d="M560 118 C540 128 524 142 514 158"/>
+            <path d="M620 118 C640 128 656 142 666 158"/>
+          </g>
+          <!-- nabori u temporalnim režnjevima i malom mozgu -->
+          <g stroke="#eaf6ff" stroke-opacity=".30" stroke-width="1.3">
+            <path d="M448 486 C442 512 446 540 462 562"/>
+            <path d="M478 492 C476 520 482 544 496 566"/>
+            <path d="M510 496 C512 522 518 546 528 566"/>
+            <path d="M732 486 C738 512 734 540 718 562"/>
+            <path d="M702 492 C704 520 698 544 684 566"/>
+            <path d="M670 496 C668 522 662 546 652 566"/>
+            <path d="M440 602 C462 616 496 622 528 616"/>
+            <path d="M452 620 C474 632 504 636 532 630"/>
+            <path d="M740 602 C718 616 684 622 652 616"/>
+            <path d="M728 620 C706 632 676 636 648 630"/>
+          </g>
+          <!-- centralna pukotina (longitudinalna fisura) -->
+          <g>
+            <path d="M590 100 C586 190 586 300 590 400 C592 460 590 520 590 566" stroke="#04101f" stroke-opacity=".55" stroke-width="9" filter="url(#groove)"/>
+            <path d="M590 100 C586 190 586 300 590 400 C592 460 590 520 590 566" stroke="#eaf6ff" stroke-opacity=".42" stroke-width="1.6"/>
+          </g>
+
+          <!-- ══ ZLATNE NITI (neuronska mreža u staklu) ══ -->
+          <g class="threads" stroke="url(#gold)" stroke-width="1.5" stroke-opacity=".9" fill="none">
+            <path d="M590 330 C520 292 452 300 404 340"/>
+            <path d="M590 330 C660 292 728 300 776 340"/>
+            <path d="M590 330 C566 392 544 438 508 476"/>
+            <path d="M590 330 C614 392 636 438 672 476"/>
+            <path d="M404 340 C376 384 370 430 392 470"/>
+            <path d="M776 340 C804 384 810 430 788 470"/>
+            <path d="M508 476 C546 500 634 500 672 476"/>
+            <path d="M590 330 C588 262 590 208 596 166"/>
+            <path d="M590 470 C540 500 470 508 430 496"/>
+            <path d="M590 470 C640 500 710 508 750 496"/>
+          </g>
+          <g class="spark">
+            <circle cx="404" cy="340" r="4.4" fill="#fff2d2"/><circle cx="776" cy="340" r="4.4" fill="#fff2d2"/>
+            <circle cx="508" cy="476" r="3.6" fill="#ffd479"/><circle cx="672" cy="476" r="3.6" fill="#ffd479"/>
+            <circle cx="596" cy="166" r="3.4" fill="#fffaf0"/><circle cx="430" cy="496" r="3" fill="#ffd479"/>
+            <circle cx="750" cy="496" r="3" fill="#ffd479"/>
+          </g>
+        </g>
+
+        <!-- ══ SPEKULAR + kaustika ══ -->
+        <g clip-path="url(#brainClip)">
+          <path d="M300 120 L540 620 L360 620 L180 160 Z" fill="#ffffff" opacity=".10"/>
+          <path d="M760 90 L980 520 L880 560 L700 130 Z" fill="#ffffff" opacity=".06"/>
+          <ellipse cx="440" cy="270" rx="130" ry="76" fill="url(#caustic)" opacity=".55"/>
+          <ellipse cx="740" cy="360" rx="96" ry="130" fill="url(#caustic)" opacity=".30"/>
+          <ellipse cx="590" cy="180" rx="200" ry="40" fill="url(#caustic)" opacity=".22"/>
+        </g>
+
+        <!-- ══ ZLATNO JEZGRO ══ -->
+        <g transform="translate(590 340)">
+          <g class="core-pulse">
+            <circle r="212" fill="url(#coreBloom)" opacity=".92"/>
+            <circle r="126" fill="url(#coreBloom)" opacity=".88"/>
+            <g class="spark" stroke="#ffeec2" stroke-opacity=".55" stroke-width="1.6" stroke-linecap="round">
+              <path d="M0 -228 L0 -164"/><path d="M0 228 L0 164"/>
+              <path d="M-228 0 L-164 0"/><path d="M228 0 L164 0"/>
+              <path d="M-161 -161 L-116 -116"/><path d="M161 -161 L116 -116"/>
+              <path d="M-161 161 L-116 116"/><path d="M161 161 L116 116"/>
+            </g>
+            <!-- spoljni prsten sa zupcima -->
+            <g filter="url(#bloom)">
+              <circle r="112" fill="none" stroke="url(#goldDark)" stroke-width="13" stroke-opacity=".88"/>
+              <circle r="112" fill="none" stroke="url(#gold)" stroke-width="3.2" stroke-opacity=".96"/>
+              <circle r="97" fill="none" stroke="#fff4d2" stroke-width="1.1" stroke-opacity=".62" stroke-dasharray="3 8"/>
+              <g stroke="#fff4d2" stroke-opacity=".55" stroke-width="1.6">
+                <path d="M0 -122 L0 -112"/><path d="M0 122 L0 112"/><path d="M-122 0 L-112 0"/><path d="M122 0 L112 0"/>
+              </g>
+            </g>
+            <!-- heksagonalni kristal -->
+            <g filter="url(#bloom)">
+              <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" fill="url(#goldDark)" opacity=".96"/>
+              <polygon points="0,-90 78,-45 78,45 0,90 -78,45 -78,-45" fill="none" stroke="#fff6dc" stroke-width="2.2" stroke-opacity=".92"/>
+              <polygon points="0,-66 57,-33 57,33 0,66 -57,33 -57,-33" fill="url(#gold)" opacity=".97"/>
+              <polygon points="0,-66 57,-33 0,0" fill="#fffaf0" opacity=".58"/>
+              <polygon points="-57,-33 0,0 0,-66" fill="#ffe3a6" opacity=".38"/>
+              <polygon points="0,0 57,33 -57,33" fill="#c87d12" opacity=".48"/>
+              <polygon points="0,-44 39,-22 39,22 0,44 -39,22 -39,-22" fill="none" stroke="#fffdf6" stroke-width="1.4" stroke-opacity=".88"/>
+              <polygon points="0,-22 19,-11 19,11 0,22 -19,11 -19,-11" fill="#fffdf8" opacity=".96"/>
+            </g>
+            <g class="spark">
+              <circle cx="0" cy="-112" r="3.6" fill="#fffdf8"/>
+              <circle cx="97" cy="56" r="3" fill="#ffeec2"/>
+              <circle cx="-97" cy="56" r="3" fill="#ffeec2"/>
+            </g>
+          </g>
+          <!-- anamorfna svjetlosna pruga (luksuzni render detalj) -->
+          <g opacity=".85">
+            <ellipse cx="0" cy="0" rx="268" ry="3.2" fill="#fffdf4" opacity=".55" filter="url(#soft2)"/>
+            <ellipse cx="0" cy="0" rx="150" ry="1.6" fill="#ffffff" opacity=".85"/>
+            <ellipse cx="0" cy="0" rx="3" ry="176" fill="#fff6dc" opacity=".35" filter="url(#soft2)"/>
+          </g>
+        </g>
+
+        <!-- ══ SPOLJNI ZLATNI AKCENTI NA IVICI STAKLA ══ -->
+        <g fill="none" stroke="url(#gold)" stroke-opacity=".8" stroke-width="1.7" stroke-linecap="round">
+          <path d="M330 214 C314 250 312 300 322 344"/>
+          <path d="M850 214 C866 250 868 300 858 344"/>
+          <path d="M492 112 C530 102 560 98 590 98"/>
+          <path d="M688 112 C650 102 620 98 590 98"/>
+          <path d="M424 596 C452 616 512 622 556 610"/>
+          <path d="M756 596 C728 616 668 622 624 610"/>
+        </g>
+      </g>
+
+      <!-- ══ ODSJAJ NA PODLOZI ══ -->
+      <g opacity=".14" filter="url(#soft)" transform="translate(0,1500) scale(1,-1)">
+        <use href="#cerebrum" fill="#bfe6ff"/>
+        <use href="#cerebrum" transform="translate(1180,0) scale(-1,1)" fill="#bfe6ff"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="panel p1">
+    <h3>CROSS-NODE CLUSTER</h3>
+    <p class="sub">deljena tabla · gossip · HMAC</p>
+    <ul>
+      <li><span class="dot"></span>atomski claim (mkdir lock / Redis Lua) + lease renewal</li>
+      <li><span class="dot c"></span>gossip membership: heartbeat, suspect/dead</li>
+      <li><span class="dot v"></span>ulazna poruka kroz istu medijaciju</li>
+    </ul>
+  </div>
+
+  <div class="panel p2">
+    <h3>SWARM CORE</h3>
+    <p class="sub">stigmergija · work stealing · specijalizacija</p>
+    <ul>
+      <li><span class="dot"></span>feromoni sa opadanjem (pola za 5 min)</li>
+      <li><span class="dot"></span>worker uzima najvrjedniji zadatak koji može</li>
+      <li><span class="dot g"></span>specijalizacija se <b>meri</b>, ne propisuje</li>
+    </ul>
+  </div>
+
+  <div class="panel p3">
+    <h3>SAFETY &amp; GOVERNANCE</h3>
+    <p class="sub">granice roja · incidenti · kill switch</p>
+    <ul>
+      <li><span class="dot"></span>izolacija open → contained → locked → frozen</li>
+      <li><span class="dot c"></span>detektori: koluzija, skriveni kanal, flooding</li>
+      <li><span class="dot v"></span>karantin je „sticky", skida ga samo board</li>
+    </ul>
+  </div>
+
+  <div class="panel p4">
+    <h3>RSI &amp; EVOLUCIJA</h3>
+    <p class="sub">R0–R5 kapije · genom · eval</p>
+    <ul>
+      <li><span class="dot"></span>nivo menja <b>samo board</b> (role owner)</li>
+      <li><span class="dot c"></span>genom ne dira autonomiju, budžet ni alate</li>
+      <li><span class="dot g"></span>svaka promena meri se zlatnim setom</li>
+    </ul>
+  </div>
+
+  <div class="tagline">jedan proces · mnogo workera · mnogo čvorova — bez centralnog orkestratora</div>
+
+  <div class="engrave e1">nmq robotics · genesis brain</div>
+  <div class="engrave e2">kristalno staklo · zlatno jezgro · № 001</div>
+
+  <div class="proof">
+    <span>verzija <b>v0.5.0</b></span><span class="sep"></span>
+    <span>testovi <i>205/205</i></span><span class="sep"></span>
+    <span>eval <i>6/6</i></span><span class="sep"></span>
+    <span>rute <i>151</i></span><span class="sep"></span>
+    <span>demo <i>26</i></span><span class="sep"></span>
+    <span>smoke <i>41/41</i></span><span class="sep"></span>
+    <span>npm zavisnosti <i>0</i></span>
+  </div>
+</div>
+</body>
+</html>

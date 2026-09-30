@@ -14,7 +14,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const [, , htmlArg = 'docs/35-SWARM-ARHITEKTURA-VIZUAL.html', pngArg = 'docs/35-swarm-arhitektura.png', wArg = '1600', hArg = '1250'] = process.argv;
+const [, , htmlArg = 'docs/35-SWARM-ARHITEKTURA-VIZUAL.html', pngArg = 'docs/35-swarm-arhitektura.png', wArg = '1600', hArg = '1250', scaleArg = '1'] = process.argv;
 
 const html = path.resolve(ROOT, htmlArg);
 const png = path.resolve(ROOT, pngArg);
@@ -43,7 +43,8 @@ const args = [
   '--headless=new',
   '--disable-gpu',
   '--hide-scrollbars',
-  '--force-device-scale-factor=1',
+  /// `scale` > 1 daje 2x/3x render (npr. 4K wallpaper iz iste HTML scene)
+  `--force-device-scale-factor=${scaleArg}`,
   `--window-size=${wArg},${hArg}`,
   `--screenshot=${png}`,
   pathToFileURL(html).href,
@@ -58,4 +59,4 @@ if (!fs.existsSync(png)) {
   process.exit(4);
 }
 const kb = (fs.statSync(png).size / 1024).toFixed(0);
-console.log(`OK: ${path.relative(ROOT, png)} (${kb} KB, ${wArg}x${hArg})`);
+console.log(`OK: ${path.relative(ROOT, png)} (${kb} KB, ${wArg}x${hArg} @${scaleArg}x)`);

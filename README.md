@@ -237,6 +237,12 @@ curl -X POST localhost:8787/v1/admin/agents/executor/keys -d '{"scopes":["crm:wr
 
 ---
 
+## GENESIS BRAIN (vizualni identitet)
+
+![GENESIS BRAIN — kristalno staklo, zlatno jezgro](docs/37-genesis-brain.png)
+
+Render: `node scripts/poster.mjs docs/37-GENESIS-BRAIN.html docs/37-genesis-brain.png 1600 1080 1` (4K: zadnji argument `2`).
+
 ## Vizualni pregled arhitekture
 
 ![NMQ Robot — swarm arhitektura](docs/35-swarm-arhitektura.png)
