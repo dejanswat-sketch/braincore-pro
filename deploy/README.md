@@ -102,17 +102,22 @@ curl -sI https://live.braincore.pro/live | head -1
 Expected: `peersAlive: 2`, at least one entry in `.done` executed by a node other than the one that received the
 task, and `pheromones.active` returning to `0` about 30 s after the last deposit.
 
-## 5. Stripe (billing → API key)
+## 5. Stripe (billing → API key) — disabled on the site for now
+
+The landing page currently uses a "Talk to us — request access" mail link: no card checkout is configured. The
+payment path is implemented and tested, so enabling it is a two-line change plus a secret:
 
 1. Create a **Payment Link** (or Price) for $999/mo; metered agent-hours are billed at $0.12/agent-hour.
 2. In Stripe → Developers → Webhooks add `https://api.braincore.pro/v1/stripe/webhook`, event
    `checkout.session.completed` and `customer.subscription.created`.
 3. Put the signing secret into `/etc/braincore/braincore.env` as `STRIPE_WEBHOOK_SECRET` and restart
    `braincore-api`.
-4. On payment the endpoint verifies the `Stripe-Signature` (HMAC-SHA256 over `t.payload`, 300 s tolerance),
+4. Replace the `#checkout` href in `site/index.html` with the Payment Link and set its success URL to
+   `https://braincore.pro/thanks.html`.
+5. On payment the endpoint verifies the `Stripe-Signature` (HMAC-SHA256 over `t.payload`, 300 s tolerance),
    ignores duplicate event ids, and returns the issued API key **once**. Only a SHA-256 hash is stored in
    `data/_control/api-keys.json`.
-5. Admin endpoints (`GET /v1/keys`, `POST /v1/keys/:id/revoke`) require `BRAINCORE_ADMIN_KEY`.
+6. Admin endpoints (`GET /v1/keys`, `POST /v1/keys/:id/revoke`) require `BRAINCORE_ADMIN_KEY`.
 
 ## 6. Operations
 

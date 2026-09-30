@@ -141,16 +141,22 @@ changes go through the control plane and keep a rollback version.
 
 ---
 
-## 8. Stripe (billing → API key)
+## 8. Stripe (billing → API key) — **currently disabled on the site by decision**
+
+**Status:** the site shows "Talk to us — request access" (mailto) instead of a card checkout, and no Stripe link is
+configured. The payment code path exists, is wired and is covered by tests, so it can be switched on the moment the
+live Stripe account exists: replace the `#checkout` href in `site/index.html` with the Payment Link and point its
+success URL at `https://braincore.pro/thanks.html`.
+
+When you enable it:
 
 1. Create the $999/mo price (and, if you bill metered usage, the $0.12/agent-hour meter).
 2. Webhook endpoint: `https://api.braincore.pro/v1/stripe/webhook`, events `checkout.session.completed` and
    `customer.subscription.created`.
-3. Copy the signing secret into `/etc/braincore/braincore.env` as `STRIPE_WEBHOOK_SECRET`; restart
-   `braincore-api`.
-4. Flow: verify `Stripe-Signature` (`t=<ts>,v1=<hmac>` over `t.payload`, 300 s tolerance) → ignore duplicate
-   event ids → issue key → store only its SHA-256 hash in `data/_control/api-keys.json` → return the plaintext key
-   exactly once.
+3. Copy the signing secret into `/etc/braincore/braincore.env` as `STRIPE_WEBHOOK_SECRET`; restart `braincore-api`.
+4. Flow: verify `Stripe-Signature` (`t=<ts>,v1=<hmac>` over `t.payload`, 300 s tolerance) → ignore duplicate event
+   ids → issue key → store only its SHA-256 hash in `data/_control/api-keys.json` → return the plaintext key exactly
+   once.
 5. Admin endpoints require `BRAINCORE_ADMIN_KEY`; revoking a key takes effect immediately, including in other
    processes (the file is re-read when its mtime changes).
 

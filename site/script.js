@@ -125,7 +125,7 @@
   refresh();
   setInterval(refresh, 10_000);
 
-  // ── 5. Stripe checkout guard ──────────────────────────────────────────
+  // ── 5. checkout guard (uključuje se kad se doda Stripe Payment Link) ──
   const checkout = document.getElementById('checkout');
   if (checkout && checkout.href.includes('REPLACE_WITH_YOUR_PAYMENT_LINK')) {
     checkout.addEventListener('click', (e) => {

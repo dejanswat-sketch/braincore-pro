@@ -92,7 +92,7 @@
         <span id="api-status">checking api…</span>
       </span>
       <a href="#pricing" class="rounded-full bg-gradient-to-r from-gold2 to-gold px-4 py-2 text-[13px] font-semibold text-night shadow-lg shadow-amber-500/20 hover:brightness-105">
-        Start — $999/mo
+        Talk to sales
       </a>
     </div>
   </nav>
@@ -458,27 +458,27 @@ node src/index.js --port=8003 --peers=127.0.0.1:8001,127.0.0.1:8002
         <li>✓ Deployment runbook, email support, updates</li>
       </ul>
       <div class="mt-8 flex flex-wrap items-center gap-3">
-        <a id="checkout" href="https://buy.stripe.com/REPLACE_WITH_YOUR_PAYMENT_LINK"
+        <a id="checkout" href="mailto:sales@braincore.pro?subject=Braincore%20Pro%20—%20request%20access&body=Company%3A%0AUse%20case%3A%0ANodes%20needed%3A"
            class="rounded-full bg-gradient-to-r from-gold2 to-gold px-6 py-3.5 text-[15px] font-bold text-night shadow-xl shadow-amber-500/25 hover:brightness-105">
-          Checkout with Stripe — $999/mo
+          Talk to us — request access
         </a>
-        <a href="mailto:sales@braincore.pro?subject=Braincore%20Pro%20pilot" class="rounded-full border border-white/15 bg-white/5 px-6 py-3.5 text-[15px] font-semibold hover:bg-white/10">
-          Talk to us first
+        <a href="https://live.braincore.pro" class="rounded-full border border-white/15 bg-white/5 px-6 py-3.5 text-[15px] font-semibold hover:bg-white/10">
+          Watch it run
         </a>
       </div>
       <p class="mt-4 text-[11.5px] text-slate-500">
-        On payment Stripe calls our webhook and your API key is issued instantly for the machine. Metered by agent-hour,
-        cancel anytime. Prices exclude VAT.
+        Pilots are onboarded personally: you get the code, a deployment window and the admin key. Card checkout is coming
+        shortly — the payment endpoint already exists and is covered by tests, it only needs the live Stripe account.
       </p>
     </div>
 
     <div class="glass reveal rounded-3xl p-8">
-      <h3 class="text-[15px] font-bold uppercase tracking-[0.2em] text-slate-400">What happens after you pay</h3>
+      <h3 class="text-[15px] font-bold uppercase tracking-[0.2em] text-slate-400">What happens next</h3>
       <ol class="mt-5 space-y-4 text-[13px] text-slate-300">
-        <li><b class="text-white">1.</b> Stripe Checkout completes and redirects to a confirmation page.</li>
-        <li><b class="text-white">2.</b> Our webhook verifies the Stripe signature and issues an API key (shown once).</li>
-        <li><b class="text-white">3.</b> You start three nodes with that key; the swarm syncs in under two seconds.</li>
-        <li><b class="text-white">4.</b> Your edge reports fitness only; the registry will send back better genomes.</li>
+        <li><b class="text-white">1.</b> You write to us with your use case and how many nodes you need.</li>
+        <li><b class="text-white">2.</b> We agree on a pilot window and hand you the deployment runbook.</li>
+        <li><b class="text-white">3.</b> You start three nodes; the swarm syncs in under two seconds.</li>
+        <li><b class="text-white">4.</b> Your edge reports fitness only; the registry sends back better genomes.</li>
       </ol>
       <a href="https://live.braincore.pro" class="mt-6 inline-block rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-[13px] font-semibold hover:bg-white/10">
         See it running first ↗
