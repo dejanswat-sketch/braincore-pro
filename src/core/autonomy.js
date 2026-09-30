@@ -14,6 +14,8 @@
  *   - kill switch (tenant suspend / agent paused) je iznad svega
  *   - svaka autonomna akcija ostavlja audit zapis sa nivoom autonomije
  */
+import path from 'node:path';
+import { exists, readJson, writeJson } from './fsx.js';
 import { PolicyError, ValidationError } from './errors.js';
 
 export const AUTONOMY_LEVELS = {
@@ -29,13 +31,20 @@ export const HUMAN_ONLY = ['financial', 'legal', 'destructive', 'external_commun
 
 export function createAutonomy({
   config = {},
+  dataDir,
   logger,
   metrics,
   audit,
 } = {}) {
   const levels = new Map(); // `${tenantId}::${agentId}` -> 'L2'
+  const stateFile = dataDir ? path.join(dataDir, '_control', 'autonomy.json') : null;
 
   const key = (tenantId, agentId) => `${tenantId}::${agentId ?? '*'}`;
+
+  async function persist() {
+    if (!stateFile) return;
+    await writeJson(stateFile, { updatedAt: new Date().toISOString(), levels: Object.fromEntries(levels) }).catch((err) => logger?.warn?.('autonomy.persist_failed', { error: err.message }));
+  }
 
   /** Nivo za tenant/agenta: specifičan agent → tenant default → globalni default. */
   function levelOf(tenantId, agentId) {
@@ -56,14 +65,32 @@ export function createAutonomy({
   return {
     AUTONOMY_LEVELS,
     HUMAN_ONLY,
+    stateFile,
+
+    /** Učitava nivoe iz `data/_control/autonomy.json` — promjene preživljavaju restart. */
+    async load() {
+      if (!stateFile || !exists(stateFile)) return { loaded: 0 };
+      const saved = await readJson(stateFile, { levels: {} });
+      let loaded = 0;
+      for (const [k, level] of Object.entries(saved?.levels ?? {})) {
+        if (AUTONOMY_LEVELS[level]) {
+          levels.set(k, level);
+          loaded += 1;
+        }
+      }
+      if (loaded) logger?.info?.('autonomy.loaded', { loaded });
+      return { loaded };
+    },
 
     setLevel(tenantId, agentId, level) {
       if (!AUTONOMY_LEVELS[level]) throw new ValidationError(`Nepoznat nivo autonomije: ${level} (dozvoljeno: ${Object.keys(AUTONOMY_LEVELS).join(', ')})`);
       levels.set(key(tenantId, agentId), level);
+      persist();
       logger?.warn?.('autonomy.level_changed', { tenantId, agentId: agentId ?? '*', autonomyLevel: level });
       metrics?.inc('autonomy_level_changes_total', { tenant: tenantId, level });
       return { tenantId, agentId: agentId ?? '*', level };
     },
+    hasLevel: (tenantId, agentId) => levels.has(key(tenantId, agentId)),
     levelOf,
     describe,
     list: () => [...levels.entries()].map(([k, level]) => { const [tenantId, agentId] = k.split('::'); return { tenantId, agentId, level }; }),

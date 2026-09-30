@@ -13,6 +13,9 @@
     "risk": { "low": "allow", "medium": "allow", "high": "require_approval" },
     "pii": { "redact": ["email", "card", "iban", "jmbg", "phone"] },
     "maxSteps": 12,
+    "maxToolCalls": 25,
+    "maxTokens": 60000,
+    "maxWallMs": 180000,
     "budget": { "runUsd": 0.5, "monthlyUsd": 50 },
     "rateLimitPerMin": 60,
     "businessHoursOnly": false

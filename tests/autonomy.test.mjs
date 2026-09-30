@@ -424,8 +424,13 @@ test('RSI: analiza nalaza i ciklus prijedloga, pa mjerenje efekta', async () => 
     const impactBefore = await robot.rsi.impact('nmq', proposalId);
     assert.equal(impactBefore.status, 'nije primijenjen');
 
-    // odobri i primijeni (akcija ili prompt)
+    // odobri; ako prompt nema sadržaj (RSI ga ne piše sam), čovjek ga dopuni — primjena bez sadržaja je zabranjena
     await robot.improvements.decide('nmq', proposalId, { approve: true });
+    const stored = await robot.improvements.get('nmq', proposalId);
+    if (stored.kind === 'prompt' && !stored.proposed) {
+      await assert.rejects(() => robot.improvements.apply('nmq', proposalId), ValidationError);
+      await robot.improvements.updateProposal('nmq', proposalId, { proposed: 'Dopunjeni prompt iz RSI nalaza.' });
+    }
     await robot.improvements.apply('nmq', proposalId);
     const impact = await robot.rsi.impact('nmq', proposalId);
     assert.ok(impact.verdict);

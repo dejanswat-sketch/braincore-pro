@@ -1,5 +1,10 @@
 # 00 — Vizija: šta je NMQ Robot i zašto je drugačiji
 
+> **v0.3 dopuna:** robot je od v0.2 narastao na **autonomni nivo**: nivoi autonomije L0–L4, ciljevi sa KPI i replan-om,
+> proaktivni watcheri, self-improvement sa odobrenjem i A/B, self-play, RSI, AI organizacija (7 uloga) i A2A pregovaranje.
+> Dokumenti `20`–`28` opisuju taj nivo, a strategija za 24 mjeseca je u `docs/27`.
+> Brojevi „6 patterna / 13 agenata" u ovom dokumentu su stanje v0.1.0 i namjerno ostaju kao istorija.
+
 > **v0.2 dopuna:** robot je od v0.1.0 narastao na **19 agenata, 11 ulaza/patterna i 20 ugrađenih alata**
 > (dodati: persistentni agenti, kontrolna ravan, epizodična memorija, sandbox, OTel, `reflection`/`debate`/`team`).
 > Nova arhitektura i plan su u `docs/12`–`docs/19`, a odluke u `DECISIONS.md` §8 (D21–D32).
@@ -83,6 +88,7 @@ Pravilo iz `10` §3: **ne graditi više od 2 vertikale u MVP-u.** Ostalo je konf
 | **v0.5** | Auto-ažuriranje baze znanja iz riješenih ticketa (uz odobrenje), prijedlog izmjena politike na osnovu `policy_denials` | Robot uči iz svog rada — pravi razlog da raste vrijednost pretplate |
 | **v0.6** | White-label za agencije (vlastiti domen, brend, pod-tenanti), marketplace alata | Jedan partner prodaje 10 klijenata umjesto jedan |
 | **v1.0** | PostgreSQL + pgvector + Redis, queue za duge zadatke, SSO/MFA, SLO izvještaji | Prelazak sa „radi" na „skalira i dokazivo" |
+| **v0.3 ✅** | Autonomija L0–L4, ciljevi sa KPI/replan, proaktivni watcheri, self-improvement, self-play, RSI, AI organizacija, A2A pregovaranje | Agent prestaje da bude izvršilac i počinje da juri rezultat — uz mjerljive granice |
 
 Roadmap je namjerno vezan za **dokaze**, ne za datume: svaka faza ima okidač u `02` §10.
 

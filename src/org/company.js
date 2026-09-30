@@ -99,6 +99,30 @@ export function createCompany({ config = {}, dataDir, logger, metrics, audit, ca
         const entry = { round, role: speaker.id, agentId: speaker.agentId, ...parsed, costUsd: res.costUsd };
         offers.push(entry);
         lastOffer = parsed.offer ?? lastOffer;
+
+        // Tvrdi limit uloge: ponuda iznad mandatom datog budžeta prekida pregovor (ne ide dalje „u tišini")
+        const asked = Number(parsed.offer?.amountUsd ?? 0);
+        if (speaker.budgetUsd && asked > Number(speaker.budgetUsd)) {
+          const proposal = improvements
+            ? await improvements.createProposal(tenantId, {
+                kind: 'action',
+                target: roleById('ceo')?.agentId ?? speaker.agentId,
+                proposed: { input: `Pregovor "${topic}": ${speaker.id} traži ${asked} USD, budžet je ${speaker.budgetUsd} USD. Odluči.` },
+                current: null,
+                rationale: `Ponuda prelazi budžet uloge ${speaker.id}`,
+                evidence: [{ round, role: speaker.id, amountUsd: asked, budgetUsd: speaker.budgetUsd }],
+                expectedImpact: 'odluka o budžetu',
+                riskLevel: 'medium',
+                source: 'org-negotiation',
+              })
+            : null;
+          const blocked = { id: uid('neg'), ts: iso(), tenantId, topic, between: [a.id, b.id], rounds: round, status: 'escalated', reason: `Ponuda ${asked} USD prelazi budžet uloge ${speaker.id} (${speaker.budgetUsd} USD)`, outcome: lastOffer, transcript: offers, proposalId: proposal?.id ?? null, context };
+          await appendJsonl(cycleFile(tenantId), { type: 'negotiation', ...blocked });
+          metrics?.inc('org_negotiations_total', { tenant: tenantId, status: 'escalated' });
+          await audit?.append({ tenantId, actor: 'org', action: 'org_negotiation', args: { topic, between: [a.id, b.id], rounds: round }, decision: 'require_approval', outcome: 'escalated', meta: { reason: blocked.reason } });
+          return blocked;
+        }
+
         if (parsed.accept) {
           const record = { id: uid('neg'), ts: iso(), tenantId, topic, between: [a.id, b.id], rounds: round, status: 'agreed', outcome: lastOffer, transcript: offers, context };
           await appendJsonl(cycleFile(tenantId), { type: 'negotiation', ...record });
@@ -136,6 +160,9 @@ export function createCompany({ config = {}, dataDir, logger, metrics, audit, ca
      */
     async cycle(tenantId, { period = 'month', topic = 'budžet za sljedeći period', context = {} } = {}) {
       const chart = await this.chart(tenantId);
+      const ceo = roleById('ceo');
+      // Autonomija: ciklus planiranja je „plan" — na L0/L1 agent to ne smije (auditovano)
+      if (autonomy?.assert) await autonomy.assert({ tenantId, agentId: ceo?.agentId, kind: 'plan', detail: { period } });
       const portfolio = goals ? await goals.portfolio(tenantId) : { goals: [], atRisk: [] };
       const ctx = { tenantId, agentId: roleById('ceo')?.agentId, pattern: 'org-cycle', trace: context.trace, runId: context.runId, signal: context.signal };
 

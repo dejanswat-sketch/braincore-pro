@@ -118,7 +118,7 @@ export function createImprovementEngine({
       const state = await loadProposals(tenantId);
       const p = state.proposals[id];
       if (!p) throw new NotFoundError('Prijedlog', id);
-      if (p.status !== 'proposed') throw new ValidationError(`Samo prijedlog u statusu "proposed" se može dopuniti (status: ${p.status})`);
+      if (!['proposed', 'approved'].includes(p.status)) throw new ValidationError(`Prijedlog se može dopuniti samo dok nije primijenjen (status: ${p.status})`);
       Object.assign(p, patch, { updatedAt: iso() });
       p.history = [...p.history, { ts: iso(), event: 'updated', fields: Object.keys(patch) }];
       await writeJson(pFile(tenantId), state);
@@ -164,14 +164,23 @@ export function createImprovementEngine({
       switch (p.kind) {
         case 'prompt': {
           if (!controlPlane) throw new PolicyError('Control plane nije dostupan — prompt se ne može primijeniti');
-          const patch = { systemPrompt: String(p.proposed) };
+          // ⚠️ Bez ove provjere bi `String(null)` postao systemPrompt "null" i tiho pokvario agenta
+          if (typeof p.proposed !== 'string' || !p.proposed.trim() || p.proposed === 'null') {
+            throw new ValidationError('Prijedlog nema predloženi prompt — dopuni ga prije primjene (PATCH /v1/admin/proposals/:id)');
+          }
+          if (!catalog?.has?.(p.target)) throw new NotFoundError('Agent', p.target);
+          const patch = { systemPrompt: p.proposed };
           result = await controlPlane.deploy(tenantId, p.target, { patch, actor: `improvement:${id}`, note: p.rationale });
           p.rollbackInfo = { type: 'control-plane', agentId: p.target, version: result.version };
           break;
         }
         case 'pattern': {
           if (!controlPlane) throw new PolicyError('Control plane nije dostupan');
-          result = await controlPlane.deploy(tenantId, p.target, { patch: { defaultPattern: String(p.proposed) }, actor: `improvement:${id}`, note: p.rationale });
+          if (typeof p.proposed !== 'string' || !p.proposed.trim() || p.proposed === 'null') {
+            throw new ValidationError('Prijedlog nema predloženi pattern — dopuni ga prije primjene');
+          }
+          if (!catalog?.has?.(p.target)) throw new NotFoundError('Agent', p.target);
+          result = await controlPlane.deploy(tenantId, p.target, { patch: { defaultPattern: p.proposed }, actor: `improvement:${id}`, note: p.rationale });
           p.rollbackInfo = { type: 'control-plane', agentId: p.target, version: result.version };
           break;
         }
@@ -186,6 +195,7 @@ export function createImprovementEngine({
           const text = typeof p.proposed === 'string' ? p.proposed : p.proposed?.text;
           if (!text) throw new ValidationError('KB prijedlog traži tekst u "proposed"');
           result = await memory.vectors.ingest(tenantId, { text, source: p.proposed?.source ?? `self-improvement:${id}`, docId: p.proposed?.docId, metadata: { proposalId: id, tags: ['self-improvement'] } });
+          p.rollbackInfo = { type: 'kb', proposalId: id };
           break;
         }
         case 'action': {
@@ -225,6 +235,12 @@ export function createImprovementEngine({
         await controlPlane.rollback(tenantId, p.rollbackInfo.agentId, Math.max(0, p.rollbackInfo.version - 1));
       } else if (p.rollbackInfo?.type === 'policy-override' && policyOverrides) {
         await policyOverrides.revert(tenantId, p.rollbackInfo.overrideId);
+      } else if (p.rollbackInfo?.type === 'kb' && memory) {
+        // KB prijedlog se vraća brisanjem upravo unesenih zapisa (po metadata.proposalId)
+        const removed = await memory.vectors.removeByMetadata?.(tenantId, { proposalId: p.rollbackInfo.proposalId });
+        p.rollbackResult = removed ?? null;
+      } else if (p.kind === 'action') {
+        p.rollbackNote = 'Akcija je već izvršena (npr. poslan mejl) — nema automatskog vraćanja; evidentirano u auditu.';
       }
       p.status = 'rolled_back';
       p.rolledBackAt = iso();

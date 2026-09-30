@@ -17,6 +17,7 @@ export function envConfig(env = process.env) {
     masterKey: env.NMQ_MASTER_KEY || '',
     httpAllowlist: parseList(env.NMQ_HTTP_ALLOWLIST, { separator: ',' }),
     maxSteps: parseNumber(env.NMQ_MAX_STEPS, 12),
+    maxTokens: parseNumber(env.NMQ_MAX_TOKENS, 0) || null, // null = bez tvrdog limita tokena
     rateLimitPerMin: parseNumber(env.NMQ_RATE_LIMIT_PER_MIN, 60),
     /** Persistentni agenti: scheduler i OTel izvoz */
     scheduler: parseBool(env.NMQ_SCHEDULER, true),

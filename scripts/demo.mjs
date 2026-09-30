@@ -429,6 +429,16 @@ async function main() {
     line(`  prijedlog #1: [${prop.kind}] ${prop.rationale.slice(0, 90)}…`);
     line(`  dokazi: ${prop.evidence.length} · očekivani efekat: ${prop.expectedImpact} · rizik: ${prop.riskLevel} · status: ${prop.status}`);
     await robot.improvements.decide('nmq', pid, { approve: true, by: 'dejan' });
+    // RSI predlaže šta treba popraviti; čovjek (ili self-play) dopuni tekst prije primjene
+    if (prop.kind === 'prompt' && !prop.proposed) {
+      try {
+        await robot.improvements.apply('nmq', pid, { by: 'dejan' });
+      } catch (err) {
+        line(`  primjena bez sadržaja je odbijena (ispravno): ${err.code} — ${err.message.slice(0, 70)}…`);
+      }
+      await robot.improvements.updateProposal('nmq', pid, { proposed: 'Ti si creative agent. Uvijek daj 3 varijante i navedi ciljnu publiku.' });
+      line(`  čovjek dopunio prijedlog (POST /v1/admin/proposals/:id) → sada se može primijeniti`);
+    }
     const applied = await robot.improvements.apply('nmq', pid, { by: 'dejan' });
     line(`  čovjek odobrio → primijenjeno: status=${applied.proposal.status}`);
     const impact = await robot.rsi.impact('nmq', pid);

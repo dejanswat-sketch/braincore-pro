@@ -1,6 +1,6 @@
 {
   "name": "nmq-robot",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "description": "NMQ Robot — univerzalni multi-tenant AI agent: gateway, 6 orchestration patterna, MCP alati, memorija/RAG, observability i governance.",
@@ -16,7 +16,8 @@
     "test": "node --test",
     "demo": "node scripts/demo.mjs",
     "serve": "node scripts/serve.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "eval": "node scripts/eval.mjs"
   },
   "dependencies": {},
   "optionalDependencies": {},

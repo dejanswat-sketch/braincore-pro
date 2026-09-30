@@ -43,8 +43,9 @@ import { createCompany } from './org/company.js';
 import { createA2ATasks } from './a2a/tasks.js';
 import { createSettlement, createNegotiator } from './a2a/negotiation.js';
 import { createAutonomyRoutes } from './server/routes-autonomy.js';
+import { createEvalHarness } from './eval/harness.js';
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.1';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -94,9 +95,13 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
   };
 
   // Autonomija: koliko agent smije sam (L0-L4) — centralna brava za sve proaktivne akcije
-  const autonomy = overrides.autonomy ?? createAutonomy({ config: config.autonomy ?? {}, logger, metrics, audit });
+  const autonomy = overrides.autonomy ?? createAutonomy({ config: config.autonomy ?? {}, dataDir: config.dataDir, logger, metrics, audit });
+  await autonomy.load(); // perzistirane promjene imaju prioritet nad config-om
   for (const [tenantId, levels] of Object.entries(config.autonomy?.tenants ?? {})) {
-    for (const [agentId, level] of Object.entries(levels)) autonomy.setLevel(tenantId, agentId === '*' ? null : agentId, level);
+    for (const [agentId, level] of Object.entries(levels)) {
+      const id = agentId === '*' ? null : agentId;
+      if (!autonomy.hasLevel(tenantId, id)) autonomy.setLevel(tenantId, id, level);
+    }
   }
 
   // Reward model: jedna ocjena po run-u (feedback, odobrenja, ishod, trošak, greške)
@@ -216,6 +221,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     defaultConstraints: { maxAmountUsd: 5000, requireHumanAboveUsd: 250, maxRounds: 5 },
   });
   const a2a = createA2ATasks({ dataDir: config.dataDir, logger, metrics, audit, orchestrator, bus, autonomy });
+  const evalHarness = overrides.eval ?? createEvalHarness({ dataDir: config.dataDir, root, logger, metrics, audit, orchestrator, tracer });
 
   Object.assign(robot, {
     config,
@@ -252,6 +258,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     settlement,
     negotiator,
     a2a,
+    eval: evalHarness,
     overrides,
     scheduler,
   });
@@ -372,5 +379,6 @@ export { createCompany } from './org/company.js';
 export { buildAgentCard } from './a2a/card.js';
 export { createA2ATasks } from './a2a/tasks.js';
 export { createSettlement, createNegotiator } from './a2a/negotiation.js';
+export { createEvalHarness } from './eval/harness.js';
 export { evaluate, resolvePolicy, redactPii, DECISIONS } from './core/policy.js';
 export * from './core/errors.js';

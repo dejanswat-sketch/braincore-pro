@@ -1,0 +1,63 @@
+{
+  "$comment": "Zlatni set za tenant `nmq` — 6 pitanja koja MORAJU proći. Provjere su determinističke (podstring, citat, alat), pa isti set radi i sa mock LLM-om i sa pravim modelom. Prag prolaznosti je 0.8.",
+  "name": "golden",
+  "tenantId": "nmq",
+  "threshold": 0.8,
+  "cases": [
+    {
+      "id": "support-reset-lozinke",
+      "input": "Kako da resetujem lozinku?",
+      "agentId": "support",
+      "checks": {
+        "expectStatus": "ok",
+        "mustUseTool": ["memory_search"],
+        "mustNotInclude": ["ne znam", "ne mogu da pomognem"]
+      }
+    },
+    {
+      "id": "support-povracaj-politika",
+      "input": "Koliko dana imam za povraćaj novca?",
+      "agentId": "support",
+      "checks": {
+        "expectStatus": "ok",
+        "mustNotInclude": ["ne znam"],
+        "maxCostUsd": 0.05
+      }
+    },
+    {
+      "id": "ecommerce-status-narudzbine",
+      "input": "Status narudžbine 1042?",
+      "agentId": "ecommerce",
+      "checks": {
+        "expectStatus": "ok",
+        "mustNotInclude": ["ne znam"]
+      }
+    },
+    {
+      "id": "finance-faktura-racunica",
+      "input": "Napravi fakturu za Prima d.o.o.: 2 x 500 EUR, PDV 20%.",
+      "agentId": "finance",
+      "checks": {
+        "expectStatus": "ok",
+        "mustNotInclude": ["ne znam"]
+      }
+    },
+    {
+      "id": "sales-kvalifikacija",
+      "input": "Kvalifikuj lead: budžet 9, hitnost 8, firma 8, odgovornost 9, jasnoća 7.",
+      "agentId": "sales",
+      "checks": {
+        "expectStatus": "ok",
+        "mustNotInclude": ["ne znam"]
+      }
+    },
+    {
+      "id": "router-prebacivanje",
+      "input": "Ne radi mi prijava na nalog, ne mogu da se ulogujem.",
+      "checks": {
+        "expectStatus": "ok",
+        "mustNotInclude": ["ne znam"]
+      }
+    }
+  ]
+}

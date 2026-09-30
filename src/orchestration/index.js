@@ -100,12 +100,15 @@ export function createOrchestrator(services) {
 
     const spentThisMonth = await cost.monthlySpent(tenantId);
     const baseMaxSteps = options.maxSteps ?? policy.maxSteps ?? tenant.maxSteps ?? config.env.maxSteps;
+    const maxSteps = baseMaxSteps * (PATTERN_STEP_BUDGET[initialPattern] ?? 1);
     const budget = createBudget({
       runUsd: options.maxRunUsd ?? tenant.budget?.runUsd ?? config.env.budget.runUsd,
       monthlyUsd: tenant.budget?.monthlyUsd ?? config.env.budget.monthlyUsd,
       spentThisMonthUsd: spentThisMonth,
-      maxSteps: baseMaxSteps * (PATTERN_STEP_BUDGET[initialPattern] ?? 1),
-      maxWallMs: options.maxWallMs ?? 180_000,
+      maxSteps,
+      // Tvrde granice iz politike (D15) — do sada su postojale samo u config-u
+      maxTokens: options.maxTokens ?? policy.maxTokens ?? tenant.maxTokens ?? config.env.maxTokens ?? Infinity,
+      maxWallMs: options.maxWallMs ?? policy.maxWallMs ?? 180_000,
     });
 
     const ctx = {
@@ -115,6 +118,7 @@ export function createOrchestrator(services) {
       sessionId: sessionId ?? null,
       runId: run0.runId,
       trace: run0,
+      tracer: services.tracer ?? null,
       budget,
       policy,
       signal,
@@ -130,6 +134,7 @@ export function createOrchestrator(services) {
       options,
       specPatch: options.specPatch ?? null,
       jobId: options.jobId ?? options.patternConfig?.jobId ?? null,
+      maxToolCalls: options.maxToolCalls ?? policy.maxToolCalls ?? null,
       budgetPerRunUsd: options.maxRunUsd,
       onEvent: typeof onEvent === 'function' ? onEvent : undefined,
       monthlySpentUsd: spentThisMonth,

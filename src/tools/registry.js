@@ -117,7 +117,8 @@ export function createToolRegistry({ logger, metrics, audit, policyResolver, def
       attempt += 1;
       budget.assertCanContinue({ label: `tool:${name}` });
       budget.addStep();
-      const span = ctx.trace?.span?.(ctx.trace, `tool ${name}`, { attempt, riskLevel: tool.riskLevel });
+      // Span alata ide u trace preko tracer-a (ranije je bilo `ctx.trace.span`, što ne postoji → nijedan span alata)
+      const span = ctx.tracer?.span?.(ctx.trace, `tool ${name}`, { attempt, riskLevel: tool.riskLevel });
       try {
         const result = await withTimeout(
           (signal) => tool.handler(args, { ...ctx, policy, tool, signal, logger }),

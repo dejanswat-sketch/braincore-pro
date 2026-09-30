@@ -155,6 +155,59 @@ export function createA2ATasks({ dataDir, logger, metrics, audit, orchestrator, 
       return (state ? all.filter((t) => t.state === state) : all).slice(0, limit);
     },
 
+    /**
+     * Nastavak zadatka poslije ljudskog odobrenja: ponovo pokreće isti zadatak sa odobrenim alatima
+     * (bez ovoga bi zadatak u `input_required` zauvijek stajao).
+     */
+    async resume(tenantId, taskId, { approve = true, approvedTools = [], by = 'human' } = {}) {
+      const task = active.get(taskId);
+      if (!task) throw new NotFoundError('A2A zadatak', taskId);
+      if (task.tenantId !== tenantId) throw new NotFoundError('A2A zadatak', taskId);
+      if (task.state !== 'input_required') throw new ValidationError(`Zadatak nije u stanju koje čeka odluku (state: ${task.state})`);
+
+      task.history.push({ ts: iso(), state: approve ? 'approved' : 'rejected', by });
+      task.updatedAt = iso();
+
+      if (!approve) {
+        task.state = 'cancelled';
+        task.output = task.output ?? 'Odbijeno od strane čovjeka.';
+        await appendJsonl(file(tenantId), { ...task, _op: 'updated' });
+        await persist(tenantId);
+        emit(task, 'cancelled', { reason: 'rejected-by-human' });
+        return task;
+      }
+
+      const tools = [...new Set([...(approvedTools ?? []), ...(task.approvals ?? []).map((a) => a.tool)])];
+      task.state = 'working';
+      emit(task, 'working', { resumed: true });
+      try {
+        const result = await orchestrator.run({
+          tenantId,
+          agentId: task.skillId ?? null,
+          pattern: task.params?.pattern,
+          input: task.input,
+          sessionId: task.sessionId,
+          userId: `a2a:${task.fromAgent}`,
+          options: task.params?.options ?? {},
+          approvedTools: tools,
+        });
+        task.runId = result.runId;
+        task.costUsd = Number(((task.costUsd ?? 0) + (result.costUsd ?? 0)).toFixed(6));
+        task.output = result.output;
+        task.state = result.status === 'awaiting_approval' ? 'input_required' : 'completed';
+        task.approvals = result.approvals ?? [];
+      } catch (err) {
+        task.state = 'failed';
+        task.error = { message: err.message, code: err.code ?? 'UNKNOWN' };
+      }
+      task.history.push({ ts: iso(), state: task.state, by: 'nmq-robot' });
+      await appendJsonl(file(tenantId), { ...task, _op: 'updated' });
+      await persist(tenantId);
+      metrics?.inc('a2a_tasks_resumed_total', { tenant: tenantId, state: task.state });
+      emit(task, task.state, { output: task.output, error: task.error ?? null });
+      return task;
+    },
+
     /** Zadatak koji čeka ulaz (npr. odobrenje) — nastavlja se kroz /v1/approvals. */
     async resumeAfterApproval(tenantId, taskId) {
       const task = active.get(taskId);

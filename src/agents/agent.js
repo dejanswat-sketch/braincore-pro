@@ -55,6 +55,8 @@ export function createAgentRunner(services) {
     const handoffs = [];
     const repeats = new Map(); // zaštita od ponavljanja istog alata sa istim argumentima
     const maxRepeats = spec.maxToolRepeats ?? 3;
+    const maxToolCalls = ctx.maxToolCalls ?? null; // tvrdi limit iz politike (D15)
+    let toolCallsUsed = 0;
     let output = '';
     let status = 'ok';
     const usage = { tokensIn: 0, tokensOut: 0 };
@@ -113,6 +115,19 @@ export function createAgentRunner(services) {
 
       let stopAfterTools = false;
       for (const tc of res.toolCalls) {
+        toolCallsUsed += 1;
+        if (maxToolCalls && toolCallsUsed > maxToolCalls) {
+          steps.push({ type: 'tool', name: tc.name, ok: false, code: 'MAX_TOOL_CALLS', message: 'Prekoračen limit poziva alata (' + maxToolCalls + ')' });
+          messages.push({
+            role: 'tool',
+            tool_call_id: tc.id,
+            name: tc.name,
+            content: JSON.stringify({ status: 'blocked', reason: 'Limit poziva alata (' + maxToolCalls + ') je dostignut — odgovori sa onim što imaš.' }),
+          });
+          status = 'max_tool_calls';
+          stopAfterTools = true;
+          continue;
+        }
         // Zaštita od petlje: isti alat sa istim argumentima se ne smije ponavljati beskonačno
         const signature = `${tc.name}:${JSON.stringify(tc.arguments ?? {})}`;
         const seen = (repeats.get(signature) ?? 0) + 1;
@@ -214,9 +229,10 @@ export function createAgentRunner(services) {
       });
     }
 
-    // 5) Epizodična memorija: pamti kako je zadatak riješen (samo kad je bilo stvarnih akcija)
+    // 5) Epizodična memorija: pamti kako je zadatak riješen (samo kad je bilo stvarnih akcija).
+    // `ctx.recordEpisode === false` isključuje upis (npr. self-play: rješenje još nije ocijenjeno)
     const toolSteps = steps.filter((s) => s.type === 'tool' && s.ok);
-    if (spec.episodic !== false && (toolSteps.length || ctx.recordEpisode === true)) {
+    if (spec.episodic !== false && ctx.recordEpisode !== false && (toolSteps.length || ctx.recordEpisode === true)) {
       try {
         await memory.episodic.record(tenantId, {
           agentId: spec.id,

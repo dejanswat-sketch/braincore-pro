@@ -122,7 +122,7 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
     async deploy(tenantId, agentId, { patch = {}, actor = 'control-plane', note = null } = {}) {
       if (!tenants.has(tenantId)) throw new NotFoundError('Tenant', tenantId);
       const base = catalog.get(agentId, tenantId);
-      if (!base && !patch.systemPrompt) throw new NotFoundError('Agent', agentId);
+      if (!base) throw new NotFoundError('Agent', agentId);
       if (!patch || typeof patch !== 'object' || !Object.keys(patch).length) throw new ValidationError('Deploy traži najmanje jedno polje u "patch"');
 
       const a = ensureAgent(tenantId, agentId);

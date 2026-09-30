@@ -11,7 +11,9 @@ import { redactPii } from '../core/policy.js';
 export function createSessionStore({ dataDir, logger, maxMessages = 40, keepRecent = 12, ttlMs = 7 * 24 * 3600 * 1000, piiKinds = ['email', 'card', 'iban', 'jmbg'] } = {}) {
   const sessions = new Map();
   const key = (tenantId, sessionId) => `${tenantId}::${sessionId}`;
-  const sessionFile = (tenantId, sessionId) => path.join(dataDir, 'tenants', tenantId, 'sessions', `${sessionId}.jsonl`);
+  // Ime fajla mora biti sigurno za fajl-sistem (sessionId može sadržati ':' ili '/' — npr. "eval:golden:case1")
+  const safeId = (sessionId) => String(sessionId).replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
+  const sessionFile = (tenantId, sessionId) => path.join(dataDir, 'tenants', tenantId, 'sessions', `${safeId(sessionId)}.jsonl`);
 
   function create(tenantId, { sessionId = uid('sess'), agentId = null, userId = null, meta = {} } = {}) {
     const session = {

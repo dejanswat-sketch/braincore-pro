@@ -223,3 +223,21 @@ Odluke koje iz ovoga slijede (i važe za oba sloja):
 
 **Stanje dokaza (v0.3.0):** `node --test` → **150/150**, `node scripts/demo.mjs` → **21 sekcija** bez greške,
 `node scripts/smoke.mjs` → **31/31**, `node src/cli.js audit-verify` → lanac ispravan.
+
+---
+
+## 10. Ispravke iz revizije (v0.3.1) — odluke D47–D49
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D47 | **Eval zlatni set je kapija** | `eval/<tenantId>.json` (pitanja + determinističke provjere: sadržaj, citat, alati, status, trošak) → `src/eval/harness.js`, CLI `npm run eval`, ruta `POST /v1/admin/eval`; rezultati u `data/tenants/<id>/eval/results-YYYY-MM.jsonl`, metrika `nmq_eval_pass_rate` | Bez mjerenja „da li je bolje" svaka promjena prompta je nagađanje; eval je preduslov za self-improvement, A/B i RSI |
+| D48 | Tvrde granice iz politike | `maxToolCalls`, `maxTokens`, `maxWallMs` se čitaju iz `config/policies.json` (i mogu se zadati po run-u) i **stvarno prekidaju** run | Do sada su postojale u config-u, ali ih kod nije čitao — „tvrda" granica koja ne važi je gora od nikakve |
+| D49 | Sadržaj prijedloga je obavezan | `apply` odbija `prompt`/`pattern` prijedlog bez teksta; prijedlog se može dopuniti dok nije primijenjen (`POST /v1/admin/proposals/:id`); rollback `kb` prijedloga briše unesene zapise; `a2a.resume` nastavlja zadatak poslije odobrenja; nivoi autonomije se perzistiraju (`data/_control/autonomy.json`) | Revizija je pokazala tri tihe greške: `String(null)` kao prompt, KB bez rollback-a i zadatak koji zauvijek čeka |
+
+**Popravljeno iz revizije (sa testovima):** spanovi alata nisu ulazili u trace (`ctx.trace.span` → `ctx.tracer.span`);
+self-play je upisivao epizode nezavisno od ocjene sudije (`ctx.recordEpisode === false`);
+`controlPlane.deploy` je dozvoljavao nepostojećeg agenta; sesija sa `:` u imenu nije mogla da se snimi;
+`company.cycle` nije provjeravao autonomiju; pregovor nije stao kad ponuda pređe budžet uloge.
+
+**Stanje dokaza (v0.3.1):** `node --test` → **162/162**, `node scripts/eval.mjs` → **6/6 (100%)**,
+`node scripts/demo.mjs` → 21 sekcija, `node scripts/smoke.mjs` → 31/31.

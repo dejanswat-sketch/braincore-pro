@@ -52,8 +52,8 @@
       "title": "CHRO (ljudi i znanje)",
       "agentId": "hr",
       "reportsTo": "ceo",
-      "mandate": "Znanje tima, onboarding, baza znanja",
-      "kpis": ["pokrivenost KB > 80%", "vrijeme do short liste < 1 dan"],
+      "mandate": "Znanje tima, onboarding, baza znanja (bez odluka o ljudima — te odluke ostaju čovjeku)",
+      "kpis": ["pokrivenost KB > 80%", "vrijeme odgovora na HR pitanja < 1 dan"],
       "budgetUsd": 15
     },
     {

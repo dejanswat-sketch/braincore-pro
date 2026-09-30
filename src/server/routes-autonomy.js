@@ -72,6 +72,13 @@ export function createAutonomyRoutes({ robot, config, tenants, logger, metrics }
       handler: async ({ tenantId, params }) => need('a2a').cancel(tenantId, params.taskId),
     },
     {
+      method: 'POST',
+      path: '/a2a/tasks/:taskId/resume',
+      requiredRole: 'approve',
+      handler: async ({ tenantId, params, body, auth }) =>
+        need('a2a').resume(tenantId, params.taskId, { approve: body?.approve !== false, approvedTools: body?.approvedTools ?? [], by: body?.by ?? auth.keyId ?? 'human' }),
+    },
+    {
       method: 'GET',
       path: '/a2a/tasks/:taskId/events',
       requiredRole: 'read',
@@ -245,6 +252,12 @@ export function createAutonomyRoutes({ robot, config, tenants, logger, metrics }
     },
     {
       method: 'POST',
+      path: '/v1/admin/proposals/:id',
+      requiredRole: 'admin',
+      handler: async ({ tenantId, params, body }) => need('improvements').updateProposal(tenantId, params.id, body ?? {}),
+    },
+    {
+      method: 'POST',
       path: '/v1/admin/proposals/:id/decide',
       requiredRole: 'approve',
       handler: async ({ tenantId, params, body, auth }) => need('improvements').decide(tenantId, params.id, { approve: body.approve !== false, by: body.by ?? auth.keyId, note: body.note ?? null }),
@@ -363,6 +376,29 @@ export function createAutonomyRoutes({ robot, config, tenants, logger, metrics }
       path: '/v1/admin/org/history',
       requiredRole: 'admin',
       handler: async ({ tenantId, query }) => ({ history: await need('company').history(tenantId, { limit: Number(query.limit ?? 20) }) }),
+    },
+
+    // ───────────────────────── Eval (zlatni set) ─────────────────────────
+    {
+      method: 'POST',
+      path: '/v1/admin/eval',
+      requiredRole: 'admin',
+      handler: async ({ tenantId, body }) => need('eval').run(tenantId, { name: body?.set ?? 'golden', caseIds: body?.caseIds ?? null, maxCases: body?.maxCases ?? 50 }),
+    },
+    {
+      method: 'GET',
+      path: '/v1/admin/eval/sets',
+      requiredRole: 'admin',
+      handler: async ({ tenantId }) => {
+        const set = await need('eval').loadSet(tenantId).catch(() => null);
+        return { tenantId, goldenSet: set ? { name: set.name, cases: set.cases.length, threshold: set.threshold ?? 0.8, file: set.file } : null };
+      },
+    },
+    {
+      method: 'GET',
+      path: '/v1/admin/eval/history',
+      requiredRole: 'admin',
+      handler: async ({ tenantId, query }) => ({ history: await need('eval').history(tenantId, { limit: Number(query.limit ?? 20) }) }),
     },
 
     // ───────────────────────── Autonomija ─────────────────────────
