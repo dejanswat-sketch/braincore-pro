@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Braincore Pro — API Reference</title>
+<meta name="description" content="Braincore Pro API: submit tasks to a decentralized AI swarm, read swarm metrics, report fitness to the Genome Registry, and receive Stripe webhooks. Zero npm dependencies." />
+<link rel="canonical" href="https://braincore.pro/docs.html" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: radial-gradient(900px 600px at 50% -10%, rgba(255,180,61,.14), transparent 60%), linear-gradient(180deg,#05080f,#02040a); }
+  .glass { background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)); backdrop-filter: blur(14px); border: 1px solid rgba(190,220,255,.18); }
+  .gold-text { background: linear-gradient(94deg,#fff 6%,#ffd479 45%,#ffb43d 65%,#fff 96%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  pre { background: rgba(0,0,0,.45); border: 1px solid rgba(190,220,255,.14); }
+  table th, table td { border-bottom: 1px solid rgba(190,220,255,.12); }
+  code { color: #ffd479; }
+</style>
+</head>
+<body class="font-sans text-slate-200 antialiased">
+<header class="sticky top-0 z-40 border-b border-white/10 bg-[#02040a]/70 backdrop-blur-xl">
+  <nav class="mx-auto flex max-w-6xl items-center justify-between px-5 py-3.5">
+    <a href="index.html" class="flex items-center gap-3">
+      <span class="h-7 w-7 rounded-lg" style="background: radial-gradient(circle at 35% 30%, #ffe9b0, #ffb43d 45%, #7a4c0c); box-shadow: 0 0 20px rgba(255,190,90,.45)"></span>
+      <span class="text-[14px] font-extrabold tracking-[0.2em]">BRAINCORE<span class="text-amber-300"> PRO</span></span>
+    </a>
+    <div class="flex items-center gap-5 text-[13px]">
+      <a class="hover:text-white" href="index.html">← Home</a>
+      <a class="hover:text-white" href="https://live.braincore.pro">Live swarm ↗</a>
+      <a class="rounded-full bg-gradient-to-r from-amber-400 to-amber-300 px-4 py-2 text-[13px] font-semibold text-slate-900" href="index.html#pricing">Start — $999/mo</a>
+    </div>
+  </nav>
+</header>
+
+<main class="mx-auto max-w-6xl px-5 py-12">
+  <h1 class="text-4xl font-extrabold tracking-tight">API <span class="gold-text">reference</span></h1>
+  <p class="mt-4 max-w-3xl text-[14.5px] leading-relaxed text-slate-300">
+    Base URL <code>https://api.braincore.pro</code>. Every endpoint is served by a single zero-dependency Node
+    process. Requests accept an optional <code>x-api-key</code> header (issued after checkout); without a key the
+    public demo tenant is used.
+  </p>
+
+  <section class="mt-10 glass rounded-2xl p-6">
+    <h2 class="text-[15px] font-bold uppercase tracking-[0.2em] text-slate-300">Endpoints</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full min-w-[720px] text-left text-[13px]">
+        <thead class="text-[11px] uppercase tracking-wider text-slate-400">
+          <tr><th class="py-3 pr-4">Method</th><th class="py-3 pr-4">Path</th><th class="py-3 pr-4">Purpose</th><th class="py-3">Auth</th></tr>
+        </thead>
+        <tbody class="text-slate-300">
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/health</td><td class="py-3 pr-4">Liveness and node identity</td><td class="py-3">—</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/status</td><td class="py-3 pr-4">Node stats + membership + live viewers</td><td class="py-3">—</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/metrics</td><td class="py-3 pr-4">Counters used by the landing page</td><td class="py-3">—</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-amber-300">POST</td><td class="py-3 pr-4 font-mono">/task</td><td class="py-3 pr-4">Submit work into the swarm</td><td class="py-3">optional key</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/tasks</td><td class="py-3 pr-4">Known tasks, results, CRDT snapshot</td><td class="py-3">—</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-amber-300">POST</td><td class="py-3 pr-4 font-mono">/v1/fitness</td><td class="py-3 pr-4">Edge reports fitness (metrics only, HMAC)</td><td class="py-3">HMAC signature</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/v1/genome/best?k=1</td><td class="py-3 pr-4">Best genome from the top 10 %</td><td class="py-3">—</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/v1/registry/stats</td><td class="py-3 pr-4">Genome leaderboard and recent reports</td><td class="py-3">—</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-amber-300">POST</td><td class="py-3 pr-4 font-mono">/v1/stripe/webhook</td><td class="py-3 pr-4">Stripe → issue API key after payment</td><td class="py-3">Stripe signature</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/v1/keys</td><td class="py-3 pr-4">List issued keys (masked)</td><td class="py-3">admin key</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-emerald-300">WS</td><td class="py-3 pr-4 font-mono">/events</td><td class="py-3 pr-4">Live swarm feed (snapshot + events)</td><td class="py-3">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="mt-8 grid gap-4 lg:grid-cols-2">
+    <div class="glass rounded-2xl p-6">
+      <h2 class="text-[15px] font-bold">Submit a task</h2>
+      <pre class="mt-3 overflow-x-auto rounded-xl p-4 text-[12.5px] text-slate-200">curl -s https://api.braincore.pro/task \
+  -H 'content-type: application/json' \
+  -H "x-api-key: $BRAINCORE_API_KEY" \
+  -d '{
+    "type": "support.ticket",
+    "payload": { "text": "Reset my password" },
+    "value": 10,
+    "ttl": 30000
+  }'</pre>
+      <p class="mt-3 text-[12.5px] text-slate-400"><code>type</code> is required. <code>value</code> is the priority used to order claims; <code>ttl</code> is milliseconds before the task expires.</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6">
+      <h2 class="text-[15px] font-bold">Report fitness (edge → registry)</h2>
+      <pre class="mt-3 overflow-x-auto rounded-xl p-4 text-[12.5px] text-slate-200">// only these eight fields are accepted
+{
+  "node_id": "edge-us-1",
+  "genome_id": "genom-B",
+  "fitness": 0.87,
+  "tasks_done": 142,
+  "pheromone_efficiency": 0.92,
+  "tenant_hash": "…",
+  "ts": 1770000000000,
+  "sig": "&lt;hmac-sha256 of the body&gt;"
+}</pre>
+      <p class="mt-3 text-[12.5px] text-slate-400">Extra fields, or any string longer than 128 characters, are rejected — that closes the obvious side channels.</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6">
+      <h2 class="text-[15px] font-bold">Live feed (WebSocket)</h2>
+      <pre class="mt-3 overflow-x-auto rounded-xl p-4 text-[12.5px] text-slate-200">const ws = new WebSocket('wss://live.braincore.pro/events')
+ws.onmessage = (e) =&gt; {
+  const msg = JSON.parse(e.data)
+  // { type: 'snapshot', nodes: [...], pheromones: [...], stats: {...} }
+  // { type: 'event', kind: 'task_done', nodeId, ms }
+}</pre>
+      <p class="mt-3 text-[12.5px] text-slate-400">Snapshots every second; events pushed immediately. The server implements RFC 6455 itself — no <code>ws</code> package.</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6">
+      <h2 class="text-[15px] font-bold">Run your own swarm</h2>
+      <pre class="mt-3 overflow-x-auto rounded-xl p-4 text-[12.5px] text-slate-200">export NMQ_CLUSTER_SECRET=$(openssl rand -hex 32)
+
+node src/index.js --port=8001 --api-port=8081
+node src/index.js --port=8002 --peers=127.0.0.1:8001
+node src/index.js --port=8003 \
+     --peers=127.0.0.1:8001,127.0.0.1:8002
+
+# SYNCED in 0.0s, 3 nodes alive</pre>
+      <p class="mt-3 text-[12.5px] text-slate-400">UDP gossip runs on the same port number as the HTTP admin (different protocol namespaces). The API and live feed run on <code>--api-port</code>.</p>
+    </div>
+  </section>
+
+  <section class="mt-10 glass rounded-2xl p-6">
+    <h2 class="text-[15px] font-bold uppercase tracking-[0.2em] text-slate-300">Environment variables</h2>
+    <div class="mt-4 overflow-x-auto">
+      <table class="w-full min-w-[640px] text-left text-[13px]">
+        <thead class="text-[11px] uppercase tracking-wider text-slate-400"><tr><th class="py-3 pr-4">Name</th><th class="py-3 pr-4">Used for</th><th class="py-3">Required</th></tr></thead>
+        <tbody class="text-slate-300">
+          <tr><td class="py-3 pr-4 font-mono">NMQ_CLUSTER_SECRET</td><td class="py-3 pr-4">HMAC gossip signatures + AES-256-GCM payload key</td><td class="py-3">yes</td></tr>
+          <tr><td class="py-3 pr-4 font-mono">NMQ_REDIS_URL</td><td class="py-3 pr-4">Redis for the RESP queue (optional)</td><td class="py-3">no</td></tr>
+          <tr><td class="py-3 pr-4 font-mono">STRIPE_WEBHOOK_SECRET</td><td class="py-3 pr-4">Verifying <code>/v1/stripe/webhook</code></td><td class="py-3">for billing</td></tr>
+          <tr><td class="py-3 pr-4 font-mono">BRAINCORE_ADMIN_KEY</td><td class="py-3 pr-4">Admin access to <code>/v1/keys</code></td><td class="py-3">for admin</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mt-4 text-[12px] text-slate-500">Secret values are never echoed by the API. Rotate <code>NMQ_CLUSTER_SECRET</code> during a maintenance window: all nodes must restart together.</p>
+  </section>
+</main>
+
+<footer class="border-t border-white/10 py-8">
+  <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 text-[12.5px] text-slate-400 sm:flex-row">
+    <p>© <span id="y">2026</span> Braincore Pro</p>
+    <div class="flex gap-5">
+      <a class="hover:text-white" href="index.html">Home</a>
+      <a class="hover:text-white" href="privacy.html">Privacy</a>
+      <a class="hover:text-white" href="terms.html">Terms</a>
+      <a class="hover:text-white" href="https://api.braincore.pro/health">API health</a>
+    </div>
+  </div>
+</footer>
+<script>document.getElementById('y').textContent = new Date().getFullYear();</script>
+</body>
+</html>

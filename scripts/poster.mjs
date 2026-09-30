@@ -16,7 +16,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const [, , htmlArg = 'docs/35-SWARM-ARHITEKTURA-VIZUAL.html', pngArg = 'docs/35-swarm-arhitektura.png', wArg = '1600', hArg = '1250', scaleArg = '1'] = process.argv;
 
-const html = path.resolve(ROOT, htmlArg);
+// htmlArg može imati query (npr. index.html?hero=1) — odvoji putanju od query-ja
+const [htmlPath, htmlQuery = ''] = String(htmlArg).split('?');
+const html = path.resolve(ROOT, htmlPath);
 const png = path.resolve(ROOT, pngArg);
 if (!fs.existsSync(html)) {
   console.error(`Nema HTML-a: ${html}`);
@@ -39,6 +41,8 @@ if (!browser) {
 }
 
 fs.mkdirSync(path.dirname(png), { recursive: true });
+// `--wait=<ms>` (ili env POSTER_WAIT_MS): sačekaj prije snimka — za stranice koje same crtaju (live feed, animacije)
+const waitArg = Number((process.argv.find((a) => a.startsWith('--wait=')) ?? '').split('=')[1] ?? process.env.POSTER_WAIT_MS ?? 0) || 0;
 const args = [
   '--headless=new',
   '--disable-gpu',
@@ -46,8 +50,11 @@ const args = [
   /// `scale` > 1 daje 2x/3x render (npr. 4K wallpaper iz iste HTML scene)
   `--force-device-scale-factor=${scaleArg}`,
   `--window-size=${wArg},${hArg}`,
+  ...(waitArg ? [`--virtual-time-budget=${waitArg}`] : []),
+  // `--transparent`: snimi PNG sa prozirnom podlogom (za hero sliku na sajtu)
+  ...(process.argv.includes('--transparent') ? ['--default-background-color=00000000'] : []),
   `--screenshot=${png}`,
-  pathToFileURL(html).href,
+  pathToFileURL(html).href + (htmlQuery ? `?${htmlQuery}` : ''),
 ];
 const res = spawnSync(browser, args, { stdio: 'ignore', timeout: 120_000 });
 if (res.error) {

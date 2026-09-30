@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Braincore Pro — Live Swarm</title>
+<meta name="description" content="Live view of a decentralized AI swarm: nodes, stigmergy pheromones and task flow. No central orchestrator." />
+<style>
+  :root{--ink:#eaf2ff;--muted:#8ea3c6;--gold:#ffd479;--cyan:#8fe4ff;--green:#7df0b0;--rose:#ff9fb1;
+    --glass:rgba(255,255,255,.06);--stroke:rgba(190,220,255,.20)}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#02040a;color:var(--ink);
+    font-family:"Segoe UI",Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1400px;margin:0 auto;padding:22px 20px 40px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:34px;height:34px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#ffe9b0,#ffb43d 45%,#7a4c0c);
+    box-shadow:0 0 26px rgba(255,190,90,.45)}
+  h1{margin:0;font-size:19px;letter-spacing:2.4px;font-weight:800;
+    background:linear-gradient(92deg,#fff,var(--gold) 60%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin:2px 0 0;font-size:11.5px;letter-spacing:1.6px;color:var(--muted);text-transform:uppercase}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid var(--stroke);
+    background:var(--glass);backdrop-filter:blur(10px);font-size:12px;color:#d7e4ff}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+  .dot.off{background:var(--rose);box-shadow:0 0 10px var(--rose)}
+  .grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
+  @media (max-width:940px){.grid{grid-template-columns:1fr}}
+  .panel{border:1px solid var(--stroke);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
+    backdrop-filter:blur(16px);box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
+  .panel h2{margin:0;padding:12px 14px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+    border-bottom:1px solid rgba(190,220,255,.14)}
+  #stage{position:relative;height:520px;background:
+    radial-gradient(700px 380px at 50% 45%,rgba(255,186,70,.10),transparent 65%),
+    linear-gradient(180deg,#05080f,#02040a)}
+  canvas{display:block;width:100%;height:100%}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+  .stat{border:1px solid var(--stroke);border-radius:12px;padding:9px 10px;background:rgba(255,255,255,.03)}
+  .stat b{display:block;font-size:19px}
+  .stat span{font-size:10.5px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+  .legend{padding:10px 12px;font-size:11.5px;color:var(--muted);line-height:2}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+  #log{padding:8px 12px;font-size:11px;line-height:1.85;height:190px;overflow:auto;color:#c9d8f2}
+  #log div{border-bottom:1px dashed rgba(160,195,255,.12);padding:3px 0}
+  .t{color:var(--muted)}
+  footer{margin-top:16px;font-size:11.5px;color:var(--muted);text-align:center}
+  a{color:var(--cyan);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>BRAINCORE PRO</h1>
+        <p class="sub">Live swarm · no central orchestrator</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <span class="badge"><span class="dot" id="conn"></span><span id="connText">connecting…</span></span>
+      <span class="badge">WS <b id="wsUrl" style="margin-left:6px"></b></span>
+      <a class="badge" href="https://braincore.pro">← braincore.pro</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="panel">
+      <h2>Swarm topology · stigmergy &amp; task flow</h2>
+      <div id="stage"><canvas id="c"></canvas></div>
+    </div>
+
+    <div style="display:grid;gap:16px;align-content:start">
+      <div class="panel">
+        <h2>Counters</h2>
+        <div class="stats">
+          <div class="stat"><b id="sNodes">0</b><span>nodes alive</span></div>
+          <div class="stat"><b id="sTasks">0</b><span>tasks known</span></div>
+          <div class="stat"><b id="sDone">0</b><span>tasks done</span></div>
+          <div class="stat"><b id="sPher">0</b><span>active pheromones</span></div>
+          <div class="stat"><b id="sCrdt">0</b><span>CRDT entries</span></div>
+          <div class="stat"><b id="sLoad">0</b><span>this node load</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Legend</h2>
+        <div class="legend">
+          <div><i style="background:var(--gold);box-shadow:0 0 10px var(--gold)"></i>node (this one is larger)</div>
+          <div><i style="background:var(--cyan);box-shadow:0 0 10px var(--cyan)"></i>peer node</div>
+          <div><i style="background:var(--rose);box-shadow:0 0 10px var(--rose)"></i>suspect / dead</div>
+          <div><i style="background:#fff;opacity:.7"></i>pheromone trail (fades with decay)</div>
+          <div><i style="background:var(--green);box-shadow:0 0 10px var(--green)"></i>task completed here</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Event stream</h2>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Zero-npm swarm · UDP gossip (dgram) · CRDT blackboard (LWW + vector clock) · pheromones with TTL &amp; decay ·
+    <span id="nodeId"></span>
+  </footer>
+</div>
+<script src="live.js"></script>
+</body>
+</html>

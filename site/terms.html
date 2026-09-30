@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terms of Service — Braincore Pro</title>
+<meta name="robots" content="index,follow" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{background:linear-gradient(180deg,#05080f,#02040a)}.glass{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));backdrop-filter:blur(14px);border:1px solid rgba(190,220,255,.18)}
+  h2{margin-top:2rem}</style>
+</head>
+<body class="font-sans text-slate-300 antialiased">
+<main class="mx-auto max-w-3xl px-5 py-12">
+  <a href="index.html" class="text-[13px] text-amber-300">← braincore.pro</a>
+  <h1 class="mt-6 text-3xl font-extrabold tracking-tight text-white">Terms of Service</h1>
+  <p class="mt-2 text-[12.5px] text-slate-500">Last updated: <span id="d"></span></p>
+
+  <div class="glass mt-8 rounded-2xl p-7 text-[14px] leading-relaxed">
+    <h2 class="text-[16px] font-bold text-white">1. The service</h2>
+    <p class="mt-2">Braincore Pro licenses software that runs a decentralized swarm of AI agents in your own infrastructure, together with a control surface, a central genome registry, and support. The software is delivered as source code you run yourself; we do not host your agents' data.</p>
+
+    <h2 class="text-[16px] font-bold text-white">2. Plans and billing</h2>
+    <p class="mt-2">The Pro plan is <strong>$999 per month</strong>, billed in advance through Stripe, plus metered usage at <strong>$0.12 per agent-hour</strong> billed monthly in arrears. Prices exclude VAT and any local taxes. Subscriptions renew automatically until cancelled; cancellation takes effect at the end of the current period.</p>
+
+    <h2 class="text-[16px] font-bold text-white">3. API keys</h2>
+    <p class="mt-2">A key is issued after the first successful payment and shown once. Keep it secret; you are responsible for usage under your key. We may revoke a key if it is leaked, abused, or used to attack the platform. Rotating or revoking a key is free.</p>
+
+    <h2 class="text-[16px] font-bold text-white">4. Your data and your responsibility</h2>
+    <p class="mt-2">You own your data. You are responsible for having a lawful basis to process the content you route through the swarm, for the actions your agents take, and for keeping backups. The software includes human-approval gates for high-risk actions; you decide how to configure them.</p>
+
+    <h2 class="text-[16px] font-bold text-white">5. Acceptable use</h2>
+    <p class="mt-2">No unlawful use, no mass unsolicited messaging, no attempts to break the platform's isolation or to attack third parties from our infrastructure. Automated decisions that produce legal or similarly significant effects on people must keep a human in the loop.</p>
+
+    <h2 class="text-[16px] font-bold text-white">6. AI output</h2>
+    <p class="mt-2">Model output can be wrong. The system is built to measure itself (evaluation gates, reward model, audit log) and to ask for approval, but it is not a guarantee of correctness. Verify anything that matters, especially numbers, legal text and money.</p>
+
+    <h2 class="text-[16px] font-bold text-white">7. Availability and support</h2>
+    <p class="mt-2">Support is provided by email during business days. We publish honest status rather than SLA theatre; a formal uptime SLA can be added by agreement.</p>
+
+    <h2 class="text-[16px] font-bold text-white">8. Warranty and liability</h2>
+    <p class="mt-2">The software is provided "as is" without implied warranties. To the maximum extent permitted by law, our aggregate liability is limited to the fees you paid in the twelve months preceding the claim. We are not liable for indirect or consequential damages.</p>
+
+    <h2 class="text-[16px] font-bold text-white">9. Changes and termination</h2>
+    <p class="mt-2">We may update these terms with 30 days' notice by email; continued use means acceptance. Either party may terminate for material breach. On termination you keep the code and data already on your machines.</p>
+
+    <h2 class="text-[16px] font-bold text-white">10. Contact</h2>
+    <p class="mt-2"><a class="text-amber-300" href="mailto:sales@braincore.pro">sales@braincore.pro</a></p>
+  </div>
+  <p class="mt-6 text-[12px] text-slate-500">Template terms describing how the service is actually delivered; have counsel review before publishing.</p>
+</main>
+<script>document.getElementById('d').textContent = new Date().toISOString().slice(0, 10);</script>
+</body>
+</html>

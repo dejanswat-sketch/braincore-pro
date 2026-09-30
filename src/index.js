@@ -4,6 +4,7 @@
  */
 import { loadConfig } from './core/config.js';
 import { pathToFileURL } from 'node:url';
+import path from 'node:path';
 import { createSwarmNode } from './node.js';
 import { createLogger } from './core/logger.js';
 import { createMetrics } from './observability/metrics.js';
@@ -56,7 +57,7 @@ import { createSwarm } from './swarm/swarm.js';
 import { createEvolution } from './evolution/genome.js';
 import { createMetaRsi } from './rsi/meta.js';
 
-export const VERSION = '0.6.1';
+export const VERSION = '0.7.0';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -501,6 +502,15 @@ export { createExtractor } from './research/extractor.js';
 export { createGenomeRegistry, ALLOWED_REPORT_FIELDS } from './research/genome-registry.js';
 export { createFederationClient } from './research/federation.js';
 export { createSwarmNode, createSupportCluster, createExecutionCluster, createResearchCluster, NODE_DEFAULTS } from './node.js';
+// ── BRAINCORE PRO: clusters fasade, API sloj, live feed ──────────────────────
+export { createSupportCluster as createSupportClusterFacade } from './clusters/support.js';
+export { createResearchCluster as createResearchClusterFacade } from './clusters/research.js';
+export { createExecutionCluster as createExecutionClusterFacade } from './clusters/execution.js';
+export { createApiServer, API_DEFAULTS } from './api/server.js';
+export { createKeyIssuer, verifyStripeSignature, signPayload, handleStripeWebhook } from './api/stripe.js';
+export { attachWebSocket, encodeFrame, parseFrame, acceptKey } from './live/ws.js';
+export { createLiveFeed } from './live/feed.js';
+export { encryptPayload, decryptPayload, deriveKey } from './shared/crypto.js';
 
 // ── CLI: `node src/index.js --port=8001 --peers=127.0.0.1:8002,...` ──────────
 // Jedan proces = jedan node roja. Nema mastera; sve ide preko gossip-a i CRDT-a.
@@ -537,7 +547,26 @@ if (isMain && hasPortArg) {
   const humanMs = (started.syncMs / 1000).toFixed(1);
   // eslint-disable-next-line no-console
   console.log(`${started.synced ? 'SYNCED' : 'PARTIAL'} in ${humanMs}s, ${peersAlive + 1} nodes alive (udp :${started.port}, http :${started.httpPort}, tenant ${tenantId})`);
+
+  // ── BRAINCORE PRO: javni API + live feed (api.braincore.pro / live.braincore.pro) ──
+  // Pokreće se samo na jednom čvoru (nginx `api.` i `live.` pokazuju na njega).
+  const apiPort = arg('api-port', null);
+  let apiServer = null;
+  if (apiPort) {
+    const { createApiServer } = await import('./api/server.js');
+    apiServer = await createApiServer({
+      node,
+      config: { port: Number(apiPort), dataDir: arg('data', process.env.NMQ_DATA_DIR ?? path.join(process.cwd(), 'data')) },
+      logger: bootLogger,
+      env: process.env,
+    });
+    const apiAddr = await apiServer.listen();
+    // eslint-disable-next-line no-console
+    console.log(`API on http://${apiAddr.host}:${apiAddr.port} · live /live · ws /events · zero npm`);
+  }
+
   const shutdown = async () => {
+    if (apiServer) await apiServer.close().catch(() => {});
     await node.close();
     process.exit(0);
   };

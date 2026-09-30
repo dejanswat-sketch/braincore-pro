@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Welcome to Braincore Pro</title>
+<meta name="robots" content="noindex" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: radial-gradient(900px 600px at 50% -10%, rgba(255,180,61,.18), transparent 60%), linear-gradient(180deg,#05080f,#02040a); }
+  .glass { background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)); backdrop-filter: blur(14px); border: 1px solid rgba(190,220,255,.18); }
+  .gold-text { background: linear-gradient(94deg,#fff 6%,#ffd479 45%,#ffb43d 65%,#fff 96%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+</style>
+</head>
+<body class="min-h-screen font-sans text-slate-200 antialiased">
+  <main class="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center px-6 py-16 text-center">
+    <div class="glass w-full rounded-3xl p-10">
+      <p class="text-[12px] uppercase tracking-[0.3em] text-amber-200">Payment received</p>
+      <h1 class="mt-4 text-4xl font-extrabold tracking-tight">Welcome to <span class="gold-text">Braincore Pro</span></h1>
+      <p class="mt-5 text-[14.5px] leading-relaxed text-slate-300">
+        Thank you. Your API key is being issued by our webhook and is shown on the confirmation page. Then start the
+        swarm on your machine — three nodes, no npm install:
+      </p>
+      <pre class="mt-6 overflow-x-auto rounded-2xl border border-white/10 bg-black/40 p-5 text-left text-[12.5px] leading-relaxed text-slate-300">NMQ_CLUSTER_SECRET=$(openssl rand -hex 32) node src/index.js --port=8001 --api-port=8081
+node src/index.js --port=8002 --peers=127.0.0.1:8001
+node src/index.js --port=8003 --peers=127.0.0.1:8001,127.0.0.1:8002</pre>
+      <p class="mt-6 text-[13px] text-slate-400">
+        You should see <span class="font-mono text-emerald-300">SYNCED in &lt;2s, 3 nodes alive</span>. Open
+        <a class="text-cyan-300 underline decoration-dotted" href="https://live.braincore.pro">live.braincore.pro</a>
+        to watch tasks flow between your nodes.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a class="rounded-full bg-gradient-to-r from-amber-400 to-amber-300 px-6 py-3 text-[14px] font-bold text-slate-900" href="https://braincore.pro">Back to braincore.pro</a>
+        <a class="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-[14px] font-semibold" href="mailto:support@braincore.pro">support@braincore.pro</a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

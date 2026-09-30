@@ -1,0 +1,59 @@
+# Braincore Pro — swarm node (systemd template)
+#
+# One instance per node:  8001, 8002, 8003
+#   systemctl enable --now braincore-node@8001
+#   systemctl enable --now braincore-node@8002
+#   systemctl enable --now braincore-node@8003
+#
+# Port-specific settings live in /etc/braincore/node-%i.env
+#   PORT=%i
+#   API_PORT=8081          # only on the node that nginx exposes
+#   PEERS=127.0.0.1:8001,127.0.0.1:8002
+#
+# Zero npm dependencies: this unit never runs `npm install`. Node 20+ must be installed system-wide.
+
+[Unit]
+Description=Braincore Pro swarm node :%i (UDP gossip + HTTP admin)
+Documentation=https://braincore.pro/docs.html
+After=network-online.target
+Wants=network-online.target
+# Optional: start after Redis when the shared queue is enabled
+After=redis-server.service
+Wants=redis-server.service
+
+[Service]
+Type=simple
+User=braincore
+Group=braincore
+WorkingDirectory=/opt/braincore
+
+EnvironmentFile=/etc/braincore/braincore.env
+EnvironmentFile=-/etc/braincore/node-%i.env
+
+ExecStart=/usr/bin/node src/index.js \
+  --port=${PORT} \
+  --peers=${PEERS} \
+  --tenant=${NMQ_DEFAULT_TENANT} \
+  --data=${NMQ_DATA_DIR} \
+  --log=${NMQ_LOG_LEVEL}
+# The API + live feed only runs where API_PORT is set; see deploy/braincore-api@.service
+ExecStartPost=/bin/true
+
+Restart=always
+RestartSec=2
+# Swarm nodes are cheap; cap them so a runaway loop cannot take the box down.
+MemoryMax=768M
+CPUQuota=150%
+TasksMax=256
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/braincore/data /var/log/braincore
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=braincore-node-%i
+
+[Install]
+WantedBy=multi-user.target

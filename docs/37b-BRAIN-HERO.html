@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="sr-Latn">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>GENESIS BRAIN — kristalno staklo · zlatno jezgro</title>
+<title>Genesis Brain — hero</title>
 <style>
   :root{
     --gold:#ffd479; --gold2:#ffb43d; --ink:#eaf2ff; --muted:#8ea3c6;
@@ -113,31 +113,18 @@
   .tagline{position:absolute;left:0;right:0;bottom:124px;text-align:center;z-index:6;
     font-size:13.5px;letter-spacing:3.6px;text-transform:uppercase;color:#a9bcdd;opacity:.9}
 </style>
-  <style id="heroMode">
-    /* ?hero=1 → čist hero render: bez panela, rama, trake i gravura (za naslovnu sajta) */
-    body.hero .panel, body.hero .frame, body.hero .corner, body.hero .proof,
-    body.hero .engrave, body.hero .tagline, body.hero .title p, body.hero .title .rule { display: none !important; }
-    body.hero .stage { height: 1080px; }
-    body.hero .title { top: 40px; }
-    body.hero .brain { top: 150px; width: 1280px; height: 800px; }
-  </style>
-  <script>
-    if (new URLSearchParams(location.search).get('hero') === '1') document.addEventListener('DOMContentLoaded', () => document.body.classList.add('hero'));
-  </script>
+<style>
+  html,body{background:transparent !important}
+  .stage{background:transparent !important;width:1400px;height:980px}
+  .stage::before,.stage::after{display:none !important}
+  .title{top:16px}
+  .title p{letter-spacing:5px}
+  .brain{top:110px;width:1240px;height:800px}
+  .grain{opacity:.18}
+</style>
 </head>
 <body>
-<div class="stage">
-  <svg class="grain" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3"/><feColorMatrix type="saturate" values="0"/></filter><rect width="100%" height="100%" filter="url(#n)" opacity="0.5"/></svg>
-  <div class="frame"></div>
-  <div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
-
-  <div class="title">
-    <h1>GENESIS BRAIN</h1>
-    <p>kristalno staklo · zlatno jezgro · nmq robot v0.5.0</p>
-    <div class="rule"></div>
-  </div>
-
-  <div class="brain float-slow">
+<div class="stage"><div class="title"><h1>GENESIS BRAIN</h1><p>crystal glass · golden core · braincore pro v2.0</p><div class="rule"></div></div><div class="brain float-slow">
     <svg viewBox="0 0 1180 740" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="glassFill" x1="0.2" y1="0" x2="0.8" y2="1">
@@ -442,62 +429,6 @@
         <use href="#cerebrum" transform="translate(1180,0) scale(-1,1)" fill="#bfe6ff"/>
       </g>
     </svg>
-  </div>
-
-  <div class="panel p1">
-    <h3>CROSS-NODE CLUSTER</h3>
-    <p class="sub">deljena tabla · gossip · HMAC</p>
-    <ul>
-      <li><span class="dot"></span>atomski claim (mkdir lock / Redis Lua) + lease renewal</li>
-      <li><span class="dot c"></span>gossip membership: heartbeat, suspect/dead</li>
-      <li><span class="dot v"></span>ulazna poruka kroz istu medijaciju</li>
-    </ul>
-  </div>
-
-  <div class="panel p2">
-    <h3>SWARM CORE</h3>
-    <p class="sub">stigmergija · work stealing · specijalizacija</p>
-    <ul>
-      <li><span class="dot"></span>feromoni sa opadanjem (pola za 5 min)</li>
-      <li><span class="dot"></span>worker uzima najvrjedniji zadatak koji može</li>
-      <li><span class="dot g"></span>specijalizacija se <b>meri</b>, ne propisuje</li>
-    </ul>
-  </div>
-
-  <div class="panel p3">
-    <h3>SAFETY &amp; GOVERNANCE</h3>
-    <p class="sub">granice roja · incidenti · kill switch</p>
-    <ul>
-      <li><span class="dot"></span>izolacija open → contained → locked → frozen</li>
-      <li><span class="dot c"></span>detektori: koluzija, skriveni kanal, flooding</li>
-      <li><span class="dot v"></span>karantin je „sticky", skida ga samo board</li>
-    </ul>
-  </div>
-
-  <div class="panel p4">
-    <h3>RSI &amp; EVOLUCIJA</h3>
-    <p class="sub">R0–R5 kapije · genom · eval</p>
-    <ul>
-      <li><span class="dot"></span>nivo menja <b>samo board</b> (role owner)</li>
-      <li><span class="dot c"></span>genom ne dira autonomiju, budžet ni alate</li>
-      <li><span class="dot g"></span>svaka promena meri se zlatnim setom</li>
-    </ul>
-  </div>
-
-  <div class="tagline">jedan proces · mnogo workera · mnogo čvorova — bez centralnog orkestratora</div>
-
-  <div class="engrave e1">nmq robotics · genesis brain</div>
-  <div class="engrave e2">kristalno staklo · zlatno jezgro · № 001</div>
-
-  <div class="proof">
-    <span>verzija <b>v0.5.0</b></span><span class="sep"></span>
-    <span>testovi <i>205/205</i></span><span class="sep"></span>
-    <span>eval <i>6/6</i></span><span class="sep"></span>
-    <span>rute <i>151</i></span><span class="sep"></span>
-    <span>demo <i>26</i></span><span class="sep"></span>
-    <span>smoke <i>41/41</i></span><span class="sep"></span>
-    <span>npm zavisnosti <i>0</i></span>
-  </div>
-</div>
+  </div></div>
 </body>
 </html>

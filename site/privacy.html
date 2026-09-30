@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privacy Policy — Braincore Pro</title>
+<meta name="robots" content="index,follow" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>body{background:linear-gradient(180deg,#05080f,#02040a)}.glass{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));backdrop-filter:blur(14px);border:1px solid rgba(190,220,255,.18)}
+  h2{margin-top:2rem}</style>
+</head>
+<body class="font-sans text-slate-300 antialiased">
+<main class="mx-auto max-w-3xl px-5 py-12">
+  <a href="index.html" class="text-[13px] text-amber-300">← braincore.pro</a>
+  <h1 class="mt-6 text-3xl font-extrabold tracking-tight text-white">Privacy Policy</h1>
+  <p class="mt-2 text-[12.5px] text-slate-500">Last updated: <span id="d"></span></p>
+
+  <div class="glass mt-8 rounded-2xl p-7 text-[14px] leading-relaxed">
+    <h2 class="text-[16px] font-bold text-white">1. What we collect</h2>
+    <p class="mt-2">We collect the minimum needed to run the service: your email address (from Stripe Checkout), your company name if you provide it, billing records, and aggregate usage counters (agent-hours, tasks processed).</p>
+
+    <h2 class="text-[16px] font-bold text-white">2. What we never collect</h2>
+    <p class="mt-2">Your task payloads, support tickets, code, documents, prompts and model outputs stay on your infrastructure. Federated learning reports contain <strong>eight numeric fields only</strong>; the API rejects any other field, and rejects string values longer than 128 characters to close side channels.</p>
+
+    <h2 class="text-[16px] font-bold text-white">3. Why we process it</h2>
+    <p class="mt-2">To deliver the service (contract), to bill you correctly (contract and legal obligation), and to keep the platform secure (legitimate interest). We do not sell personal data and we do not use it to train models.</p>
+
+    <h2 class="text-[16px] font-bold text-white">4. Processors</h2>
+    <p class="mt-2">Stripe (payments), your chosen hosting providers, and email delivery for transactional messages. Each processor is bound by its own data processing agreement. Payment card data never reaches our servers.</p>
+
+    <h2 class="text-[16px] font-bold text-white">5. Retention</h2>
+    <p class="mt-2">Billing records are kept as long as tax law requires (typically 10 years). API keys are stored only as SHA-256 hashes. Service logs are kept for 30 days. Deleting your account removes your keys and tenant metadata; your local data is yours to delete.</p>
+
+    <h2 class="text-[16px] font-bold text-white">6. Your rights</h2>
+    <p class="mt-2">Access, rectification, erasure, restriction, portability and objection. Write to <a class="text-amber-300" href="mailto:privacy@braincore.pro">privacy@braincore.pro</a> and we respond within 30 days.</p>
+
+    <h2 class="text-[16px] font-bold text-white">7. Security</h2>
+    <p class="mt-2">Peer messages are HMAC-signed; task payloads are encrypted with AES-256-GCM keys derived from your cluster secret; the audit log is hash-chained so tampering is detectable. Transport between nodes should additionally run inside WireGuard or a private network.</p>
+
+    <h2 class="text-[16px] font-bold text-white">8. Honest limitations</h2>
+    <p class="mt-2">The federation <code>tenant_hash</code> is a salted hash used for grouping reports. It is a pseudonymisation measure, not legal anonymisation, and we say so plainly instead of implying otherwise.</p>
+
+    <h2 class="text-[16px] font-bold text-white">9. Contact</h2>
+    <p class="mt-2">Braincore Pro · <a class="text-amber-300" href="mailto:privacy@braincore.pro">privacy@braincore.pro</a></p>
+  </div>
+  <p class="mt-6 text-[12px] text-slate-500">This document describes how the software behaves; it is not legal advice. Have counsel review it before relying on it for compliance.</p>
+</main>
+<script>document.getElementById('d').textContent = new Date().toISOString().slice(0, 10);</script>
+</body>
+</html>

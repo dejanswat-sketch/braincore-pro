@@ -238,6 +238,31 @@ curl -X POST localhost:8787/v1/admin/agents/executor/keys -d '{"scopes":["crm:wr
 ---
 
 
+
+## BRAINCORE PRO (v0.7.0) — prodaja i deployment
+
+Ime proizvoda za strano tržište je **BRAINCORE PRO**, kontrolna površina je **GENESIS BRAIN v2.0**.
+Domen `braincore.pro` je kupljen: **sajt na Hostingeru**, **mašina (3 node-a + API + live) na Hetzneru**.
+
+| Dio | Gdje je | Šta radi |
+|---|---|---|
+| Sajt (statični, EN) | `site/` | `index.html` (hero, 4 sloja, 4 klastera, security, deploy, poređenje, cena $999, FAQ), `docs.html`, `privacy.html`, `terms.html`, `thanks.html`, `script.js`, `assets/brain-hero.png`, `assets/live-preview.png` |
+| API sloj | `src/api/server.js` + `src/api/stripe.js` | `/health`, `/status`, `/metrics`, `POST /task`, `/v1/fitness`, `/v1/genome/best`, `/v1/stripe/webhook`, admin rute za ključeve, CORS + rate limit |
+| Live vizuelizacija | `src/live/ws.js`, `src/live/feed.js`, `src/api/live.html`, `src/api/live.js` | sopstveni WebSocket (RFC 6455, bez npm), canvas prikaz čvorova, feromona koji isparavaju i toka taskova |
+| Klaster fasade | `src/clusters/{support,research,execution}.js` | imena iz smernica: jedan objekat po klasteru (intake, run, reportFromRewards) |
+| Deploy | `deploy/` | `install.sh` (Ubuntu: Node 20, nginx, Redis, certbot), `braincore-node@.service`, `braincore-api.service`, `nginx-braincore.conf`, `braincore.env.example`, `README.md` |
+| Runbook (EN) | `docs/39-BRAINCORE-PRO-DEPLOY.md` | DNS u hPanelu, SSL, upload sajta, instalacija mašine, prijemni test, operacije, iskrene rupe |
+
+Pokretanje (jedan proces = jedan node; API + live samo na prvom):
+
+```bash
+NMQ_CLUSTER_SECRET=$(openssl rand -hex 32) node src/index.js --port=8001 --api-port=8081
+node src/index.js --port=8002 --peers=127.0.0.1:8001
+node src/index.js --port=8003 --peers=127.0.0.1:8001,127.0.0.1:8002
+# → SYNCED in 0.0s, 3 nodes alive · API on http://127.0.0.1:8081 · live /live
+```
+
+Dokazi: `node --test` → **240/240** (15 novih u `tests/braincore.test.mjs`), demo 27 sekcija, smoke 42/42, eval 6/6.
 ## Mapiranje poster → kod (v0.6.0, po „Punim smernicama")
 
 | Element sa postera | Gdje je u kodu | Šta radi |

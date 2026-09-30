@@ -1,0 +1,44 @@
+# Braincore Pro — public API + live feed (systemd)
+#
+# This is the node that nginx exposes as api.braincore.pro and live.braincore.pro.
+# It runs swarm node :8001 together with the HTTP/WebSocket facade on :8081.
+
+[Unit]
+Description=Braincore Pro API + live feed (:8081, node :8001)
+Documentation=https://braincore.pro/docs.html
+After=network-online.target braincore-node@8001.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=braincore
+Group=braincore
+WorkingDirectory=/opt/braincore
+
+EnvironmentFile=/etc/braincore/braincore.env
+EnvironmentFile=-/etc/braincore/node-8001.env
+
+ExecStart=/usr/bin/node src/index.js \
+  --port=8001 \
+  --api-port=8081 \
+  --peers=${PEERS} \
+  --tenant=${NMQ_DEFAULT_TENANT} \
+  --data=${NMQ_DATA_DIR} \
+  --log=${NMQ_LOG_LEVEL}
+
+Restart=always
+RestartSec=2
+MemoryMax=1G
+CPUQuota=200%
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/braincore/data /var/log/braincore
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=braincore-api
+
+[Install]
+WantedBy=multi-user.target
