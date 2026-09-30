@@ -64,6 +64,8 @@ export const NODE_DEFAULTS = {
   /** Kompakcija CRDT-a (GC tombstone-a) — koliko često i koliko star zapis smije biti obrisan. */
   compactionIntervalMs: 300_000,
   compactionAgeMs: 600_000,
+  /** GC cijelih task:/result:/claim: zapisa (ne samo tombstone-a) — 1h soak je pokazao da tabla raste vječno. */
+  gcAgeMs: 900_000,
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -375,6 +377,36 @@ export async function createSwarmNode({
 
   async function runTask(task, { attempt = 1 } = {}) {
     const started = Date.now();
+    /**
+     * OBNOVLJANJE CLAIM LEASE-A (obavezno).
+     *
+     * Zašto: 1h soak je pokazao da pod zasićenjem izvršenje traje duže od `claimLeaseMs` (10 s), pa je
+     * lease isticao DOK VLASNIK JOŠ RADI — drugi čvorovi su preuzimali isti task → 11 200 duplih
+     * izvršenja u 25 707 taskova. Sada vlasnik osvježava `claim.at` svakih lease/3 i oglašava to roju,
+     * pa zdravi vlasnik NIKAD ne izgubi claim, a mrtvi ga izgubi odmah.
+     */
+    const renewEveryMs = Math.max(400, Math.floor(cfg.claimLeaseMs / 3));
+    const renew = setInterval(() => {
+      try {
+        const cur = crdt.get(`claim:${task.id}`);
+        if (cur && cur.nodeId !== id) {
+          clearInterval(renew); // izgubili smo claim — ne obnavljamo tuđi zapis
+          metrics?.inc('node_claim_renew_stopped_total', { node: id });
+          return;
+        }
+        crdt.set(`claim:${task.id}`, { nodeId: id, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt, renewed: true });
+        const fresh = crdt.delta({ [id]: lastBroadcast }).filter((e) => e.nodeId === id);
+        if (fresh.length) {
+          lastBroadcast = Math.max(...fresh.map((e) => e.counter));
+          gossip.broadcast({ kind: 'crdt', entries: fresh });
+        }
+        metrics?.inc('node_claim_renewed_total', { node: id });
+      } catch (err) {
+        logger?.warn?.('node.claim_renew_failed', { taskId: task.id, error: err.message });
+      }
+    }, renewEveryMs);
+    if (renew.unref) renew.unref();
+
     try {
       const output = runner ? await runner(task, { nodeId: id, robot, attempt, idempotencyKey: task.idempotencyKey ?? task.id }) : { output: `obrađeno na ${id}` };
       // Provjera vlasništva POSLIJE posla: ako je neko drugi u međuvremenu preuzeo claim, naš rezultat
@@ -408,6 +440,7 @@ export async function createSwarmNode({
       logger?.warn?.('node.task_failed', { nodeId: id, taskId: task.id, error: err.message, attempt });
       return record;
     } finally {
+      clearInterval(renew);
       inFlight.delete(task.id);
     }
   }
@@ -456,6 +489,22 @@ export async function createSwarmNode({
     const compactTimer = setInterval(() => {
       try {
         crdt.compact({ olderThanMs: cfg.compactionAgeMs });
+        // GC: briše završene/zapuštene task:/result:/claim: zapise starije od gcAgeMs,
+        // a NIKAD ono što je ovaj čvor trenutno preuzeo (inFlight) ni task koji još nije završen.
+        crdt.gc({
+          olderThanMs: cfg.gcAgeMs,
+          protect: (key, entry) => {
+            const taskId = key.split(':').slice(1).join(':');
+            if (inFlight.has(taskId)) return true;
+            if (key.startsWith('task:')) {
+              const done = entry?.value?.state === 'done';
+              const hasResult = Boolean(crdt.get("result:" + taskId));
+              return !done && !hasResult; // nezavršen task se čuva
+            }
+            if (key.startsWith('claim:')) return isClaimLive(entry?.value ?? null); // živ claim se čuva
+            return false;
+          },
+        });
       } catch (err) {
         logger?.warn?.('node.compact_failed', { error: err.message });
       }

@@ -129,3 +129,38 @@ Prvi pravi 1-satni soak (`--minutes=60 --rate=8 --restart-every=600`) **nije pro
 
 **Šta je ovo dobro pokazalo:** kratki runovi (1–3 min) daju lijepe brojeve i **lažnu sigurnost**; sat vremena
 otkrije klasu grešaka koja se inače vidi tek kod kupca.
+
+---
+
+## 8. POPRAVKE poslije pada 1h soak-a (v1.7.0) — obnavljanje lease-a + GC
+
+Implementirano tačno po prioritetu iz §7:
+
+### 1. Obnavljanje claim lease-a dok task traje (`src/node.js`)
+Dok `runTask` radi, vlasnik svakih `claimLeaseMs / 3` (10 s → **3,3 s**) osvježava `claim.at`, upisuje
+`renewed: true` i **oglašava svježi zapis roju** (gossip). Ako u međuvremenu izgubi vlasništvo (neko drugi
+je zapisao svoj claim), obnavljanje se **samo zaustavlja** — ne obnavljamo tuđi zapis. Interval se čisti u
+`finally`, pa nema curenja tajmera.
+
+Efekat: **zdravi vlasnik nikad ne izgubi claim** (ma koliko izvršenje trajalo), a mrtvi ga izgubi odmah —
+što je i bio cilj. Time pada glavni uzrok 11 200 duplih izvršenja.
+
+### 2. GC cijelih zapisa (`src/shared/blackboard.js` → `gc()`)
+`gc({ olderThanMs: 15 min, protect })` briše `task:`, `result:` i `claim:` zapise starije od 15 minuta, uz
+dvije brave:
+* `protect` čuva ono što je **ovaj čvor preuzeo** (`inFlight`) i **nezavršene** taskove (bez `result:`),
+* **živ claim se ne dira** (`isClaimLive`).
+
+Brojači (`done`, statistika) žive **izvan tabele**, pa GC-om ne gube tačnost. Node ga poziva u istoj petlji
+kao i kompakciju (`compactionIntervalMs`, 5 min).
+
+### 3. Testovi (`tests/claim-renew.test.mjs`)
+* vlasnik drži claim duže od lease-a (runner 2,6 s vs lease 0,9 s) i `claim.at` se **osjetno povećava**,
+  a peer koji vidi samo zapis ga **ne preuzima**;
+* GC briše završene `task:`/`result:` zapise, **čuva** nezavršen task i živ claim, ne dira nepovezane
+  ključeve, i **brojač ostaje tačan** poslije GC-a.
+
+### 4. Ponovni 1h soak (u toku)
+Pokrenut `node scripts/soak.mjs --minutes=60 --rate=8 --restart-every=600` poslije deploya popravki.
+Kriteriji: `izgubljeno = 0`, `duplo = 0`, `p95 ≤ 1,5 s`, heap stabilan (< 100 MB). Rezultat ide u
+`docs/soak-1h-fixed.log` i `data/_control/soak-history.json`.

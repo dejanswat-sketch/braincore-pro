@@ -123,6 +123,34 @@ export function createCrdtBlackboard({ nodeId = 'node', logger, metrics, maxKeys
       return { size: state.size, deleted, live: state.size - deleted, maxKeys };
     },
 
+    /**
+     * GC TABELE (ne samo tombstone-a).
+     *
+     * Zašto: 1h soak je pokazao da `task:`, `result:` i `claim:` zapisi rastu **zauvijek** — 37 751 zapis
+     * po čvoru i heap 240 MB poslije sat vremena. Kompakcija je brisala samo tombstone-e.
+     *
+     * `protect(key)` čuva ono što je još u radu (npr. task koji je ovaj čvor preuzeo). Brojači
+     * (`done`, statistika) žive IZVAN tabele, pa se GC-om ne gube.
+     */
+    gc({ olderThanMs = 900_000, now = Date.now(), protect = null, prefixes = ['task:', 'result:', 'claim:'] } = {}) {
+      const removed = [];
+      for (const [key, entry] of state) {
+        if (!prefixes.some((p) => key.startsWith(p))) continue;
+        if (protect && protect(key, entry)) continue;
+        const age = now - Date.parse(entry.ts ?? 0);
+        if (Number.isFinite(age) && age >= olderThanMs) {
+          state.delete(key);
+          removed.push(key);
+        }
+      }
+      if (removed.length) {
+        metrics?.inc('crdt_gc_total', {}, removed.length);
+        logger?.info?.('crdt.gc', { nodeId, removed: removed.length, size: state.size });
+        emitter.emit('gc', { removed, size: state.size });
+      }
+      return { removed: removed.length, size: state.size };
+    },
+
     entries({ includeDeleted = false } = {}) {
       return [...state.values()].filter((e) => includeDeleted || !e.deleted);
     },
