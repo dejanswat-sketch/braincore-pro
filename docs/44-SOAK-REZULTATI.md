@@ -363,3 +363,35 @@ scheduler put prolazi kroz claim verifikaciju, ili job uopšte ne startuje).
 ### Stanje mašine (nepromijenjeno)
 `releases/v1.8.0` (fencing živ) · sva tri servisa aktivna · `nmq-server` / `oaa-trial` / `cloudflared`
 netaknuti · video čeka `duplo = 0` · `api.braincore.pro/llms.txt` i Grafana na 3030 poslije soak-a #6.
+
+---
+
+## 14. DIO 4 — DIJAGNOSTIKA (nalazi, ne pretpostavke)
+
+Pušteno sa **privremeno aktivnom derivacijom** (grubi patch: bez pravila prioriteta), pa su nalazi ovi:
+
+### `webhook` — NIJE claim prozor, nego redoslijed trigger-a pod opterećenjem
+Sa derivacijom aktivnom, `max.test.mjs` **sam prolazi** (`runs: 1`, `reasons: ["event"]`, event izvršen za
+**108 ms**). Ali u **punom setu** (fajlovi se izvršavaju paralelno):
+```
+[webhook-diag] {"elapsedMs":8009,"runs":1,"reasons":["schedule"],"eventRan":false}
+```
+Run se dogodio sa razlogom **`schedule`**, ne `event`. Posao ima i `schedule: { type: 'once' }` i
+`triggers: [{ type: 'event' }]` — **pod opterećenjem „once" schedule pobijedi** i event-run se ne pojavi.
+Dakle: to je **redoslijed/trka trigger-a**, a ne dužina claim prozora. Popravka nije rok, nego ili
+(a) test koji ne miješa `schedule` i `triggers`, ili (b) kod koji garantuje da event-trigger ima prioritet.
+
+### `Live feed` — petlja od `tick()`-ova NIJE dovoljna
+Sa rokom `claimWindows().confirmMs + 1000` i petljom do `done` traga, test i dalje pada (1 670 ms ≈
+confirm 1 625 ms + malo) → dakle poslije ~1,6 s tick-anja **zadatak još nije završen**. To znači da
+verifikacija claim-a u jednom čvoru ne završi samo ponavljanjem `tick()`-ova — treba vidjeti da li
+`claimConfirmMs` čeka **unutar** tick-a (blokirajuće) ili zahtijeva CRDT sync rundu.
+
+### `explicit` test je pao samo zbog mog grubog patcha
+Privremeni patch je koristio `Math.max(..., ceil(detekcija*1.25))` **bez** pravila prioriteta, pa je
+pregazio eksplicitne vrijednosti. To **nije** problem dizajna — Dio 1 (`4e2ce1a`) pravilo već čuva.
+
+### Zaključak za Dio 5
+1. Derivaciju aktivirati **sa pravilom prioriteta** (kao u §13), ne grubim `Math.max`.
+2. `Live feed` prvo dijagnostikovati (da li confirm blokira unutar tick-a), pa onda mijenjati test.
+3. `webhook` odvojiti od grace rada — to je trigger-race (schedule vs event), nezavisan nalaz.
