@@ -35,6 +35,7 @@ export const API_DEFAULTS = {
   corsOrigins: ['https://braincore.pro', 'https://www.braincore.pro', 'http://localhost:8080', 'http://127.0.0.1:8080'],
   maxBodyBytes: 512 * 1024,
   rateLimitPerMin: 240,
+  rateLimitPerKeyPerMin: 120, // metering/limit po ključu — jedan tenant ne smije da zagusi mašinu
   stripeToleranceSec: 300,
 };
 
@@ -72,6 +73,53 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
     if (rateWindow.length >= cfg.rateLimitPerMin) return false;
     rateWindow.push(now);
     return true;
+  }
+
+  /**
+   * METERING I RATE LIMIT PO KLJUČU (Sprint 3 → uslov za Sprint 7 self-serve).
+   *
+   * Zašto: jedan tenant sa 8 t/s može da zagusi event loop (vidi soak — p95 je otišao na 15 min).
+   * Zato svaki ključ/tenant ima svoj prozor i svoj brojač, pa:
+   *   • nemoguće je da jedan ključ pojede kapacitet mašine (rate limit po ključu),
+   *   • naplata po agent-satu ima tačan izvor (`agentMs` = zbroj trajanja zadataka tog tenanta),
+   *   • Grafana dobija `nmq_tenant_tasks_total{tenant="..."}`.
+   */
+  const tenantUsage = new Map(); // tenantId -> { tasks, agentMs, firstAt, lastAt, rejected }
+  const keyWindows = new Map(); // tenantId -> [timestamps]
+
+  function noteUsage(tenantId, { ms = 0, rejected = false } = {}) {
+    const u = tenantUsage.get(tenantId) ?? { tasks: 0, agentMs: 0, rejected: 0, firstAt: new Date().toISOString(), lastAt: null };
+    if (rejected) u.rejected += 1;
+    else {
+      u.tasks += 1;
+      if (ms) u.agentMs += Number(ms);
+    }
+    u.lastAt = new Date().toISOString();
+    tenantUsage.set(tenantId, u);
+    return u;
+  }
+
+  function allowRateForKey(tenantId) {
+    const limit = cfg.rateLimitPerKeyPerMin ?? 120;
+    if (!limit) return true;
+    const now = Date.now();
+    const win = (keyWindows.get(tenantId) ?? []).filter((t) => now - t <= 60_000);
+    if (win.length >= limit) return false;
+    win.push(now);
+    keyWindows.set(tenantId, win);
+    return true;
+  }
+
+  function usageReport() {
+    const tenants = [...tenantUsage.entries()].map(([tenantId, u]) => ({
+      tenantId,
+      tasks: u.tasks,
+      agentHours: Number((u.agentMs / 3_600_000).toFixed(4)),
+      rejected: u.rejected,
+      firstAt: u.firstAt,
+      lastAt: u.lastAt,
+    }));
+    return { tenants, totals: { tasks: tenants.reduce((s, t) => s + t.tasks, 0), agentHours: Number(tenants.reduce((s, t) => s + t.agentHours, 0).toFixed(4)) } };
   }
 
   async function readBody(req) {
@@ -138,6 +186,15 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         put('braincore_gossip_rate_limited_total', 'Odbijenih zbog rate limita', 'counter', node.gossip.stats.rateLimited ?? 0);
         put('braincore_gossip_prev_key_total', 'Prihvaćenih potpisa STARIM ključem (rotacija)', 'counter', node.gossip.stats.acceptedWithPrevKey ?? 0);
         put('braincore_uptime_seconds', 'Vrijeme rada čvora', 'gauge', Math.round(stats.uptimeMs / 1000));
+        // Metrike po tenantu (metering za naplatu po agent-satu)
+        m.push('# HELP nmq_tenant_tasks_total Primljeni taskovi po tenantu', '# TYPE nmq_tenant_tasks_total counter');
+        m.push('# HELP nmq_tenant_agent_hours Zbroj trajanja zadataka po tenantu (agent-sati)', '# TYPE nmq_tenant_agent_hours gauge');
+        m.push('# HELP nmq_tenant_rejected_total Odbijeni zahtjevi po tenantu (rate limit)', '# TYPE nmq_tenant_rejected_total counter');
+        for (const t of usageReport().tenants) {
+          m.push(`nmq_tenant_tasks_total{tenant="${t.tenantId}"} ${t.tasks}`);
+          m.push(`nmq_tenant_agent_hours{tenant="${t.tenantId}"} ${t.agentHours}`);
+          m.push(`nmq_tenant_rejected_total{tenant="${t.tenantId}"} ${t.rejected}`);
+        }
         return send(200, `${m.join('\n')}\n`, { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' });
       }      /**
        * CHAOS DEMO — „KILL NODE" dugme na live.braincore.pro.
@@ -221,15 +278,24 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         }
         // Opciona autentikacija ključem (ključ se izdaje posle Stripe plaćanja)
         const apiKey = req.headers['x-api-key'] ?? (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') ?? null;
+        let keyTenant = 'demo';
         if (apiKey) {
           const record = await issuer.verify(apiKey);
           if (!record) return send(401, { error: { code: 'INVALID_KEY', message: 'API ključ nije važeći ili je opozvan' } });
           body.tenantId = body.tenantId ?? record.tenantId;
+          keyTenant = record.tenantId;
+        }
+        if (!allowRateForKey(keyTenant)) {
+          noteUsage(keyTenant, { rejected: true });
+          metrics?.inc('nmq_tenant_rejected_total', { tenant: keyTenant });
+          return send(429, { error: { code: 'TENANT_RATE_LIMITED', message: `Ključ za „${keyTenant}" je prekoračio ${cfg.rateLimitPerKeyPerMin ?? 120} zahtjeva/min`, retryable: true, details: { tenant: keyTenant } } });
         }
         if (!body.type && !body.title) return send(400, { error: { code: 'VALIDATION_ERROR', message: 'Task traži "type" (ili "title")' } });
         const task = await node.submitTask(body);
         metrics?.inc('api_tasks_accepted_total', {});
-        return send(200, { accepted: true, task: { ...task, payload: undefined }, node: node.nodeId });
+        metrics?.inc('nmq_tenant_tasks_total', { tenant: keyTenant });
+        noteUsage(keyTenant);
+        return send(200, { accepted: true, task: { ...task, payload: undefined }, node: node.nodeId, tenant: keyTenant });
       }
       if (req.method === 'POST' && url.pathname === '/v1/fitness') {
         const raw = await readBody(req);
@@ -262,6 +328,22 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
           toleranceSec: cfg.stripeToleranceSec,
         });
         return send(result.status, result.body);
+      }
+      if (req.method === 'GET' && url.pathname === '/v1/usage') {
+        const admin = env.BRAINCORE_ADMIN_KEY ?? null;
+        const provided = req.headers['x-api-key'] ?? (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+        if (!admin || provided !== admin) return send(401, { error: { code: 'ADMIN_REQUIRED', message: 'Traži se BRAINCORE_ADMIN_KEY' } });
+        return send(200, usageReport());
+      }
+      /**
+       * GET /v1/usage — potrošnja po tenantu (taskovi, agent-sati, odbijeni).
+       * Traži admin ključ. Ovo je izvor za naplatu ($999/mo + $0.12/agent-sat) i za mjesečne izvještaje.
+       */
+      if (req.method === 'GET' && url.pathname === '/v1/usage') {
+        const admin = env.BRAINCORE_ADMIN_KEY ?? null;
+        const provided = req.headers['x-api-key'] ?? (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+        if (!admin || provided !== admin) return send(401, { error: { code: 'ADMIN_REQUIRED', message: 'Traži se BRAINCORE_ADMIN_KEY' } });
+        return send(200, usageReport());
       }
       if (req.method === 'GET' && url.pathname === '/v1/keys') {
         const admin = env.BRAINCORE_ADMIN_KEY ?? null;
