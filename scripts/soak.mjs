@@ -199,6 +199,8 @@ const result = {
   runnerDelayMs: DELAY,
   durationSec: Number(durationSec.toFixed(1)),
   submitted: submitted.size,
+  shedByBackpressure: shed.length,
+  failedSubmit: failedSubmit.length,
   completed,
   lost,
   duplicated,
