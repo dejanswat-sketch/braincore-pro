@@ -57,7 +57,7 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
     for (const [tenantId, t] of Object.entries(state.tenants)) {
       for (const [agentId, a] of Object.entries(t.agents ?? {})) {
         if (a.status === 'active' && a.overrides && Object.keys(a.overrides).length) {
-          catalog.setOverride(agentId, a.overrides);
+          catalog.setOverride(tenantId, agentId, a.overrides);
           logger?.info?.('controlplane.override_restored', { tenantId, agentId, version: a.activeVersion });
         }
       }
@@ -112,7 +112,7 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
     get(tenantId, agentId) {
       const t = ensureTenant(tenantId);
       const a = t.agents[agentId] ?? emptyAgent(agentId);
-      return { ...a, effective: catalog.get(agentId) ?? null };
+      return { ...a, effective: catalog.get(agentId, tenantId) ?? null };
     },
 
     /**
@@ -121,7 +121,7 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
      */
     async deploy(tenantId, agentId, { patch = {}, actor = 'control-plane', note = null } = {}) {
       if (!tenants.has(tenantId)) throw new NotFoundError('Tenant', tenantId);
-      const base = catalog.get(agentId);
+      const base = catalog.get(agentId, tenantId);
       if (!base && !patch.systemPrompt) throw new NotFoundError('Agent', agentId);
       if (!patch || typeof patch !== 'object' || !Object.keys(patch).length) throw new ValidationError('Deploy traži najmanje jedno polje u "patch"');
 
@@ -132,11 +132,11 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
       a.status = 'active';
       a.versions = [...(a.versions ?? []), { version, patch, actor, note, createdAt: iso(), specHash: sha256({ agentId, patch }) }];
       await persist();
-      catalog.setOverride(agentId, a.overrides);
+      catalog.setOverride(tenantId, agentId, a.overrides);
       metrics?.inc('controlplane_deploys_total', { tenant: tenantId, agent: agentId });
       await auditLifecycle({ tenantId, actor, action: 'agent_deploy', agentId, meta: { version, fields: Object.keys(patch), note } });
       logger?.info?.('controlplane.deploy', { tenantId, agentId, version, fields: Object.keys(patch) });
-      return { agentId, version, active: catalog.get(agentId), patch };
+      return { agentId, version, active: catalog.get(agentId, tenantId), patch };
     },
 
     async rollback(tenantId, agentId, version) {
@@ -154,8 +154,8 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
       a.activeVersion = target.version;
       a.versions = [...a.versions, { version: target.version, patch: accumulated, actor: 'rollback', note: `rollback sa v${rolledBackFrom}`, createdAt: iso(), specHash: sha256({ agentId, patch: accumulated }) }];
       await persist();
-      if (Object.keys(accumulated).length) catalog.setOverride(agentId, accumulated);
-      else catalog.clearOverride(agentId);
+      if (Object.keys(accumulated).length) catalog.setOverride(tenantId, agentId, accumulated);
+      else catalog.clearOverride(tenantId, agentId);
       metrics?.inc('controlplane_rollbacks_total', { tenant: tenantId, agent: agentId });
       await auditLifecycle({ tenantId, action: 'agent_rollback', agentId, meta: { from: rolledBackFrom, to: target.version }, outcome: 'ok' });
       logger?.warn?.('controlplane.rollback', { tenantId, agentId, from: rolledBackFrom, to: target.version });
@@ -168,8 +168,8 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
       a.status = status;
       a.statusReason = reason;
       await persist();
-      if (status === 'active' && Object.keys(a.overrides ?? {}).length) catalog.setOverride(agentId, a.overrides);
-      else if (status !== 'active') catalog.clearOverride(agentId);
+      if (status === 'active' && Object.keys(a.overrides ?? {}).length) catalog.setOverride(tenantId, agentId, a.overrides);
+      else if (status !== 'active') catalog.clearOverride(tenantId, agentId);
       metrics?.inc('controlplane_status_changes_total', { tenant: tenantId, agent: agentId, status });
       await auditLifecycle({ tenantId, actor, action: `agent_${status}`, agentId, meta: { reason } });
       return { agentId, status };
@@ -239,6 +239,8 @@ export function createControlPlane({ config, catalog, dataDir, logger, metrics, 
             if (rec.revokedAt) continue;
             if (safeEqual(rec.hash, candidateHash)) {
               rec.lastUsedAt = iso();
+              // Perzistiraj upotrebu ključa (bez čekanja — ne blokira zahtjev)
+              persist().catch((err) => logger?.debug?.('controlplane.persist_failed', { error: err.message }));
               metrics?.inc('agent_key_auth_total', { tenant: tenantId, agent: agentId });
               return { tenantId, agentId, role: rec.role, scopes: rec.scopes ?? [], keyId: rec.id, auth: 'agent-key' };
             }

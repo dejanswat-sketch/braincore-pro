@@ -7,9 +7,10 @@
  */
 export function createReflectionPattern({ runAgent, catalog, helpers, critic, logger }) {
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const maxRounds = Math.max(1, Math.min(config.maxRounds ?? 2, 5));
     const threshold = config.threshold ?? 0.75;
-    const spec = catalog.get(ctx.agentId) ?? catalog.get('support');
+    const spec = cat.get(ctx.agentId) ?? cat.get('support');
     const task = typeof input === 'string' ? input : JSON.stringify(input);
 
     const rounds = [];

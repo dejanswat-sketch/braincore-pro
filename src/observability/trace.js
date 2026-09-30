@@ -118,6 +118,17 @@ export function createTracer({ dataDir, logger, metrics, otel } = {}) {
     async readFromDisk({ tenantId, date = new Date(), limit = 100 }) {
       return readJsonl(traceFile(tenantId, date), { limit, tail: true });
     },
+
+    /** Traži run na disku (danas i juče) — poslije restarta memorija je prazna. */
+    async findOnDisk({ tenantId, runId, days = 2 }) {
+      for (let d = 0; d < days; d += 1) {
+        const date = new Date(Date.now() - d * 86_400_000);
+        const rows = await readJsonl(traceFile(tenantId, date), { limit: 5000 });
+        const found = rows.find((r) => r.runId === runId);
+        if (found) return found;
+      }
+      return null;
+    },
   };
 }
 

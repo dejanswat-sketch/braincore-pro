@@ -86,12 +86,27 @@ export function createLongTermMemory({ dataDir, logger, piiKinds = ['email', 'ca
       return facts[key];
     },
 
-    async forget(tenantId, { key, userId } = {}) {
+    /** Briše činjenice: `key` (jedna) ili `keys` (niz). Nikad ne briše sve ako nije izričito zadato. */
+    async forget(tenantId, { key, keys, userId } = {}) {
       const facts = await readJson(factsFile(tenantId), {});
-      if (key) delete facts[key];
-      const before = Object.keys(facts).length;
+      const targets = [...(key ? [key] : []), ...(keys ?? [])];
+      let removed = 0;
+      for (const k of targets) {
+        if (k in facts) {
+          delete facts[k];
+          removed += 1;
+        }
+      }
+      if (userId) {
+        for (const [k, f] of Object.entries(facts)) {
+          if (JSON.stringify(f?.value ?? '').includes(userId)) {
+            delete facts[k];
+            removed += 1;
+          }
+        }
+      }
       await writeJson(factsFile(tenantId), facts);
-      return { removed: key ? 1 : before, remaining: Object.keys(facts).length };
+      return { removed, remaining: Object.keys(facts).length };
     },
 
     factsFile,

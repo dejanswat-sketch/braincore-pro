@@ -146,6 +146,68 @@ async function main() {
     return '404';
   });
 
+  // ── MAX nivo: kontrolna ravan, persistentni poslovi, epizode ──
+  await check('GET /v1/whoami', async () => {
+    const j = await (await api('/v1/whoami')).json();
+    if (!j.tenantId) throw new Error('nema tenantId');
+    return `${j.tenantId} / ${j.role}`;
+  });
+
+  await check('GET /v1/admin/health', async () => {
+    const j = await (await api('/v1/admin/health')).json();
+    if (!j.controlPlane || !j.sandbox) throw new Error('kontrolna ravan ili sandbox nisu dostupni');
+    return `agenata: ${j.agents}, poslova: ${j.jobs}, sandbox: ${j.sandbox.level}, OTel: ${j.otel?.enabled}`;
+  });
+
+  await check('POST /v1/admin/agents/support/deploy + rollback', async () => {
+    const dep = await (await api('/v1/admin/agents/support/deploy', { method: 'POST', body: JSON.stringify({ patch: { temperature: 0.42 }, note: 'smoke' }) })).json();
+    if (dep.version !== 1) throw new Error(`deploy nije vratio verziju 1: ${JSON.stringify(dep)}`);
+    const rb = await (await api('/v1/admin/agents/support/rollback', { method: 'POST', body: JSON.stringify({ version: 0 }) })).json();
+    if (rb.activeVersion !== 0) throw new Error('rollback nije vratio na baseline');
+    return `deploy v1 → rollback v0`;
+  });
+
+  await check('POST /v1/admin/agents/executor/keys', async () => {
+    const j = await (await api('/v1/admin/agents/executor/keys', { method: 'POST', body: JSON.stringify({ scopes: ['crm:write'] }) })).json();
+    if (!/^nmqa_/.test(j.key ?? '')) throw new Error('ključ nije u formatu nmqa_…');
+    await api(`/v1/admin/agents/executor/keys/${j.keyId}`, { method: 'DELETE' });
+    return `izdat i opozvan (${j.keyId})`;
+  });
+
+  await check('POST /v1/admin/jobs + run', async () => {
+    const created = await (await api('/v1/admin/jobs', { method: 'POST', body: JSON.stringify({ name: 'smoke posao', agentId: 'ops', input: 'radi', schedule: { type: 'interval', everyMs: 3600000 }, runNow: true }) })).json();
+    if (!created.id) throw new Error('posao nije kreiran');
+    const run = await (await api(`/v1/admin/jobs/${created.id}/run`, { method: 'POST' })).json();
+    if (!['ok', 'awaiting_approval'].includes(run.status)) throw new Error(`posao nije izvršen: ${JSON.stringify(run).slice(0, 200)}`);
+    const runs = await (await api(`/v1/admin/jobs/${created.id}/runs`)).json();
+    await api(`/v1/admin/jobs/${created.id}`, { method: 'DELETE' });
+    return `status=${run.status}, zapisa=${runs.runs.length}`;
+  });
+
+  await check('POST /v1/admin/processes (dugoročni proces)', async () => {
+    const j = await (await api('/v1/admin/processes', { method: 'POST', body: JSON.stringify({ name: 'smoke onboarding', agentId: 'ops', stepDelayMs: 1000, steps: [{ id: 'd1', input: 'a' }, { id: 'd2', input: 'b' }] }) })).json();
+    if (j.steps !== 2) throw new Error('proces nije kreiran sa 2 koraka');
+    const run1 = await (await api(`/v1/admin/jobs/${j.jobId}/run`, { method: 'POST' })).json();
+    const job = await (await api(`/v1/admin/jobs/${j.jobId}`)).json();
+    await api(`/v1/admin/jobs/${j.jobId}`, { method: 'DELETE' });
+    return `koraka=${j.steps}, poslije 1. pokretanja završeno=${job.process?.done?.length ?? 0} (${run1.status})`;
+  });
+
+  await check('GET/POST /v1/admin/episodes', async () => {
+    await api('/v1/admin/episodes', { method: 'POST', body: JSON.stringify({ problem: 'smoke problem', solution: 'smoke rješenje', success: true, lessons: ['provjeri prvo'] }) });
+    const j = await (await api('/v1/admin/episodes')).json();
+    if (!j.stats?.total) throw new Error('epizoda nije zapamćena');
+    return `epizoda: ${j.stats.total} (${j.stats.success} uspješnih)`;
+  });
+
+  await check('GET /metrics (MAX metrike)', async () => {
+    const text = await (await api('/metrics')).text();
+    const wanted = ['nmq_runs_started_total', 'nmq_cost_usd_total', 'nmq_jobs_runs_total', 'nmq_controlplane_deploys_total', 'nmq_approvals_pending'];
+    const missing = wanted.filter((m) => !text.includes(m));
+    if (missing.length) throw new Error(`nedostaju metrike: ${missing.join(', ')}`);
+    return `${wanted.length} ključnih metrika prisutno`;
+  });
+
   const failed = results.filter((r) => !r.ok);
   console.log('');
   console.log(`  ── SMOKE REZULTAT: ${results.length - failed.length}/${results.length} prošlo ──`);

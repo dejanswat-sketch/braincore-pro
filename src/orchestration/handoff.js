@@ -9,6 +9,7 @@
  */
 export function createHandoffPattern({ runAgent, catalog, helpers, logger }) {
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const maxHandoffs = Math.max(1, Math.min(config.maxHandoffs ?? 3, 6));
     const visited = [];
     const transcript = [];
@@ -17,7 +18,7 @@ export function createHandoffPattern({ runAgent, catalog, helpers, logger }) {
     const approvals = [];
     const handoffChain = [];
 
-    let current = catalog.get(config.entry ?? ctx.agentId) ?? catalog.get('support');
+    let current = cat.get(config.entry ?? ctx.agentId) ?? cat.get('support');
     let payload = typeof input === 'string' ? input : JSON.stringify(input);
     let output = '';
     let status = 'ok';
@@ -61,7 +62,7 @@ export function createHandoffPattern({ runAgent, catalog, helpers, logger }) {
         status = 'handoff_loop';
         break;
       }
-      const next = catalog.get(handoff.toAgent);
+      const next = cat.get(handoff.toAgent);
       if (!next) {
         logger?.warn?.('handoff.unknown_agent', { to: handoff.toAgent });
         output = `${output}\n\n_(Agent ${handoff.toAgent} ne postoji.)_`;

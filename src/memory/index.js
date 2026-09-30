@@ -49,13 +49,25 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
       };
     },
 
-    /** GDPR: briše sve što znamo o korisniku (facts + događaji ostaju u audit tragu kao dokaz brisanja). */
+    /**
+     * GDPR: briše sve što znamo o korisniku — činjenice (samo one koje ga pominju),
+     * epizode (fajl + vektorski zapisi) i bilježi dokaz brisanja u istoriju.
+     * ⚠️ Svesno NE briše cijeli facts.json — ranija verzija je to radila i brisala je podatke drugih korisnika.
+     */
     async forgetUser(tenantId, userId) {
       const facts = await longterm.readFacts(tenantId);
-      const removed = Object.values(facts).filter((f) => f.value && JSON.stringify(f.value).includes(userId)).length;
-      await longterm.forget(tenantId, {});
-      await longterm.append(tenantId, { type: 'note', content: `Zahtjev za brisanje podataka korisnika ${userId}`, data: { userId, removedFacts: removed } });
-      return { userId, removedFacts: removed, kb: 'vektorski zapisi se brišu po docId (vidi vectors.remove)' };
+      const toRemove = Object.entries(facts).filter(([key, f]) => key.includes(userId) || JSON.stringify(f?.value ?? '').includes(userId));
+      for (const [key] of toRemove) delete facts[key];
+      if (toRemove.length) await longterm.forget(tenantId, { keys: toRemove.map(([k]) => k) });
+      const episodicResult = await episodic.removeUser(tenantId, userId);
+      const kbRemoved = await vectors.removeByMetadata?.(tenantId, { userId });
+      await longterm.append(tenantId, {
+        type: 'note',
+        content: `GDPR brisanje: korisnik ${userId} — uklonjeno ${toRemove.length} činjenica, ${episodicResult.removed} epizoda, ${kbRemoved?.removed ?? 0} vektorskih zapisa`,
+        data: { userId, facts: toRemove.map(([k]) => k), episodes: episodicResult, kb: kbRemoved ?? null },
+        importance: 1,
+      });
+      return { userId, removedFacts: toRemove.map(([k]) => k), removedEpisodes: episodicResult.removed, removedVectors: kbRemoved?.removed ?? 0 };
     },
   };
 }

@@ -1,5 +1,10 @@
 # 04 — Orchestracija: 6 patterna
 
+> **v0.2 dopuna:** dodati su `reflection`, `debate` i `team` (plus `react` kao alias za `agent` petlju) —
+> opis u `docs/16-PATTERNI-MAX.md`. `PATTERNS` sada ima **11 imena**, a budžet koraka se množi po patternu
+> (`PATTERN_STEP_BUDGET` u `src/orchestration/index.js`, odluka D26 u `DECISIONS.md` §8).
+> Ovaj dokument ostaje tačan za prvih 6 patterna.
+
 > Dokument je **izvršni ugovor** za `src/orchestration/` i `src/agents/`.
 > Izvor istine je `docs/DECISIONS.md` (D13, D14, D15, D16, D17).
 > Verzija: 1.1 · Datum: 2026-09-29 · Vlasnik: NMQ (Dejan Milošević PR)

@@ -31,7 +31,7 @@ import { createScheduler } from './scheduler/index.js';
 import { createControlPlane } from './controlplane/registry.js';
 import { createOtelExporter } from './observability/otel.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -45,12 +45,17 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
   const otel = overrides.otel ?? createOtelExporter({ dataDir: config.dataDir, file: config.env.otelFile !== false, endpoint: config.env.otelEndpoint, headers: config.env.otelHeaders, logger, serviceName: 'nmq-robot', serviceVersion: VERSION });
   const tracer = createTracer({ dataDir: config.dataDir, logger, metrics, otel });
   const audit = createAuditLog({ dataDir: config.dataDir, logger });
-  const cost = createCostTracker({ dataDir: config.dataDir, logger });
+  const cost = createCostTracker({ dataDir: config.dataDir, logger, metrics });
   const llm = overrides.llm ? wrapLlmProvider(overrides.llm, logger) : createLlm({ env: config.env, logger, metrics });
   const memory = overrides.memory ?? createMemory({ dataDir: config.dataDir, llm, env: config.env, logger });
   const catalog = createAgentCatalog(config, logger);
   const tenants = createTenantStore({ config, dataDir: config.dataDir, logger, env: config.env });
   await tenants.loadStatuses();
+
+  const isProduction = (config.env.nodeEnv ?? process.env.NODE_ENV) === 'production' || (config.env.nmqEnv ?? process.env.NMQ_ENV) === 'production';
+  if (isProduction && !config.env.masterKey) {
+    throw new Error('NMQ_MASTER_KEY je obavezan u produkciji (bez njega se tenant tajne ne mogu bezbjedno čuvati)');
+  }
 
   // Sandbox: aplikativne granice za alate i MCP podprocese
   const sandboxCfg = config.tools?.sandbox ?? {};
@@ -63,6 +68,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     maxMemoryMb: sandboxCfg.maxMemoryMb ?? 256,
     maxTimeoutMs: sandboxCfg.maxTimeoutMs ?? 20_000,
     allowChildProcess: sandboxCfg.allowChildProcess !== false,
+    production: isProduction,
     logger,
   });
 
@@ -70,6 +76,11 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
 
   // Trajno skladište poslova mora postojati prije alata (alat `process_update` ga koristi)
   const jobs = overrides.jobs ?? createJobStore({ dataDir: config.dataDir, logger });
+  // Warm-up: poslije restarta scheduler mora odmah vidjeti poslove svih tenanta
+  // (bez ovoga bi prvi tick bio prazan dok se tenant ne učita kroz neki drugi poziv)
+  if (jobs.load) {
+    for (const t of config.tenants) await jobs.load(t.id).catch((err) => logger.warn('jobs.warmup_failed', { tenant: t.id, error: err.message }));
+  }
 
   const tools = createToolRegistry({ logger, metrics, audit, policyResolver });
   registerBuiltinTools(tools, { dataDir: config.dataDir, memory, env: config.env, logger, metrics, sandbox, jobs });
@@ -150,6 +161,8 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     ...createRoutes({ robot, config, logger, metrics, tenants, dataDir: config.dataDir }),
     ...createAdminRoutes({ robot, config, tenants, logger, metrics }),
   ];
+  // Gauge mora postojati i kad je nula — inače alert/panel ne vidi metriku
+  for (const t of config.tenants) metrics.set('approvals_pending', { tenant: t.id }, 0);
   robot.server = createHttpServer({ routes: robot.routes, robot, logger, metrics, config, tenants });
 
   robot.listen = async ({ port = config.env.port, host = config.env.host } = {}) => {

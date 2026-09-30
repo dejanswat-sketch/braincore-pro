@@ -27,16 +27,24 @@ export function priceFor(model, { fallback = { in: 1.0, out: 3.0 } } = {}) {
   return key ? PRICING[key] : fallback;
 }
 
+/** Da li je cijena tačna, iz prefiksa ili fallback (za metrike i upozorenja). */
+export function priceSource(model) {
+  if (!model) return 'unknown';
+  if (PRICING[model]) return 'exact';
+  return Object.keys(PRICING).some((k) => model.startsWith(k)) ? 'prefix' : 'fallback';
+}
+
 /** Cijena za usage objekat { promptTokens, completionTokens }. */
 export function computeCost(model, usage = {}) {
   const price = priceFor(model);
+  const source = priceSource(model);
   const tin = Number(usage.promptTokens ?? usage.input_tokens ?? 0);
   const tout = Number(usage.completionTokens ?? usage.output_tokens ?? 0);
   const usd = (tin / 1e6) * price.in + (tout / 1e6) * price.out;
-  return { usd: Number(usd.toFixed(8)), price, tokensIn: tin, tokensOut: tout, model };
+  return { usd: Number(usd.toFixed(8)), price, priceSource: source, tokensIn: tin, tokensOut: tout, model };
 }
 
-export function createCostTracker({ dataDir, logger } = {}) {
+export function createCostTracker({ dataDir, logger, metrics } = {}) {
   const monthKey = (d = new Date()) => d.toISOString().slice(0, 7);
   const usageFile = (tenantId, d = new Date()) => path.join(dataDir, 'tenants', tenantId, 'usage', `${monthKey(d)}.jsonl`);
 
@@ -46,6 +54,11 @@ export function createCostTracker({ dataDir, logger } = {}) {
      */
     async record({ tenantId, agentId, runId, model, usage, provider = 'llm', meta = {} }) {
       const cost = computeCost(model, usage);
+      if (cost.priceSource === 'fallback') {
+        // Nepoznat model → naplaćujemo po fallback tarifi, ali to MORAMO znati (inače marža laže)
+        metrics?.inc('pricing_fallback_total', { model: String(model ?? 'unknown') });
+        logger?.warn?.('cost.unknown_model', { model, provider, tenantId });
+      }
       const entry = {
         ts: iso(),
         tenantId,
@@ -56,6 +69,7 @@ export function createCostTracker({ dataDir, logger } = {}) {
         tokensIn: cost.tokensIn,
         tokensOut: cost.tokensOut,
         usd: cost.usd,
+        priceSource: cost.priceSource,
         ...meta,
       };
       if (dataDir) await appendJsonl(usageFile(tenantId), entry);

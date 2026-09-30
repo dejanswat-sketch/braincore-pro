@@ -1,5 +1,8 @@
 # 07 — MVP plan (12 nedjelja)
 
+> **v0.2 dopuna:** plan za MAX nivo (16 nedjelja, od v0.2.0 do enterprise spremnosti) je u
+> `docs/19-MVP-MAX-PLAN.md`. Ovaj dokument ostaje plan prve faze (v0.1.0 → prvi plaćeni klijent).
+
 > Realno stanje: **Nedjelja 0 je završena** — skeleton, ugovor, dokumentacija (00–11), 70 testova, demo i smoke prolaze.
 > Plan ispod je ono što ostaje do prvog plaćenog klijenta. Faze imaju **dokaz da su gotove**, ne samo listu zadataka.
 

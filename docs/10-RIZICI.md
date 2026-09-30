@@ -1,5 +1,10 @@
 # 10 — Rizici i mitigacije
 
+> **v0.2 dopuna:** novi rizici MAX nivoa (prekompleksnost, leasing bez distributed lock-a, K8s operativni
+> teret, per-agent budžet koji blokira klijenta u radu) su u `docs/19-MVP-MAX-PLAN.md` §5.
+> Rizik „kompleksnost 6 patterna" je narastao na 11 ulaza — mitigacija: pattern se bira konfiguracijom,
+> a `PATTERN_STEP_BUDGET` sprečava da multi-agent patterni pojedu budžet predviđen za jedan razgovor.
+
 > Vezano za `docs/DECISIONS.md` v1.0. Ovo je **radni registar rizika za odlučivanje**, ne prezentacija.
 > Vjerovatnoća i uticaj su **procjena** (skala: niska / srednja / visoka). Dokument se ažurira
 > pri svakom pilotu i na kraju svakog mjeseca — rizik koji nije ažuriran je rizik koji je zaboravljen.

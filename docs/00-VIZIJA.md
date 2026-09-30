@@ -1,5 +1,10 @@
 # 00 — Vizija: šta je NMQ Robot i zašto je drugačiji
 
+> **v0.2 dopuna:** robot je od v0.1.0 narastao na **19 agenata, 11 ulaza/patterna i 20 ugrađenih alata**
+> (dodati: persistentni agenti, kontrolna ravan, epizodična memorija, sandbox, OTel, `reflection`/`debate`/`team`).
+> Nova arhitektura i plan su u `docs/12`–`docs/19`, a odluke u `DECISIONS.md` §8 (D21–D32).
+> Brojevi „6 patterna / 13 agenata" u ovom dokumentu su stanje v0.1.0 i namjerno ostaju kao istorija.
+
 > Ovaj dokument je namjerno kratak i odlučujući. Detalji su u `01`–`10`, ugovor u `DECISIONS.md`.
 
 ---

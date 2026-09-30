@@ -11,13 +11,14 @@
  */
 export function createDebatePattern({ runAgent, catalog, helpers, logger }) {
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const task = typeof input === 'string' ? input : JSON.stringify(input);
     const rounds = Math.max(1, Math.min(config.rounds ?? 2, 4));
-    const debaters = (config.debaters ?? []).filter((d) => catalog.get(d.agent));
+    const debaters = (config.debaters ?? []).filter((d) => cat.get(d.agent));
     if (debaters.length < 2) {
       // nema dovoljno debatera → ponašaj se kao reflection/agent (bez pada)
       logger?.warn?.('debate.not_enough_debaters', { count: debaters.length });
-      const spec = catalog.get(ctx.agentId) ?? catalog.get('support');
+      const spec = cat.get(ctx.agentId) ?? cat.get('support');
       const res = await runAgent(spec, task, { ...ctx, agentId: spec.id, pattern: 'debate' });
       return { output: res.output, skipped: 'nedovoljno debatera (min 2)', usage: res.usage, costUsd: res.costUsd, approvals: res.approvals ?? [], handoffs: [], rounds: [] };
     }
@@ -32,7 +33,7 @@ export function createDebatePattern({ runAgent, catalog, helpers, logger }) {
       ctx.onEvent?.({ type: 'debate_round', round: r, max: rounds });
       const current = [];
       for (const d of debaters) {
-        const spec = catalog.get(d.agent);
+        const spec = cat.get(d.agent);
         const prompt = [
           `TEMA: ${task}`,
           '',
@@ -56,7 +57,7 @@ export function createDebatePattern({ runAgent, catalog, helpers, logger }) {
     }
 
     // Sudija: sintetiše odluku (i, ako je LLM, kroz helpers → trošak je naplaćen)
-    const judgeSpec = catalog.get(config.judge ?? 'critic');
+    const judgeSpec = cat.get(config.judge ?? 'critic');
     let verdict = '';
     try {
       const synth = await helpers.callLlm(ctx, {

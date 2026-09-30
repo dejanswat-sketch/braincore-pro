@@ -11,9 +11,10 @@
  */
 export function createMagenticPattern({ runAgent, catalog, helpers, critic, logger }) {
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const maxIterations = Math.max(1, Math.min(config.maxIterations ?? 3, 6));
     const threshold = config.threshold ?? 0.7;
-    const spec = catalog.get(ctx.agentId) ?? catalog.get('support');
+    const spec = cat.get(ctx.agentId) ?? cat.get('support');
     const task = typeof input === 'string' ? input : JSON.stringify(input);
 
     const iterations = [];

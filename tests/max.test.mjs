@@ -239,24 +239,24 @@ test('scheduler: alat process_update mijenja stanje procesa iz agenta', async ()
 test('control plane: deploy nove verzije mijenja agenta odmah, rollback ga vraća', async () => {
   const robot = await buildTestRobot({ script: () => ({ text: 'ok' }) });
   try {
-    const before = robot.catalog.get('support').temperature;
+    const before = robot.catalog.get('support', 'nmq').temperature;
     const deployed = await robot.controlPlane.deploy('nmq', 'support', { patch: { temperature: 0.9, maxSteps: 3 }, note: 'topliji ton' });
     assert.equal(deployed.version, 1);
-    assert.equal(robot.catalog.get('support').temperature, 0.9);
-    assert.equal(robot.catalog.get('support').maxSteps, 3);
+    assert.equal(robot.catalog.get('support', 'nmq').temperature, 0.9);
+    assert.equal(robot.catalog.get('support', 'nmq').maxSteps, 3);
 
     const v2 = await robot.controlPlane.deploy('nmq', 'support', { patch: { maxSteps: 5 } });
     assert.equal(v2.version, 2);
-    assert.equal(robot.catalog.get('support').maxSteps, 5);
-    assert.equal(robot.catalog.get('support').temperature, 0.9, 'zakrpe se sabiraju');
+    assert.equal(robot.catalog.get('support', 'nmq').maxSteps, 5);
+    assert.equal(robot.catalog.get('support', 'nmq').temperature, 0.9, 'zakrpe se sabiraju');
 
     const rolled = await robot.controlPlane.rollback('nmq', 'support', 1);
     assert.equal(rolled.activeVersion, 1);
-    assert.equal(robot.catalog.get('support').maxSteps, 3);
+    assert.equal(robot.catalog.get('support', 'nmq').maxSteps, 3);
 
     const baseline = await robot.controlPlane.rollback('nmq', 'support', 0);
     assert.deepEqual(baseline.overrides, {});
-    assert.equal(robot.catalog.get('support').temperature, before);
+    assert.equal(robot.catalog.get('support', 'nmq').temperature, before);
 
     const audit = await robot.audit.read('nmq');
     assert.ok(audit.some((e) => e.action === 'agent_deploy'));
@@ -330,7 +330,7 @@ test('control plane: stanje preživljava restart (override se vraća iz fajla)',
 
   const robot2 = await buildTestRobot({ script: () => ({ text: 'ok' }), dataDir: dir });
   try {
-    assert.equal(robot2.catalog.get('support').temperature, 0.77, 'deploy mora preživjeti restart');
+    assert.equal(robot2.catalog.get('support', 'nmq').temperature, 0.77, 'deploy mora preživjeti restart');
   } finally {
     await robot2.close();
     await cleanup(dir);
@@ -666,11 +666,11 @@ test('admin API: lifecycle, ključevi, poslovi i epizode kroz HTTP', async () =>
 
     const deploy = await call('/v1/admin/agents/support/deploy', { method: 'POST', body: JSON.stringify({ patch: { temperature: 0.33 }, note: 'http deploy' }) });
     assert.equal(deploy.status, 200);
-    assert.equal(robot.catalog.get('support').temperature, 0.33);
+    assert.equal(robot.catalog.get('support', 'nmq').temperature, 0.33);
 
     const rollback = await call('/v1/admin/agents/support/rollback', { method: 'POST', body: JSON.stringify({ version: 0 }) });
     assert.equal(rollback.body.activeVersion, 0);
-    assert.equal(robot.catalog.get('support').temperature, 0.2);
+    assert.equal(robot.catalog.get('support', 'nmq').temperature, 0.2);
 
     const paused = await call('/v1/admin/agents/creative/status', { method: 'POST', body: JSON.stringify({ status: 'paused' }) });
     assert.equal(paused.body.status, 'paused');
@@ -800,6 +800,229 @@ test('sandbox: agent ne smije pozvati alat koji je van njegovog sandboxa', async
       await cleanup(strictRobot.__dir);
     }
   } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+// ─────────────────────────── popravke iz revizije v0.2 ───────────────────────────
+
+test('scheduler: agent iz procesa dobija jobId (process_update radi bez eksplicitnog id-a)', async () => {
+  const robot = await buildTestRobot({
+    scheduler: true,
+    script: ({ messages }) => {
+      if (messages.some((m) => m.role === 'tool')) return { text: 'Pomjereno na kasnije.' };
+      return { toolCalls: [{ name: 'process_update', arguments: { state: 'waiting_client', note: 'cekam odgovor', nextRunInMs: 3_600_000 } }] };
+    },
+  });
+  try {
+    const job = await robot.scheduler.createJob('nmq', {
+      name: 'proces koji sam sebe odgađa',
+      type: 'process',
+      agentId: 'ops',
+      schedule: { type: 'interval', everyMs: 60_000 },
+      process: { steps: [{ id: 's1', name: 'Korak', input: 'uradi i odgodi' }], done: [], state: 'pending' },
+    });
+    const res = await robot.scheduler.runNow('nmq', job.id);
+    assert.equal(res.status, 'ok');
+    const updated = await robot.scheduler.get('nmq', job.id);
+    assert.equal(updated.process.state, 'waiting_client', 'agent je morao promijeniti stanje bez eksplicitnog jobId');
+    assert.ok(
+      updated.process.log.some((l) => /cekam odgovor/.test(l.note ?? '')),
+      'bilješka agenta mora ostati u procesu',
+    );
+  } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+test('scheduler: waiting_approval ZAUSTAVLJA raspored (nema dvostrukog izvršavanja)', async () => {
+  const robot = await buildTestRobot({
+    scheduler: true,
+    env: { NMQ_SCHEDULER_TICK_MS: '20' },
+    script: ({ messages }) =>
+      messages.some((m) => m.role === 'tool')
+        ? { text: 'Mejl je poslat.' }
+        : { toolCalls: [{ name: 'email_send', arguments: { to: 'k@example.com', subject: 'Ponuda', body: 'x' } }] },
+  });
+  try {
+    const job = await robot.scheduler.createJob('nmq', {
+      name: 'posao koji traži odobrenje',
+      agentId: 'sales',
+      input: 'Pošalji ponudu',
+      schedule: { type: 'interval', everyMs: 10_000 },
+      runNow: true,
+    });
+    const res = await robot.scheduler.runNow('nmq', job.id);
+    assert.equal(res.status, 'awaiting_approval');
+    const after = await robot.scheduler.get('nmq', job.id);
+    assert.equal(after.status, 'waiting_approval');
+    assert.equal(after.nextRunAt, null, 'raspored mora stati dok se ne odobri');
+    assert.match(after.pausedReason, /email_send/);
+
+    robot.scheduler.start();
+    await wait(200); // tick ne smije ponovo pokrenuti posao
+    const later = await robot.scheduler.get('nmq', job.id);
+    assert.equal(later.runs, 1, `posao se izvršio ${later.runs}x — očekivano 1 (bez duplog izvršavanja)`);
+  } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+test('scheduler: uspjeh resetuje attempts, retry koristi eksponencijalni backoff', async () => {
+  let fail = true;
+  const robot = await buildTestRobot({
+    scheduler: true,
+    script: () => {
+      if (fail) throw Object.assign(new Error('privremeno'), { retryable: true });
+      return { text: 'ok' };
+    },
+  });
+  try {
+    const job = await robot.scheduler.createJob('nmq', { name: 'flaky', agentId: 'ops', input: 'x', schedule: { type: 'interval', everyMs: 60_000 }, retry: { max: 3, backoffMs: 100 } });
+    await robot.scheduler.runNow('nmq', job.id);
+    const after1 = await robot.scheduler.get('nmq', job.id);
+    assert.equal(after1.attempts, 1);
+    const firstDelay = after1.nextRunAt - Date.now();
+
+    await robot.scheduler.runNow('nmq', job.id);
+    const after2 = await robot.scheduler.get('nmq', job.id);
+    assert.equal(after2.attempts, 2);
+    const secondDelay = after2.nextRunAt - Date.now();
+    assert.ok(secondDelay > firstDelay * 1.5, `backoff mora rasti (${firstDelay} → ${secondDelay})`);
+
+    fail = false;
+    await robot.scheduler.runNow('nmq', job.id);
+    const after3 = await robot.scheduler.get('nmq', job.id);
+    assert.equal(after3.status, 'ok');
+    assert.equal(after3.attempts, 0, 'uspjeh mora resetovati brojač pokušaja');
+  } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+test('scheduler: cron se validira pri kreiranju (nema tiho mrtvih poslova)', async () => {
+  const robot = await buildTestRobot({ script: () => ({ text: 'ok' }), scheduler: true });
+  try {
+    await assert.rejects(
+      () => robot.scheduler.createJob('nmq', { name: 'loš cron', agentId: 'ops', input: 'x', schedule: { type: 'cron', cron: '0 8 * * JAN' } }),
+      (err) => err instanceof ValidationError && /cron/i.test(err.message),
+    );
+    await assert.rejects(
+      () => robot.scheduler.createJob('nmq', { name: 'prekratak cron', agentId: 'ops', input: 'x', schedule: { type: 'cron', cron: '0 8 *' } }),
+      ValidationError,
+    );
+    await assert.rejects(
+      () => robot.scheduler.createJob('nmq', { name: 'loš interval', agentId: 'ops', input: 'x', schedule: { type: 'interval', everyMs: 0 } }),
+      ValidationError,
+    );
+    await assert.rejects(
+      () => robot.scheduler.createJob('nmq', { name: 'nepoznat tip', agentId: 'ops', input: 'x', schedule: { type: 'svakidanas' } }),
+      ValidationError,
+    );
+    const ok = await robot.scheduler.createJob('nmq', { name: 'dobar cron', agentId: 'ops', input: 'x', schedule: { type: 'cron', cron: '*/15 8-17 * * 1-5' } });
+    assert.ok(ok.nextRunAt > Date.now());
+  } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+test('scheduler: wildcard trigger "hook.*" pokriva sve hookove', async () => {
+  const robot = await buildTestRobot({ script: () => ({ text: 'ok' }), scheduler: true });
+  try {
+    await robot.scheduler.createJob('nmq', {
+      name: 'svi hookovi',
+      agentId: 'ops',
+      input: 'reaguj',
+      schedule: { type: 'once' },
+      triggers: [{ type: 'event', event: 'hook.*' }],
+    });
+    const fired = await robot.scheduler.triggerEvent('hook.shopify', { orderId: '1' });
+    assert.equal(fired, 1, 'wildcard hook.* mora uhvatiti hook.shopify');
+    await wait(150); // izvršavanje posla je asinhrono
+    const runs = await robot.scheduler.runs('nmq');
+    assert.equal(runs.length, 1);
+  } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+test('GDPR: forgetUser briše epizode, vektore i samo tuđe činjenice korisnika', async () => {
+  const robot = await buildTestRobot({ script: () => ({ text: 'ok' }) });
+  try {
+    const ep = await robot.memory.episodic.record('nmq', {
+      userId: 'u1',
+      agentId: 'support',
+      problem: 'Korisnik u1 traži povraćaj, mejl petar@example.com',
+      solution: 'Odobreno, kartica 4111111111111111 evidentirana',
+      success: true,
+      lessons: ['Provjeri rok 14 dana'],
+    });
+    await robot.memory.episodic.record('nmq', { userId: 'u2', agentId: 'support', problem: 'Drugi korisnik u2 pita za dostavu', solution: 'Odgovoreno', success: true });
+    await robot.memory.longterm.upsertFact('nmq', 'klijent_u1', { name: 'Petar', email: 'petar@example.com' });
+    await robot.memory.longterm.upsertFact('nmq', 'klijent_u2', { name: 'Ana' });
+    await robot.memory.vectors.upsert('nmq', { id: 'doc_u1_1', text: 'dokument korisnika u1', metadata: { userId: 'u1', source: 'upload' } });
+
+    // PII redakcija pri upisu u epizodu
+    const raw = await fs.readFile(robot.memory.episodic.file('nmq'), 'utf8');
+    assert.ok(!raw.includes('petar@example.com'), 'PII ne smije biti u epizodama');
+    assert.ok(!raw.includes('4111111111111111'), 'broj kartice ne smije biti u epizodama');
+    assert.match(raw, /EMAIL_REDACTED/);
+
+    const result = await robot.memory.forgetUser('nmq', 'u1');
+    assert.ok(result.removedEpisodes >= 1, 'epizoda korisnika mora biti obrisana');
+    assert.deepEqual(result.removedFacts, ['klijent_u1']);
+    assert.ok(result.removedVectors >= 1, 'vektorski zapis korisnika mora biti obrisan');
+
+    const facts = await robot.memory.longterm.readFacts('nmq');
+    assert.equal(facts.klijent_u1, undefined);
+    assert.ok(facts.klijent_u2, 'činjenice drugog korisnika moraju ostati');
+
+    const stats = await robot.memory.episodic.stats('nmq');
+    assert.equal(stats.total, 1, 'ostaje samo epizoda drugog korisnika');
+
+    const hits = await robot.memory.vectors.query('nmq', { text: 'dokument korisnika', k: 5, minScore: 0 });
+    assert.ok(!hits.some((h) => h.id === 'doc_u1_1'), 'vektorski zapis korisnika je obrisan');
+  } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+test('epizode: dodavanje pouke reindeksira zapis (pouka utiče na sličnost)', async () => {
+  const robot = await buildTestRobot({ script: () => ({ text: 'ok' }) });
+  try {
+    const ep = await robot.memory.episodic.record('nmq', { agentId: 'finance', problem: 'Faktura sa pogrešnim PDV-om', solution: 'Ispravljeno', success: false });
+    const before = await robot.memory.episodic.similar('nmq', 'provjeri pdv prije slanja', { k: 3, minScore: 0.01 });
+    await robot.memory.episodic.addLesson('nmq', ep.id, { lesson: 'Uvijek provjeri PDV stopu prije slanja fakture', success: true });
+    const after = await robot.memory.episodic.similar('nmq', 'provjeri pdv prije slanja', { k: 3, minScore: 0.01 });
+    assert.ok(after.length >= 1);
+    assert.ok(
+      after[0].score >= (before[0]?.score ?? 0),
+      `sličnost mora porasti ili ostati ista poslije reindeksiranja (${before[0]?.score} → ${after[0].score})`,
+    );
+    assert.match(after[0].lessons.join(' '), /PDV stopu/);
+  } finally {
+    await cleanup(robot.__dir);
+  }
+});
+
+test('webhook: skipDirectRun pokreće samo poslove (bez duplog izvršavanja)', async () => {
+  const robot = await buildTestRobot({ script: () => ({ text: 'posao reagovao' }), scheduler: true });
+  // tenant hook mapping sa skipDirectRun
+  robot.config.tenants.find((t) => t.id === 'nmq').hooks.shopify = { agentId: 'ecommerce', skipDirectRun: true };
+  const addr = await robot.listen({ port: 0, host: '127.0.0.1' });
+  const base = `http://127.0.0.1:${addr.port}`;
+  try {
+    await robot.scheduler.createJob('nmq', { name: 'shopify jobs only', agentId: 'ecommerce', input: 'obradi', schedule: { type: 'once' }, triggers: [{ type: 'event', event: 'hook.shopify' }] });
+    const res = await fetch(`${base}/v1/hooks/shopify`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-tenant': 'nmq' }, body: JSON.stringify({ subject: 'Narudžbina 1042' }) });
+    const body = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(body.triggeredOnly, true);
+    assert.equal(body.runId, undefined, 'nema sinhronog run-a');
+    await wait(200);
+    const runs = await robot.scheduler.runs('nmq');
+    assert.equal(runs.length, 1, 'posao se pokrenuo tačno jednom');
+  } finally {
+    await robot.close();
     await cleanup(robot.__dir);
   }
 });

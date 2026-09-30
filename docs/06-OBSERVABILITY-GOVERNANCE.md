@@ -1,5 +1,9 @@
 # 06 — Observability i governance
 
+> **v0.2 dopuna:** dodati su OTLP izvoz (`src/observability/otel.js`), metrike poslova i kontrolne ravni,
+> `nmq_approvals_pending` gauge i pravila alerta (`infra/observability/alerts.yml`) — vidi
+> `docs/18-OBSERVABILITY-MAX.md` i `DECISIONS.md` D30.
+
 > Svrha: definisati šta se loguje, kako se prati jedan run (trace/spanovi), koje metrike idu u Prometheus,
 > kako se računa i naplaćuje trošak, kako rade politike, human-in-the-loop, hash-chained audit, alerti i dashboard.
 > Usklađeno sa `docs/DECISIONS.md`: **D13** (6 patterna), **D14** (agenti iz `config/agents/*.json`), **D15** (governance: allow/deny,

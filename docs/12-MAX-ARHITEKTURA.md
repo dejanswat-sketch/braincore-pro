@@ -143,8 +143,10 @@ runJob():
    ├─ store.appendRun() → data/tenants/<id>/jobs/runs-YYYY-MM.jsonl
    └─ audit({ action: 'job_run' | 'job_run_manual' })
 
-greška: attempts++, status 'retrying' (retry.max, backoffMs*attempts), 'blocked' za PolicyError,
-        'failed' poslije maxAttempts; enabled=false; audit outcome:'error'
+greška: attempts++, status 'retrying' (retry.max, eksponencijalni backoff min(600000, backoffMs·2^(attempts-1))),
+        'blocked' za PolicyError, 'failed' poslije maxAttempts; enabled=false; audit outcome:'error'
+odobrenje: ako run završi sa awaiting_approval → status 'waiting_approval', nextRunAt=null (raspored se
+        zaustavlja da se posao ne izvrši dvaput), pausedReason; nastavak: POST /v1/admin/jobs/:id/resume
 događaj: POST /v1/hooks/:source → robot.bus.emit('hook.<source>') → scheduler.triggerEvent()
 dokaz:   tests/max.test.mjs (interval, tick, pauza/resume, event trigger, checkpoint, retry)
 ```
@@ -199,7 +201,6 @@ Agent je „uvek uključen" kroz tri nezavisna mehanizma:
 | `data/tenants/<id>/audit/audit.jsonl` | hash-lanac akcija | `src/observability/audit.js` |
 | `data/tenants/<id>/usage/YYYY-MM.jsonl` | potrošnja za mjesečni budžet | `src/observability/cost.js` |
 | `data/tenants/<id>/traces/YYYY-MM-DD.jsonl`, `data/_global/otel-traces.jsonl` | spanovi i OTLP izvoz | `src/observability/trace.js`, `otel.js` |
-| `data/tenants/<id>/approvals/*` (stanje odobrenja) | runovi koji čekaju odobrenje | `src/server/routes.js` (`/v1/approvals`) |
 
 Pri restartu `controlPlane.load()` **ponovo primjenjuje** `overrides` na katalog — ali samo za agente
 čiji je `status === 'active'` (`src/controlplane/registry.js`, `load()`). Pauziran agent poslije restarta
@@ -215,6 +216,7 @@ ostaje bez zakrpa, što je namjerno: pauza znači „vrati se na config".
 | rate-limit prozori | `rates` u `src/tenancy/store.js` | Poslije restarta limit kreće od nule (nije sigurnosni problem, jeste tačnost). |
 | `heads` hash-lanca audita | `src/observability/audit.js` | Kešira se po tenantu (`tenantId → {seq, hash}`); poslije restarta prvi `append` učita zadnji zapis iz fajla — a `readJsonl` **čita cio fajl** pa reže rep (`src/core/fsx.js`), dakle inicijalizacija je O(veličina audit fajla), ne O(1). |
 | Zahtjevi u toku (HTTP ili job) | proces | Prekidaju se; nema perzistentnog „in-flight" stanja, pa se ne nastavljaju automatski. |
+| **Odobrenja koja čekaju** (`pendingApprovals` Map, TTL 24 h) | `src/server/routes.js` | Poslije restarta zahtjev za odobrenje **ne postoji** (`POST /v1/approvals/:runId` → 404). Nema fajla sa stanjem odobrenja. |
 | Keš LLM-a i `overrides` u katalogu prije `load()` | `src/llm/*`, `src/agents/catalog.js` | Prazni; `load()` ih rekonstruiše iz `agents.json` (kad je agent `active`). |
 
 ---
@@ -246,6 +248,21 @@ heap, dijeljeni event loop, dijeljeni CPU. Greška u zajedničkom modulu može p
 `HUBSPOT_TOKEN`, `SHOPIFY_TOKEN`, `STRIPE_SECRET_KEY` **u `envAllowlist`** — to su tajne koje tada *jesu*
 vidljive MCP podprocesu; lista je namjerna, ali je treba suziti po serveru. (b) `assertPath` se poziva iz
 alata koji ga zovu; to nije OS-level zabrana (nema seccomp/namespaces).
+
+**Provjereno u ovom okruženju (procesni nivo):** zakrpa kataloga nije per-tenant. Mjerenje sa mock LLM-om:
+
+```
+createRobot({ dataDir: <temp> })            // tenanti: nmq, demo-shop
+controlPlane.deploy('nmq','support',{ patch:{ temperature: 0.9 } })
+catalog.get('support').temperature          → 0.9
+// isti proces, drugi tenant, bez ijedne njegove akcije:
+catalog.get('support').temperature          → 0.9   (prije deploy-a bilo je 0.2)
+```
+
+`src/agents/catalog.js` drži `overrides` kao `Map<agentId, patch>` — **jednu** zakrpu po agentu za cio
+proces. Zato `§8` (tačka 5) nije teorijska: multi-tenant deploy je danas **nesiguran** bez izmjene ključa
+mape na `tenantId:agentId`. Izolacija **podataka** nije pogođena (memorija/audit/trošak ostaju po
+`tenantId`); pogođena je izolacija **ponašanja** agenta.
 
 **3. K8s (`infra/k8s/base/`).** `namespace.yaml` (Namespace `nmq-system` sa
 `pod-security.kubernetes.io/enforce: restricted`, `ResourceQuota`, `LimitRange`), `deployment.yaml`
@@ -340,17 +357,23 @@ su pripremljeni za zamjenu.
    (`tests/max.test.mjs`), a ne kao način prijave na API.
 7. **Nema K8s operatora, Helm charta, ni per-tenant namespace šablona**; `NetworkPolicy` ne postoji.
 8. **Nema RLS-a** — izolacija baze je planirana (`docs/02` §4), trenutno je fizička po folderu.
-9. **Nema dashboarda**; operater koristi `/v1/admin/*`, `journalctl` i `GET /metrics`.
-10. **Cijene modela su konstanta u kodu** (`src/observability/cost.js`, `PRICING`) — moraju se ručno
+9. **Odobrenja koja čekaju ne preživljavaju restart** (`pendingApprovals` je `Map` u `src/server/routes.js`,
+   TTL 24 h) — poslije restarta `POST /v1/approvals/:runId` vraća 404.
+10. **Nema dashboarda**; operater koristi `/v1/admin/*`, `journalctl` i `GET /metrics`.
+11. **Cijene modela su konstanta u kodu** (`src/observability/cost.js`, `PRICING`) — moraju se ručno
     provjeravati; nema `data/_global/pricing.json` sa `checkedAt`.
-11. **`process_update` ne dobija `jobId` automatski.** Alat čita `args.jobId ?? ctx.jobId`
-    (`src/tools/builtin.js`), a scheduler ne postavlja `ctx.jobId`, pa agent mora sam da zna `jobId`
-    ili ga dobiti kroz `patternConfig`; inače baca `ValidationError`.
-12. **MCP HTTP zaglavlja se ne interpolišu** — `"Bearer ${NMQ_INTERNAL_MCP_TOKEN}"` u `config/tools.json`
+12. **`process_update` dobija `jobId` iz konteksta** — scheduler ga prosljeđuje kroz
+    `options.jobId` (+ `patternConfig.jobId`), a `src/orchestration/index.js` ga stavlja u
+    `ctx.jobId = options.jobId ?? options.patternConfig?.jobId ?? null`. Alat i dalje prihvata
+    `args.jobId` kao jači izvor (`args.jobId ?? ctx.jobId`), pa ručno pokretanje van joba mora
+    proslijediti `jobId`.
+13. **MCP HTTP zaglavlja se ne interpolišu** — `"Bearer ${NMQ_INTERNAL_MCP_TOKEN}"` u `config/tools.json`
     ostaje literalni string (`src/tools/mcp-http.js` ne radi interpolaciju env varijabli).
-13. **Nema evaluacije kvaliteta** (zlatni set) i nema alert pravila, iako metrike postoje.
-14. **Nema brisanja istorije/retention politike** za `traces/`, `usage/`, `runs-*.jsonl` — rastu dok se
+14. **Nema evaluacije kvaliteta** (zlatni set) i nema alert pravila, iako metrike postoje.
+15. **Nema brisanja istorije/retention politike** za `traces/`, `usage/`, `runs-*.jsonl` — rastu dok se
     nešto ne obriše ručno.
+16. **Broj ugrađenih alata je 20** (`src/tools/builtin.js`), a `DECISIONS.md` §7 tvrdi 21 — treba
+    uskladiti jedan od dva dokumenta (kod je kanonski).
 
 ---
 

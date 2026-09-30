@@ -152,9 +152,9 @@ Odluke koje iz ovoga slijede (i važe za oba sloja):
 
 | Sposobnost | Status | Dokaz |
 |---|---|---|
-| Gateway (REST, SSE, webhook, CORS, rate limit, metrike) | ✅ | `scripts/smoke.mjs` 13/13 |
-| 6 patterna + direktan agent + ruter bez LLM-a | ✅ | `tests/patterns.test.mjs` |
-| 13 agenata (podaci) + 21 ugrađen alat | ✅ | `node src/cli.js agents/tools` |
+| Gateway (REST, SSE, webhook, CORS, rate limit, metrike) | ✅ | `scripts/smoke.mjs` 21/21 |
+| 11 ulaza: `agent`/`react` + ruter + 8 patterna | ✅ | `tests/patterns.test.mjs`, `tests/max.test.mjs` |
+| 19 agenata (podaci) + 20 ugrađenih alata | ✅ | `node src/cli.js agents/tools` |
 | MCP klijent (stdio + HTTP) + interni MCP šablon | ✅ | `tests/tools.test.mjs` |
 | Memorija: sesija, istorija/facts, RAG sa citatima | ✅ | `tests/memory.test.mjs` |
 | Izolacija tenanta (fizički + logički + normalizacija metadata) | ✅ | `tests/memory.test.mjs`, `tests/server.test.mjs` |
@@ -163,6 +163,12 @@ Odluke koje iz ovoga slijede (i važe za oba sloja):
 | Cost tracking po tenantu/agentu/modelu | ✅ | `tests/observability.test.mjs` |
 | Hash-chained audit + verifikacija | ✅ | `node src/cli.js audit-verify` |
 | Prometheus metrike | ✅ | `GET /metrics` |
+| Persistentni agenti (scheduler, cron, event triggeri, procesi) | ✅ | `tests/max.test.mjs` |
+| Kontrolna ravan (deploy/rollback/pauza, ključevi, budžeti) | ✅ | `tests/max.test.mjs`, `tests/revision.test.mjs` |
+| Epizodična memorija (učenje + GDPR brisanje) | ✅ | `tests/max.test.mjs`, `tests/revision.test.mjs` |
+| Sandbox (mreža/FS/env, symlink, produkcijske brave) | ✅ | `tests/max.test.mjs`, `tests/revision.test.mjs` |
+| OTLP izvoz + metrike poslova/kontrolne ravni | ✅ | `tests/max.test.mjs`, `tests/revision.test.mjs` |
+| K8s manifesti + alerti + Grafana dashboard | ✅ (nije izvršeno na klasteru) | `infra/k8s/`, `infra/observability/` |
 | AES-256-GCM tajne po tenantu | ✅ | `tests/observability.test.mjs` |
 | Widget za embed (Shadow DOM, SSE, feedback) | ✅ | `public/widget/nmq-robot.js`, demo stranica |
 | **Dashboard** | ❌ planirano (faza 3, `07`) | — |
@@ -190,6 +196,10 @@ Odluke koje iz ovoga slijede (i važe za oba sloja):
 | D30 | Telemetrija | **OTLP/JSON izvoz** (`src/observability/otel.js`): fajl `data/_global/otel-traces.jsonl` i/ili HTTP na `${OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`; greška izvoza ne ruši run | Radi bez kolektora, a spaja se na Tempo/Jaeger čim postoji |
 | D31 | Tenancy u K8s | SaaS (dijeljen proces + `tenantId`) **ili** namespace po klijentu (`infra/k8s/tenant-template/`) | Dva režima za dva tipa klijenta; isti image |
 | D32 | Prva zavisnost | I dalje `dependencies: {}` — uključujući scheduler, control plane, OTLP, sandbox i K8s manifeste | Nema `npm install`, nema build-a, nema supply-chain rizika |
+| D33 | Override po tenantu | `catalog.setOverride(tenantId, agentId, patch)`; `catalog.get(id, tenantId)` i `catalog.view(tenantId)`; orchestration dobija `ctx.catalog` (view svog tenanta) | Deploy za jednog klijenta **ne smije** promijeniti ponašanje agenta drugom klijentu u istom procesu (dokazano testom `tests/revision.test.mjs`) |
+| D34 | Produkcijske brave | Bez `NMQ_MASTER_KEY` nema rada u produkciji (nema dev fallback-a); `NMQ_MASTER_KEY` < 16 znakova se odbija; sandbox nivo `none` je zabranjen u produkciji; poslan a nepoznat/opozvan API ključ **nikad** ne pada na anonimusa | Tri tihe „zubate" postavke su isključene (javni dev KEK, isključen sandbox, anonimni fallback) |
+| D35 | Trajnost i zahlađenje | Atomiski upisi koriste jedinstveno ime temp fajla; `createRobot` radi warm-up job store-a za sve tenantе; `GET /v1/runs/:runId` čita i sa diska i provjerava `tenantId` (tuđi run → 404 + `nmq_tenant_mismatch_total`) | Preživljavanje restarta i izolacija moraju važiti i za poslove i za trace, ne samo za memoriju |
+| D36 | Cijena nepoznatog modela | `computeCost` vraća `priceSource` (`exact`/`prefix`/`fallback`); fallback se broji u `nmq_pricing_fallback_total` i loguje kao upozorenje | Nema tihog obračuna po pogrešnoj tarifi — marža se ne može „izgubiti u tišini" |
 
-**Stanje dokaza (v0.2.0):** `node --test` → **106/106**, `node scripts/demo.mjs` → 16 sekcija bez greške,
-`node scripts/smoke.mjs` → 13/13, `node src/cli.js audit-verify` → lanac ispravan.
+**Stanje dokaza (v0.2.1):** `node --test` → **126/126**, `node scripts/demo.mjs` → 16 sekcija bez greške,
+`node scripts/smoke.mjs` → 21/21, `node src/cli.js audit-verify` → lanac ispravan.

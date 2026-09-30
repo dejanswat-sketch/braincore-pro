@@ -10,6 +10,8 @@ export function envConfig(env = process.env) {
     publicUrl: env.NMQ_PUBLIC_URL || `http://${env.NMQ_HOST || '127.0.0.1'}:${parseNumber(env.NMQ_PORT, 8787)}`,
     dataDir: env.NMQ_DATA_DIR || './data',
     logLevel: env.NMQ_LOG_LEVEL || 'info',
+    nodeEnv: env.NODE_ENV || '',
+    nmqEnv: env.NMQ_ENV || '',
     defaultTenant: env.NMQ_DEFAULT_TENANT || 'nmq',
     allowAnonymous: parseBool(env.NMQ_ALLOW_ANONYMOUS, true),
     masterKey: env.NMQ_MASTER_KEY || '',

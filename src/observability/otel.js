@@ -8,6 +8,7 @@
  * Konvencija atributa: `nmq.tenant`, `nmq.agent`, `nmq.pattern`, `nmq.run_id`, `nmq.cost_usd`, `gen_ai.*`.
  */
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { appendText } from '../core/fsx.js';
 import { iso } from '../core/clock.js';
 
@@ -24,8 +25,13 @@ export function createOtelExporter({
   const traceFile = dataDir ? path.join(dataDir, '_global', 'otel-traces.jsonl') : null;
   let exported = 0;
 
-  const hex = (id) => String(id ?? '').replace(/[^a-f0-9]/gi, '').padEnd(32, '0').slice(0, 32);
-  const spanId = (id) => String(id ?? '').replace(/[^a-f0-9]/gi, '').padEnd(16, '0').slice(0, 16);
+  /**
+   * OTLP traži hex ID-jeve (trace 32, span 16 znakova).
+   * Naši ID-jevi su base36 (npr. trace_0munv…) — zato se heširaju, a NE filtriraju:
+   * filtriranje bi izgubilo slova g-z i pokvarilo korelaciju u Tempo/Jaeger-u.
+   */
+  const hex = (id, len = 32) => createHash('sha256').update(String(id ?? '')).digest('hex').slice(0, len);
+  const spanId = (id) => hex(id, 16);
 
   function toOtlp(run) {
     const startMs = new Date(run.startedAt).getTime();

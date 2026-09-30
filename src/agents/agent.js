@@ -219,6 +219,7 @@ export function createAgentRunner(services) {
         await memory.episodic.record(tenantId, {
           agentId: spec.id,
           runId: ctx.runId,
+          userId: ctx.userId ?? null,
           problem: userText,
           actions: steps.map((s) => (s.type === 'tool' ? `alat:${s.name}` : `llm#${s.step ?? ''}`)).slice(0, 12),
           solution: output,

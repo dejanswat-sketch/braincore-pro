@@ -15,7 +15,7 @@ import { createBudget } from '../core/budget.js';
 import { NotFoundError, ValidationError, PolicyError } from '../core/errors.js';
 
 /**
- * 10 ulaza: `agent` (ReAct petlja) i `react` (alias), `router`, `sequential`, `orchestrator-worker`,
+ * 11 ulaza: `agent` (ReAct petlja) i `react` (alias), `router`, `sequential`, `orchestrator-worker`,
  * `fanout`, `handoff`, `magentic`, `reflection`, `debate`, `team`.
  */
 export const PATTERNS = ['agent', 'react', 'router', 'sequential', 'orchestrator-worker', 'fanout', 'handoff', 'magentic', 'reflection', 'debate', 'team'];
@@ -46,7 +46,7 @@ export function createOrchestrator(services) {
     agent: {
       name: 'agent',
       run: async ({ input, ctx }) => {
-        const spec = catalog.get(ctx.agentId) ?? catalog.get('support');
+        const spec = (ctx.catalog ?? catalog).get(ctx.agentId) ?? (ctx.catalog ?? catalog).get('support');
         const res = await runAgent(spec, input, ctx);
         return { output: res.output, status: res.status, results: [res], usage: res.usage, costUsd: res.costUsd, approvals: res.approvals, handoffs: res.handoffs };
       },
@@ -77,13 +77,15 @@ export function createOrchestrator(services) {
 
     const tenant = config.tenant(tenantId);
     if (!tenant) throw new NotFoundError('Tenant', tenantId);
-    if (agentId && !catalog.get(agentId)) throw new NotFoundError('Agent', agentId);
+    // Per-tenant pogled na katalog: override (deploy) jednog klijenta ne dira druge klijente
+    const tCatalog = catalog.view ? catalog.view(tenantId) : catalog;
+    if (agentId && !tCatalog.get(agentId)) throw new NotFoundError('Agent', agentId);
     assertAgentAllowed(tenant, agentId);
     // Per-agent identitet i budžet (control plane) — agent ne smije potrošiti više od svog mjesečnog limita
     if (services.controlPlane?.assertAgentBudget) await services.controlPlane.assertAgentBudget(tenantId, agentId ?? 'router');
 
     const requestedPattern = req.pattern && PATTERNS.includes(req.pattern) ? req.pattern : null;
-    const agentSpec = agentId ? catalog.get(agentId) : null;
+    const agentSpec = agentId ? tCatalog.get(agentId) : null;
     const initialPattern = requestedPattern ?? agentSpec?.defaultPattern ?? 'router';
 
     const policy = policyResolver(tenantId, { agentId: agentId ?? undefined });
@@ -119,12 +121,14 @@ export function createOrchestrator(services) {
       pattern: initialPattern,
       approvedTools: normalizeApprovals(approvedTools),
       blackboard: options.blackboard ?? {},
+      catalog: tCatalog,
       memory: services.memory ?? null,
       tools,
       llm: services.llm ?? null,
       helpers,
       sandbox: services.sandbox ?? null,
       options,
+      jobId: options.jobId ?? options.patternConfig?.jobId ?? null,
       budgetPerRunUsd: options.maxRunUsd,
       onEvent: typeof onEvent === 'function' ? onEvent : undefined,
       monthlySpentUsd: spentThisMonth,
@@ -138,7 +142,7 @@ export function createOrchestrator(services) {
     try {
       if (initialPattern === 'router') {
         routing = await services.router.classify(input, { tenantId, useLlm: options.useLlmRouter !== false, signal, model: options.routerModel });
-        const chosen = catalog.get(routing.agentId) ?? catalog.get('support');
+        const chosen = tCatalog.get(routing.agentId) ?? tCatalog.get('support');
         assertAgentAllowed(tenant, chosen.id);
         if (services.controlPlane?.assertAgentBudget) await services.controlPlane.assertAgentBudget(tenantId, chosen.id);
         usedPattern = chosen.defaultPattern && chosen.defaultPattern !== 'router' ? chosen.defaultPattern : 'agent';
@@ -152,7 +156,7 @@ export function createOrchestrator(services) {
         span.end({ candidates: routing.candidates?.length ?? 0 });
         result = await patterns[usedPattern].run({ input, ctx, config: patternConfigFor(chosen, usedPattern, options) });
       } else {
-        const spec = agentSpec ?? catalog.get('support');
+        const spec = agentSpec ?? tCatalog.get('support');
         ctx.agentId = spec.id;
         budget.setMaxSteps(baseMaxSteps * (PATTERN_STEP_BUDGET[initialPattern] ?? 1));
         result = await patterns[initialPattern].run({ input, ctx, config: { ...patternConfigFor(spec, initialPattern, options), ...(options.patternConfig ?? {}) } });

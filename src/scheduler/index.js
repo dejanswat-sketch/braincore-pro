@@ -12,7 +12,8 @@
 import { iso } from '../core/clock.js';
 import { uid } from '../core/ids.js';
 import { BudgetExceededError, ApprovalRequiredError, PolicyError } from '../core/errors.js';
-import { nextCronAt, describeSchedule } from './cron.js';
+import { nextCronAt, describeSchedule, validateCron } from './cron.js';
+import { ValidationError } from '../core/errors.js';
 
 const DEFAULT_LEASE_MS = 60_000;
 
@@ -111,7 +112,9 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
         sessionId: job.sessionId ?? `job_${job.id}`,
         options: {
           maxRunUsd: job.budgetPerRunUsd,
-          patternConfig: { ...(job.patternConfig ?? {}), ...contextExtra },
+          // jobId ide agentu — bez toga alat `process_update` ne zna koji proces pomjera
+          jobId: job.id,
+          patternConfig: { ...(job.patternConfig ?? {}), jobId: job.id, ...contextExtra },
         },
         approvedTools: job.approvedTools,
       });
@@ -119,6 +122,9 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
       const success = result.status === 'ok' || result.status === 'awaiting_approval';
       const patch = {
         runs: (job.runs ?? 0) + 1,
+        attempts: 0, // uspjeh resetuje brojač pokušaja
+        status: 'ok',
+        lastError: null,
         lastRunAt: iso(),
         lastRunId: result.runId,
         lastStatus: result.status,
@@ -128,22 +134,32 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
       };
 
       if (job.type === 'process') {
-        const done = [...(job.process?.done ?? []), contextExtra.stepIndex];
+        // Agent je u toku run-a mogao sam promijeniti proces (alat process_update) — ne gazimo njegove izmjene
+        const fresh = (await store.get(tenantId, job.id)) ?? job;
+        const agentTouched = Boolean(fresh.updatedAt && new Date(fresh.updatedAt).getTime() > startedAt);
+        const baseProcess = agentTouched ? (fresh.process ?? {}) : (job.process ?? {});
+        const done = [...new Set([...(baseProcess.done ?? []), contextExtra.stepIndex])];
         const remaining = (job.process?.steps ?? []).length - done.length;
+        const agentState = baseProcess.state && !['pending', 'in_progress'].includes(baseProcess.state) ? baseProcess.state : null;
         patch.process = {
-          ...(job.process ?? {}),
+          ...baseProcess,
           done,
-          state: remaining > 0 ? 'in_progress' : 'awaiting_final',
-          log: [...(job.process?.log ?? []).slice(-20), { ts: iso(), step: contextExtra.stepName, runId: result.runId, status: result.status }],
+          state: agentState ?? (remaining > 0 ? 'in_progress' : 'awaiting_final'),
+          log: [...(baseProcess.log ?? []).slice(-20), { ts: iso(), step: contextExtra.stepName, runId: result.runId, status: result.status }],
         };
-        patch.nextRunAt = remaining > 0 ? now() + Number(job.process?.stepDelayMs ?? 0) : null;
+        const agentPostponed = agentTouched && fresh.nextRunAt && fresh.nextRunAt > now();
+        patch.nextRunAt = agentPostponed ? fresh.nextRunAt : remaining > 0 ? now() + Number(job.process?.stepDelayMs ?? 0) : null;
         if (remaining === 0) patch.status = 'completed';
       } else {
         patch.nextRunAt = job.schedule?.type === 'once' ? null : computeNextRun(job);
       }
 
       if (result.status === 'awaiting_approval') {
+        // ⚠️ Raspored se ZAUSTAVLJA dok čovjek ne odobri — inače bi se isti posao izvršio dvaput
+        // (jednom kroz odobrenje, jednom po rasporedu). Nastavak: POST /v1/admin/jobs/:id/resume
         patch.status = 'waiting_approval';
+        patch.nextRunAt = null;
+        patch.pausedReason = `čeka odobrenje: ${(result.approvals ?? []).map((a) => a.tool).join(', ')}`;
         metrics?.inc('jobs_waiting_approval_total', { tenant: tenantId, job: job.id });
       }
 
@@ -192,7 +208,8 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
         attempts,
         lastError: { message: err.message, code: err.code ?? 'UNKNOWN', at: iso() },
         status: retry ? 'retrying' : isPolicy ? 'blocked' : 'failed',
-        nextRunAt: retry ? now() + (job.retry?.backoffMs ?? 5000) * attempts : null,
+        // eksponencijalni backoff (max 10 min)
+        nextRunAt: retry ? now() + Math.min(600_000, (job.retry?.backoffMs ?? 5000) * 2 ** (attempts - 1)) : null,
         enabled: retry ? job.enabled !== false : false,
       };
       await releaseLease(tenantId, job.id, patch);
@@ -278,6 +295,20 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
     describeSchedule,
 
     async createJob(tenantId, spec) {
+      // Validacija rasporeda ODMAH — bolje greška pri kreiranju nego posao koji se nikad ne izvrši
+      if (spec.schedule?.type === 'cron') {
+        try {
+          validateCron(spec.schedule.cron);
+        } catch (err) {
+          throw new ValidationError(`Neispravan cron raspored: ${err.message}`, { cron: spec.schedule.cron });
+        }
+      }
+      if (spec.schedule && !['once', 'interval', 'cron'].includes(spec.schedule.type)) {
+        throw new ValidationError(`Nepoznat tip rasporeda: "${spec.schedule.type}" (dozvoljeno: once, interval, cron)`);
+      }
+      if (spec.schedule?.type === 'interval' && !(Number(spec.schedule.everyMs) > 0)) {
+        throw new ValidationError('Raspored "interval" traži "everyMs" veći od nule');
+      }
       const job = {
         id: spec.id ?? uid('job'),
         tenantId,
@@ -351,7 +382,7 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
       for (const tenantId of store.tenantsWithJobs()) {
         const jobs = await store.list(tenantId, { enabledOnly: true });
         for (const job of jobs) {
-          const match = (job.triggers ?? []).some((t) => t.type === 'event' && (t.event === event || t.event === '*'));
+          const match = (job.triggers ?? []).some((t) => t.type === 'event' && matchesEvent(t.event, event));
           if (!match) continue;
           const key = `${tenantId}:${job.id}`;
           if (runningJobs.has(key)) continue;
@@ -372,8 +403,15 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
   };
 }
 
-function renderTemplate(template, payload) {
-  return String(template).replace(/\{\{\s*([\w.]+)\s*\}\}/g, (m, path) => {
+/** Poklapanje događaja: tačno ime, '*' (svi) ili prefiks wildcard 'hook.*'. */
+function matchesEvent(pattern, event) {
+  if (!pattern) return false;
+  if (pattern === '*' || pattern === event) return true;
+  if (pattern.endsWith('.*')) return String(event).startsWith(pattern.slice(0, -1));
+  return false;
+}
+
+function renderTemplate(template, payload) {  return String(template).replace(/\{\{\s*([\w.]+)\s*\}\}/g, (m, path) => {
     const value = path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), payload);
     return value === undefined || value === null ? m : typeof value === 'string' ? value : JSON.stringify(value);
   });

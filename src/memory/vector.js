@@ -100,6 +100,21 @@ export function createVectorStore({ dataDir, embeddings, logger, defaultDim = 38
       return bucket(tenantId).delete(id);
     },
 
+    /** Briše sve zapise koji zadovoljavaju filter (npr. { userId } ili { docId }) — za GDPR. */
+    async removeByMetadata(tenantId, filter = {}) {
+      await ensureLoaded(tenantId);
+      const b = bucket(tenantId);
+      let removed = 0;
+      for (const [id, doc] of [...b.entries()]) {
+        if (matchFilter(doc.metadata, filter)) {
+          b.delete(id);
+          removed += 1;
+        }
+      }
+      if (removed) logger?.warn?.('vector.remove_by_metadata', { tenantId, removed, filter: Object.keys(filter) });
+      return { removed, filter };
+    },
+
     async count(tenantId) {
       await ensureLoaded(tenantId);
       return bucket(tenantId).size;

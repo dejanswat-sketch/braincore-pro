@@ -73,11 +73,18 @@ export function createRequestHandler({ routes, robot, logger, metrics, config, t
       let auth = { tenantId: null, role: 'viewer', keyId: null, auth: 'public' };
       if (route.auth !== false) {
         const apiKey = extractKey(req);
-        auth = tenants.authenticate({
-          apiKey,
-          tenantHint: req.headers['x-tenant'] ?? body?.tenantId ?? query.tenant,
-          required: route.auth === 'required' || config.requireAuth,
-        });
+        // 1) per-agent (service account) ključ — `nmqa_…`
+        const agentAuth = apiKey ? robot.controlPlane?.authenticateAgentKey?.(apiKey) : null;
+        if (agentAuth) {
+          auth = { ...agentAuth };
+          metrics?.inc('requests_by_agent_key_total', { tenant: auth.tenantId, agent: auth.agentId });
+        } else {
+          auth = tenants.authenticate({
+            apiKey,
+            tenantHint: req.headers['x-tenant'] ?? body?.tenantId ?? query.tenant,
+            required: route.auth === 'required' || config.requireAuth,
+          });
+        }
         if (tenants.isSuspended(auth.tenantId)) throw new NmqError('Tenant je suspendovan', { code: 'TENANT_SUSPENDED', status: 403 });
       }
 

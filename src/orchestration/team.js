@@ -25,10 +25,11 @@ export const DEFAULT_STAGES = [
 
 export function createTeamPattern({ runAgent, catalog, helpers, logger }) {
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const task = typeof input === 'string' ? input : JSON.stringify(input);
     const stages = (config.stages ?? DEFAULT_STAGES).filter((s) => !(config.skip ?? []).includes(s.role));
-    const available = stages.filter((s) => catalog.get(s.agent));
-    const missing = stages.filter((s) => !catalog.get(s.agent)).map((s) => s.agent);
+    const available = stages.filter((s) => cat.get(s.agent));
+    const missing = stages.filter((s) => !cat.get(s.agent)).map((s) => s.agent);
 
     ctx.onEvent?.({ type: 'team_start', stages: available.map((s) => `${s.role}:${s.agent}`), missing });
 
@@ -41,7 +42,7 @@ export function createTeamPattern({ runAgent, catalog, helpers, logger }) {
     const maxStageUsd = config.maxStageUsd;
 
     for (const stage of available) {
-      const spec = catalog.get(stage.agent);
+      const spec = cat.get(stage.agent);
       const vars = { ...blackboard, previous: results.at(-1)?.output ?? task };
       const stageInput = typeof stage.input === 'string' ? interpolateDeep(stage.input, vars) : stage.input ?? task;
 

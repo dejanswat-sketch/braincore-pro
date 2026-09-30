@@ -12,6 +12,8 @@ export const ROLES = {
   owner: ['*'],
   admin: ['run', 'read', 'write', 'approve', 'manage-kb'],
   operator: ['run', 'read', 'approve'],
+  // Service account jednog agenta: smije da izvršava i čita, ne smije u kontrolnu ravan
+  agent: ['run', 'read'],
   viewer: ['read'],
 };
 
@@ -20,6 +22,7 @@ export const TENANT_ID_RE = /^[a-z0-9][a-z0-9_-]{1,31}$/;
 export function createTenantStore({ config, dataDir, logger, env = {} } = {}) {
   const rates = new Map(); // tenantId -> timestamps[]
   const suspended = new Map();
+  let warnedDevKey = false;
 
   const tenantDir = (tenantId) => path.join(dataDir, 'tenants', tenantId);
   const statusFile = (tenantId) => path.join(tenantDir(tenantId), 'status.json');
@@ -35,8 +38,33 @@ export function createTenantStore({ config, dataDir, logger, env = {} } = {}) {
     return createHash('sha256').update(`${env.apiKeyPepper ?? process.env.NMQ_API_KEY_PEPPER ?? 'nmq-robot'}:${key}`).digest('hex');
   }
 
+  function isProduction() {
+    return (env.nodeEnv ?? process.env.NODE_ENV) === 'production' || (env.nmqEnv ?? process.env.NMQ_ENV) === 'production';
+  }
+
+  /**
+   * Izvodi ključ za šifrovanje tajni tenanta.
+   * ⚠️ U produkciji NEMA fallback-a — bez `NMQ_MASTER_KEY` se tenant tajne ne smiju ni čitati ni pisati
+   * (ranije je tiho korišćen javni dev ključ, što bi značilo da su sve tajne praktično otvorene).
+   */
   function deriveMasterKey(tenantId) {
-    const material = env.masterKey || process.env.NMQ_MASTER_KEY || 'nmq-dev-master-key';
+    const material = env.masterKey || process.env.NMQ_MASTER_KEY || '';
+    if (!material) {
+      if (isProduction()) {
+        throw new NmqError('NMQ_MASTER_KEY nije postavljen — u produkciji je obavezan (tajne tenanta se ne mogu čitati/pisati)', {
+          code: 'MASTER_KEY_MISSING',
+          status: 500,
+        });
+      }
+      if (!warnedDevKey) {
+        warnedDevKey = true;
+        logger?.warn?.('tenant.dev_master_key_in_use', { hint: 'Postavi NMQ_MASTER_KEY — u produkciji ovo je tvrda greška' });
+      }
+      return scryptSync('nmq-dev-master-key', `nmq-tenant:${tenantId}`, 32);
+    }
+    if (material.length < 16) {
+      throw new NmqError('NMQ_MASTER_KEY je prekratak (minimum 16 znakova; preporuka 32 bajta u hex-u)', { code: 'MASTER_KEY_WEAK', status: 500 });
+    }
     return scryptSync(material, `nmq-tenant:${tenantId}`, 32);
   }
 
@@ -58,22 +86,25 @@ export function createTenantStore({ config, dataDir, logger, env = {} } = {}) {
      * Ako tenant nema definisanih ključeva, a NMQ_ALLOW_ANONYMOUS nije isključen → vraća default tenant (dev režim).
      */
     authenticate({ apiKey, tenantHint, required = config.requireAuth }) {
-      const hashes = hashKey(apiKey ?? '');
-      for (const tenant of config.tenants) {
-        for (const key of tenant.apiKeys ?? []) {
-          const a = Buffer.from(hashes);
-          const b = Buffer.from(key.hash ?? '');
-          if (a.length === b.length && timingSafeEqual(a, b)) {
-            if (suspended.get(tenant.id) || tenant.suspended) throw new AuthError(`Tenant ${tenant.id} je suspendovan`);
-            return { tenantId: tenant.id, role: key.role ?? 'operator', keyId: key.id ?? 'key', auth: 'api-key' };
+      if (apiKey) {
+        const hashes = hashKey(apiKey);
+        for (const tenant of config.tenants) {
+          for (const key of tenant.apiKeys ?? []) {
+            const a = Buffer.from(hashes);
+            const b = Buffer.from(key.hash ?? '');
+            if (a.length === b.length && timingSafeEqual(a, b)) {
+              if (suspended.get(tenant.id) || tenant.suspended) throw new AuthError(`Tenant ${tenant.id} je suspendovan`);
+              return { tenantId: tenant.id, role: key.role ?? 'operator', keyId: key.id ?? 'key', auth: 'api-key' };
+            }
           }
         }
+        // ⚠️ Ključ je poslan ali ne postoji (ili je opozvan) — NIKAD se ne pada na anoniman pristup
+        throw new AuthError('Nepoznat ili opozvan API ključ');
       }
       if (!required && (config.env.allowAnonymous || tenantHint)) {
         const tenantId = tenantHint || config.env.defaultTenant;
         if (config.tenant(tenantId)) return { tenantId, role: 'owner', keyId: 'anonymous', auth: 'anonymous' };
       }
-      if (apiKey) throw new AuthError('Nepoznat ili opozvan API ključ');
       if (required) throw new AuthError('Nedostaje API ključ (Authorization: Bearer <ključ>)');
       return { tenantId: config.env.defaultTenant, role: 'owner', keyId: 'anonymous', auth: 'anonymous' };
     },

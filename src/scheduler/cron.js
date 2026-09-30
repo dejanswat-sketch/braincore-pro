@@ -18,19 +18,64 @@ export function cronMatches(expr, date = new Date()) {
 function fieldMatches(pattern, value) {
   if (pattern === '*') return true;
   for (const part of String(pattern).split(',')) {
-    if (part.startsWith('*/')) {
-      const step = Number(part.slice(2));
-      if (step > 0 && value % step === 0) return true;
+    const token = part.trim();
+    if (token.startsWith('*/')) {
+      const step = Number(token.slice(2));
+      if (!Number.isInteger(step) || step <= 0) throw new Error(`Neispravan korak u cron izrazu: "${token}"`);
+      if (value % step === 0) return true;
       continue;
     }
-    if (part.includes('-')) {
-      const [a, b] = part.split('-').map(Number);
-      if (Number.isFinite(a) && Number.isFinite(b) && value >= a && value <= b) return true;
+    if (token.includes('-')) {
+      const [a, b] = token.split('-').map((x) => Number(x.trim()));
+      if (!Number.isInteger(a) || !Number.isInteger(b)) throw new Error(`Neispravan raspon u cron izrazu: "${token}"`);
+      if (value >= a && value <= b) return true;
       continue;
     }
-    if (Number(part) === value) return true;
+    const num = Number(token);
+    if (!Number.isInteger(num)) {
+      // Imenovani mjeseci/dani (JAN, MON) namjerno NISU podržani — bolje glasna greška nego tiha.
+      throw new Error(`Nepoznat cron token: "${token}" (podržano: brojevi, *, liste, rasponi, */n)`);
+    }
+    if (num === value) return true;
   }
   return false;
+}
+
+/** Dozvoljeni opsezi po polju: minut, sat, dan u mjesecu, mjesec, dan u nedjelji. */
+const FIELD_RANGES = [
+  [0, 59],
+  [0, 23],
+  [1, 31],
+  [1, 12],
+  [0, 7],
+];
+
+/** Provjera izraza prije upotrebe — sintaksna, baca grešku sa objašnjenjem. */
+export function validateCron(expr) {
+  const parts = String(expr ?? '').trim().split(/\s+/);
+  if (parts.length !== 5) throw new Error(`Neispravan cron izraz: "${expr}" (očekivano 5 polja: minut sat dan mjesec dan-nedjelje)`);
+  parts.forEach((field, i) => {
+    const [min, max] = FIELD_RANGES[i];
+    for (const rawToken of field.split(',')) {
+      const token = rawToken.trim();
+      if (token === '*') continue;
+      if (token.startsWith('*/')) {
+        const step = Number(token.slice(2));
+        if (!Number.isInteger(step) || step <= 0) throw new Error(`Neispravan korak "${token}" u polju ${i + 1}`);
+        continue;
+      }
+      if (token.includes('-')) {
+        const [a, b] = token.split('-').map((x) => Number(x.trim()));
+        if (!Number.isInteger(a) || !Number.isInteger(b)) throw new Error(`Neispravan raspon "${token}" u polju ${i + 1}`);
+        if (a < min || b > max || a > b) throw new Error(`Raspon "${token}" je izvan opsega ${min}-${max} (polje ${i + 1})`);
+        continue;
+      }
+      const num = Number(token);
+      if (!Number.isInteger(num)) throw new Error(`Nepoznat token "${token}" u polju ${i + 1} (imena mjeseci/dana nisu podržana)`);
+      if (num < min || num > max) throw new Error(`Vrijednost ${num} je izvan opsega ${min}-${max} (polje ${i + 1})`);
+    }
+  });
+  return true;
 }
 
 /** Sljedeći trenutak koji zadovoljava cron, počev od `from` (isključivo). */

@@ -20,10 +20,14 @@ export async function readJson(file, fallback = null) {
   }
 }
 
+/** Jedinstveno ime privremenog fajla — sprječava sudar dva paralelna upisa (ENOENT na rename). */
+let tmpCounter = 0;
+const tmpName = (file) => `${file}.${process.pid}.${(tmpCounter += 1).toString(36)}${Math.random().toString(36).slice(2, 6)}.tmp`;
+
 /** Atomski upis (tmp + rename) — da prekid ne ostavi polovičan fajl. */
 export async function writeJson(file, value, { pretty = true } = {}) {
   await ensureDir(path.dirname(file));
-  const tmp = `${file}.${process.pid}.tmp`;
+  const tmp = tmpName(file);
   await fsp.writeFile(tmp, JSON.stringify(value, null, pretty ? 2 : 0), 'utf8');
   await fsp.rename(tmp, file);
   return file;
@@ -38,6 +42,15 @@ export async function appendJsonl(file, record) {
 export async function appendText(file, text) {
   await ensureDir(path.dirname(file));
   await fsp.appendFile(file, text, 'utf8');
+}
+
+/** Atomski upis sirovog teksta (npr. prepisivanje JSONL-a bez obrisanih zapisa). */
+export async function writeTextFile(file, text) {
+  await ensureDir(path.dirname(file));
+  const tmp = tmpName(file);
+  await fsp.writeFile(tmp, text, 'utf8');
+  await fsp.rename(tmp, file);
+  return file;
 }
 
 const readLines = (raw) =>

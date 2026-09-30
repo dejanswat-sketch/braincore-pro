@@ -10,6 +10,7 @@
  */
 export function createFanoutPattern({ runAgent, catalog, helpers, logger }) {
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const workers = Array.isArray(config.workers) && config.workers.length ? config.workers : [{ agent: ctx.agentId, angle: 'general' }];
     const concurrency = Math.max(1, Math.min(config.concurrency ?? 4, 8));
     const merge = config.merge ?? (workers.length > 1 ? 'synthesis' : 'concat');
@@ -17,7 +18,7 @@ export function createFanoutPattern({ runAgent, catalog, helpers, logger }) {
     ctx.onEvent?.({ type: 'fanout_start', count: workers.length, concurrency, merge });
 
     const tasks = workers.map((w, index) => async () => {
-      const spec = catalog.get(w.agent);
+      const spec = cat.get(w.agent);
       if (!spec) return { index, agent: w.agent, ok: false, error: `nepoznat agent ${w.agent}` };
       const angle = w.angle ? `\n\nUgao analize: ${w.angle}` : '';
       ctx.onEvent?.({ type: 'worker_start', index, agent: spec.id, angle: w.angle });

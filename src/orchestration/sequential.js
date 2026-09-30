@@ -15,10 +15,11 @@ import { interpolate, interpolateDeep } from '../core/config-utils.js';
 
 export function createSequentialPattern({ runAgent, catalog, tools, helpers, logger }) {
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const steps = config.steps ?? [];
     if (!steps.length) {
       // default: jedan agent (agent iz ctx-a)
-      const spec = catalog.get(ctx.agentId) ?? catalog.get('support');
+      const spec = cat.get(ctx.agentId) ?? cat.get('support');
       const res = await runAgent(spec, input, ctx);
       return { output: res.output, results: [res], usage: res.usage, costUsd: res.costUsd, approvals: res.approvals ?? [], handoffs: res.handoffs ?? [] };
     }
@@ -47,7 +48,7 @@ export function createSequentialPattern({ runAgent, catalog, tools, helpers, log
         continue;
       }
 
-      const spec = catalog.get(step.agent ?? ctx.agentId);
+      const spec = cat.get(step.agent ?? ctx.agentId);
       if (!spec) throw new Error(`sequential: nepoznat agent "${step.agent}"`);
       const stepInput = interpolate(step.input ?? '{{previous}}', vars);
       ctx.onEvent?.({ type: 'step_start', kind: 'agent', name: spec.id, index: i + 1 });

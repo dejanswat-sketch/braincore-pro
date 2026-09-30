@@ -235,9 +235,16 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
     {
       method: 'GET',
       path: '/v1/runs/:runId',
-      handler: async ({ params }) => {
-        const run = robot.tracer.get(params.runId);
+      handler: async ({ params, tenantId }) => {
+        let run = robot.tracer.get(params.runId);
+        if (!run) run = await robot.tracer.findOnDisk({ tenantId, runId: params.runId });
         if (!run) throw new NotFoundError('Run', params.runId);
+        // Tuđi run se NE otkriva (404, ne 403) — da se ne može ni potvrditi da postoji
+        if (run.tenantId !== tenantId) {
+          metrics?.inc('tenant_mismatch_total', { tenant: tenantId, runTenant: run.tenantId });
+          logger?.warn?.('run.tenant_mismatch', { tenantId, runTenant: run.tenantId, runId: params.runId });
+          throw new NotFoundError('Run', params.runId);
+        }
         return run;
       },
     },
@@ -350,19 +357,28 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
         const source = params.source.toLowerCase();
         const mapping = config.tenant(tenantId)?.hooks?.[source] ?? { agentId: HOOK_AGENTS[source] ?? 'support' };
         const input = normalizeHookInput(source, body);
-        const result = await executeRun({ body: { ...mapping, input, userId: body.userId ?? null }, tenantId, role });
 
         // Događaj ide i na event bus i u scheduler (persistentni agenti slušaju webhook-ove)
-        const event = { tenantId, source, input, receivedAt: iso(), runId: result.runId, body };
+        const event = { tenantId, source, input, receivedAt: iso(), body };
         robot.bus?.emit(`hook.${source}`, event);
         robot.bus?.emit('hook.*', event);
+
+        // `skipDirectRun` = webhook samo pokreće poslove (npr. dugoročne procese), bez direktnog run-a.
+        // Bez toga bi isti webhook napravio DVA izvršavanja (sinhrono + posao).
+        if (mapping.skipDirectRun) {
+          const jobsFired = robot.scheduler ? await robot.scheduler.triggerEvent(`hook.${source}`, event) : 0;
+          logger?.info?.('hook.triggered_only', { tenantId, source, jobs: jobsFired });
+          return { accepted: true, source, triggeredOnly: true, jobsTriggered: jobsFired };
+        }
+
+        const result = await executeRun({ body: { ...mapping, input, userId: body.userId ?? null }, tenantId, role });
+        event.runId = result.runId;
         if (robot.scheduler) {
-          robot.scheduler
-            .triggerEvent(`hook.${source}`, event)
-            .then((n) => {
-              if (n) logger?.info?.('hook.triggered_jobs', { tenantId, source, jobs: n });
-            })
-            .catch((err) => logger?.warn?.('hook.trigger_failed', { source, error: err.message }));
+          const jobsFired = await robot.scheduler.triggerEvent(`hook.${source}`, event).catch((err) => {
+            logger?.warn?.('hook.trigger_failed', { source, error: err.message });
+            return 0;
+          });
+          if (jobsFired) logger?.info?.('hook.triggered_jobs', { tenantId, source, jobs: jobsFired });
         }
         return { accepted: true, source, ...result };
       },

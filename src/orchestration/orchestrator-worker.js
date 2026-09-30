@@ -12,10 +12,11 @@ import { condenseList, runWithConcurrency } from './fanout.js';
 
 export function createOrchestratorWorkerPattern({ runAgent, catalog, helpers, logger, config: robotConfig }) {
   async function makePlan(input, ctx, cfg) {
+    const cat = ctx.catalog ?? catalog;
     if (Array.isArray(cfg.workers) && cfg.workers.length) return { goal: String(input), subtasks: cfg.workers, source: 'config' };
 
     const maxWorkers = cfg.maxWorkers ?? 5;
-    const table = catalog
+    const table = cat
       .routingTable()
       .map((a) => `- ${a.id} (${a.domain}): ${a.description}`)
       .join('\n');
@@ -42,7 +43,7 @@ export function createOrchestratorWorkerPattern({ runAgent, catalog, helpers, lo
       });
       const parsed = helpers.parseJson(res.text, null);
       const subtasks = (parsed?.subtasks ?? [])
-        .filter((s) => s?.goal && catalog.has(s.agent))
+        .filter((s) => s?.goal && cat.has(s.agent))
         .slice(0, maxWorkers)
         .map((s) => ({ agent: s.agent, goal: s.goal }));
       if (subtasks.length) return { goal: parsed?.goal ?? String(input), subtasks, source: 'llm' };
@@ -53,6 +54,7 @@ export function createOrchestratorWorkerPattern({ runAgent, catalog, helpers, lo
   }
 
   async function run({ input, ctx, config = {} }) {
+    const cat = ctx.catalog ?? catalog;
     const plan = await makePlan(input, ctx, config);
     ctx.onEvent?.({ type: 'plan', goal: plan.goal, subtasks: plan.subtasks, source: plan.source });
 
@@ -63,7 +65,7 @@ export function createOrchestratorWorkerPattern({ runAgent, catalog, helpers, lo
     const handoffs = [];
 
     const delegate = async (sub, index) => {
-      const spec = catalog.get(sub.agent);
+      const spec = cat.get(sub.agent);
       if (!spec) return { index, agent: sub.agent, ok: false, error: `nepoznat agent ${sub.agent}` };
       ctx.onEvent?.({ type: 'worker_start', index, agent: spec.id, goal: sub.goal });
       try {

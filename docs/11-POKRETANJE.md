@@ -8,10 +8,10 @@
 ## 1. Prvih pet minuta
 
 ```bash
-node --test                # 70 testova, bez mreže i bez npm install
-node scripts/demo.mjs      # demo svih 6 patterna + izolacija tenanta + naplata
+node --test                # 106 testova, bez mreže i bez npm install
+node scripts/demo.mjs      # demo: 16 sekcija (patterni, persistentni poslovi, kontrolna ravan, memorija, sandbox, OTel)
 node scripts/serve.mjs     # gateway na http://127.0.0.1:8787 (widget + demo stranica)
-node scripts/smoke.mjs     # 13 provjera protiv živog servera
+node scripts/smoke.mjs     # 21 provjera protiv živog servera (uključujući /v1/admin/*)
 node src/cli.js help       # sve CLI komande
 ```
 
@@ -64,6 +64,25 @@ curl -X POST localhost:8787/v1/tenants/nmq/secrets \
 | vidim šta je robot radio | `GET /v1/runs` · `GET /v1/runs/:runId` |
 | odobrim akciju visokog rizika | `GET /v1/approvals` → `POST /v1/approvals/:runId {"approve":true}` |
 | uradim backup podataka | `data/tenants/**` (pokriveno restic backup-om u 04:00) |
+
+### MAX operacije (v0.2): persistentni agenti i kontrolna ravan
+
+| Želim da… | Komanda |
+|---|---|
+| zakazem posao (cron) | `POST /v1/admin/jobs -d '{"name":"dnevni","agentId":"data","input":"izvještaj","schedule":{"type":"cron","cron":"0 8 * * 1-5"}}'` |
+| pokrenem posao odmah | `POST /v1/admin/jobs/:jobId/run` |
+| pauziram posao koji troši | `POST /v1/admin/jobs/:jobId/pause` · nastavak: `/resume` |
+| vidim istoriju izvršavanja | `GET /v1/admin/jobs/:jobId/runs` |
+| pokrenem dugoročni proces | `POST /v1/admin/processes -d '{"name":"onboarding","agentId":"ops","steps":[{"id":"d1","input":"kickoff"}]}'` |
+| deploy nove verzije agenta | `POST /v1/admin/agents/support/deploy -d '{"patch":{"temperature":0.4},"note":"topliji ton"}'` |
+| rollback agenta | `POST /v1/admin/agents/support/rollback -d '{"version":0}'` (0 = baseline iz config-a) |
+| pauziram agenta | `POST /v1/admin/agents/sales/status -d '{"status":"paused","reason":"budžet"}'` |
+| postavim budžet agentu | `POST /v1/admin/agents/sales/budget -d '{"budgetUsdMonth":30}'` |
+| izdam per-agent ključ | `POST /v1/admin/agents/executor/keys -d '{"scopes":["crm:write"]}'` |
+| vidim epizode (učenje) | `GET /v1/admin/episodes` |
+| vidim stanje kontrolne ravni | `GET /v1/admin/health` |
+| ko sam (ključ/rola) | `GET /v1/whoami` |
+| provjerim OTel izvoz | `data/_global/otel-traces.jsonl` (OTLP/JSON, jedna linija = run) |
 
 ---
 

@@ -3,12 +3,30 @@
  * Kasnije se slične epizode ubacuju u prompt kao few-shot primjeri ("ovako smo riješili prošli put").
  */
 import path from 'node:path';
-import { appendJsonl, readJsonl } from '../core/fsx.js';
+import { appendJsonl, readJsonl, writeTextFile } from '../core/fsx.js';
 import { iso } from '../core/clock.js';
 import { uid } from '../core/ids.js';
+import { redactPii } from '../core/policy.js';
 
-export function createEpisodicMemory({ dataDir, vectors, embeddings, logger, maxPromptChars = 1500 } = {}) {
+export function createEpisodicMemory({ dataDir, vectors, embeddings, logger, maxPromptChars = 1500, piiKinds = ['email', 'card', 'iban', 'jmbg', 'phone'] } = {}) {
   const file = (tenantId) => path.join(dataDir, 'tenants', tenantId, 'memory', 'episodes.jsonl');
+
+  /** Tekst epizode za vektorski indeks — bez PII. */
+  const indexText = (record) =>
+    `${record.problem}\nIshod: ${record.outcome}\n${record.solution.slice(0, 1200)}\nPouke: ${record.lessons.join('; ')}`;
+
+  async function indexEpisode(tenantId, record) {
+    if (!vectors) return;
+    try {
+      await vectors.upsert(tenantId, {
+        id: `epvec_${record.id}`,
+        text: indexText(record),
+        metadata: { kind: 'episode', episodeId: record.id, agentId: record.agentId, success: record.success, userId: record.userId ?? null, ts: record.ts },
+      });
+    } catch (err) {
+      logger?.warn?.('episodic.index_failed', { tenantId, error: err.message });
+    }
+  }
 
   return {
     file,
@@ -23,13 +41,15 @@ export function createEpisodicMemory({ dataDir, vectors, embeddings, logger, max
         ts: iso(),
         tenantId,
         agentId: episode.agentId ?? null,
+        userId: episode.userId ?? null,
         runId: episode.runId ?? null,
-        problem: String(episode.problem ?? '').slice(0, 2000),
+        // PII redakcija PRIJE upisa (i u fajl i u vektore) — epizode su najosjetljiviji sloj memorije
+        problem: redactPii(String(episode.problem ?? ''), piiKinds).slice(0, 2000),
         actions: (episode.actions ?? []).slice(0, 20),
-        solution: String(episode.solution ?? '').slice(0, 4000),
+        solution: redactPii(String(episode.solution ?? ''), piiKinds).slice(0, 4000),
         outcome: episode.outcome ?? (episode.success ? 'success' : 'unknown'),
         success: episode.success !== false,
-        lessons: (episode.lessons ?? []).slice(0, 10),
+        lessons: (episode.lessons ?? []).map((l) => redactPii(String(l), piiKinds)).slice(0, 10),
         tools: (episode.tools ?? []).slice(0, 20),
         costUsd: episode.costUsd ?? 0,
         durationMs: episode.durationMs ?? null,
@@ -38,17 +58,7 @@ export function createEpisodicMemory({ dataDir, vectors, embeddings, logger, max
       };
       if (dataDir) await appendJsonl(file(tenantId), record);
 
-      if (vectors && (record.success || record.lessons.length)) {
-        try {
-          await vectors.upsert(tenantId, {
-            id: `epvec_${record.id}`,
-            text: `${record.problem}\nIshod: ${record.outcome}\n${record.solution.slice(0, 1200)}\nPouke: ${record.lessons.join('; ')}`,
-            metadata: { kind: 'episode', episodeId: record.id, agentId: record.agentId, success: record.success, ts: record.ts },
-          });
-        } catch (err) {
-          logger?.warn?.('episodic.index_failed', { tenantId, error: err.message });
-        }
-      }
+      if (vectors && (record.success || record.lessons.length)) await indexEpisode(tenantId, record);
       logger?.debug?.('episodic.recorded', { tenantId, id: record.id, success: record.success });
       return record;
     },
@@ -97,9 +107,43 @@ export function createEpisodicMemory({ dataDir, vectors, embeddings, logger, max
       const rows = await readJsonl(file(tenantId));
       const ep = rows.filter((r) => r.id === episodeId).at(-1);
       if (!ep) return null;
-      const updated = { ...ep, lessons: [...(ep.lessons ?? []), ...(lesson ? [lesson] : [])], success: success ?? ep.success, updatedAt: iso() };
-      await appendJsonl(file(tenantId), { ...updated, _op: 'update' });
+      const updated = {
+        ...ep,
+        lessons: [...(ep.lessons ?? []), ...(lesson ? [redactPii(String(lesson), piiKinds)] : [])],
+        success: success ?? ep.success,
+        updatedAt: iso(),
+        _op: 'update',
+      };
+      await appendJsonl(file(tenantId), updated);
+      await indexEpisode(tenantId, updated); // reindeksiraj — pouke moraju uticati na sličnost
       return updated;
+    },
+
+    /**
+     * GDPR: briše sve epizode korisnika (fajl se prepisuje bez njih) i njihove vektorske zapise.
+     * Vraća broj obrisanih epizoda.
+     */
+    async removeUser(tenantId, userId) {
+      if (!dataDir) return { removed: 0 };
+      const rows = await readJsonl(file(tenantId));
+      const latest = new Map(rows.map((r) => [r.id, r])); // poslednja verzija po id-u
+      const keep = [];
+      const remove = [];
+      for (const ep of latest.values()) {
+        if (ep.userId && ep.userId === userId) remove.push(ep);
+        else keep.push(ep);
+      }
+      if (!remove.length) return { removed: 0, vectors: 0 };
+      await writeTextFile(file(tenantId), keep.map((r) => JSON.stringify(r)).join('\n') + (keep.length ? '\n' : ''));
+      let vectorsRemoved = 0;
+      for (const ep of remove) {
+        if (vectors?.remove) {
+          const ok = await vectors.remove(tenantId, `epvec_${ep.id}`).catch(() => false);
+          if (ok) vectorsRemoved += 1;
+        }
+      }
+      logger?.warn?.('episodic.user_erased', { tenantId, userId, episodes: remove.length, vectors: vectorsRemoved });
+      return { removed: remove.length, vectors: vectorsRemoved };
     },
 
     async stats(tenantId) {

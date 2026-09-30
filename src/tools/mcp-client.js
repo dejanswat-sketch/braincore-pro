@@ -27,11 +27,15 @@ export function createMcpManager({ registry, logger, metrics, root = process.cwd
     // Sandbox: podproces dobija očišćen env (samo allowlist + NMQ_*) — nikad tajne hosta
     sandbox?.assertCanSpawn?.(cfg.command);
     const safeEnv = sandbox?.scrubEnv ? sandbox.scrubEnv(cfg.env ?? {}) : { ...process.env, ...(cfg.env ?? {}) };
-    const limits = sandbox?.limits?.() ?? { maxTimeoutMs: cfg.timeoutMs ?? 30_000 };
+    const limits = sandbox?.limits?.() ?? { maxTimeoutMs: cfg.timeoutMs ?? 30_000, maxMemoryMb: 256 };
+    // Ograničenje memorije podprocesa: Node serveri ga poštuju kroz NODE_OPTIONS
+    if (limits.maxMemoryMb && /(^|[\\/])node(\.exe)?$/i.test(String(cfg.command))) {
+      safeEnv.NODE_OPTIONS = `${safeEnv.NODE_OPTIONS ?? ''} --max-old-space-size=${limits.maxMemoryMb}`.trim();
+    }
 
     const client =
       cfg.transport === 'http' || cfg.url
-        ? createHttpMcpClient({ id: cfg.id, url: cfg.url, headers: cfg.headers, logger, requestTimeoutMs: cfg.timeoutMs })
+        ? createHttpMcpClient({ id: cfg.id, url: interpolateEnv(cfg.url), headers: interpolateEnv(cfg.headers ?? {}), logger, requestTimeoutMs: cfg.timeoutMs })
         : createStdioMcpClient({
             id: cfg.id,
             command: cfg.command,
@@ -120,4 +124,21 @@ function extractText(result) {
     .map((p) => (p.type === 'text' ? p.text : `[${p.type}]`))
     .join('\n')
     .trim();
+}
+
+/**
+ * Interpolacija `${ENV_VAR}` u URL-u i zaglavljima MCP servera.
+ * Bez ovoga bi `"Bearer ${NMQ_INTERNAL_MCP_TOKEN}"` ostao doslovan string.
+ */
+function interpolateEnv(value) {
+  if (typeof value === 'string') {
+    return value.replace(/\$\{([A-Z0-9_]+)\}/g, (m, name) => (process.env[name] !== undefined ? process.env[name] : m));
+  }
+  if (Array.isArray(value)) return value.map(interpolateEnv);
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [k, v] of Object.entries(value)) out[k] = interpolateEnv(v);
+    return out;
+  }
+  return value;
 }

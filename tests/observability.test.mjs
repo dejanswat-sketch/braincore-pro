@@ -155,7 +155,7 @@ test('tenancy: tenantId validacija, API ključ i rate limit', async () => {
 test('tenancy: tajne se šifruju AES-256-GCM i mogu se pročitati samo sa istim ključem', async () => {
   const dir = await tempDataDir('secrets');
   const config = await loadConfig({ root: path.resolve(import.meta.dirname, '..'), dataDir: dir });
-  const env = { apiKeyPepper: 'pepper', masterKey: 'master-key-123', ...process.env };
+  const env = { apiKeyPepper: 'pepper', masterKey: 'master-key-123456', ...process.env };
   const t1 = createTenantStore({ config, dataDir: dir, logger: null, env });
   await t1.setSecret('nmq', 'slack', 'xoxb-super-tajni-token');
 

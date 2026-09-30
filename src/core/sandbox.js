@@ -10,6 +10,7 @@
  * Ovo je aplikativni sloj: sprečava najčešće zloupotrebe i daje jasnu grešku.
  */
 import path from 'node:path';
+import fs from 'node:fs';
 import { PolicyError } from './errors.js';
 
 export const SANDBOX_LEVELS = ['none', 'restricted', 'strict'];
@@ -23,9 +24,14 @@ export function createSandbox({
   maxMemoryMb = 256,
   maxTimeoutMs = 20_000,
   allowChildProcess = true,
+  production = (process.env.NODE_ENV === 'production' || process.env.NMQ_ENV === 'production'),
   logger,
 } = {}) {
   if (!SANDBOX_LEVELS.includes(level)) throw new PolicyError(`Nepoznat sandbox nivo: ${level}`, { level, allowed: SANDBOX_LEVELS });
+  // Nivo "none" gasi sve tri zaštite — u produkciji je to tvrda greška, ne opcija
+  if (level === 'none' && production) {
+    throw new PolicyError('Sandbox nivo "none" nije dozvoljen u produkciji', { level, production });
+  }
   const networkAllowed = level === 'strict' ? false : true;
 
   function assertNetwork(url) {
@@ -44,19 +50,41 @@ export function createSandbox({
     return true;
   }
 
-  /** Provjera putanje: read/write mora biti unutar dozvoljenog korijena i bez ".." izlaska. */
+  /**
+   * Provjera putanje: read/write mora biti unutar dozvoljenog korijena i bez ".." izlaska.
+   * Symlinkovi se razrješavaju (realpath) — inače bi link unutar `dataDir` mogao pokazivati van granice.
+   */
   function assertPath(target, { mode = 'read' } = {}) {
     if (level === 'none') return path.resolve(target);
     const roots = mode === 'write' ? fsWriteRoots : [...fsReadRoots, ...fsWriteRoots];
     if (!roots.length) throw new PolicyError(`Sandbox: nema dozvoljenog ${mode} korijena`, { target, mode });
-    const resolved = path.resolve(target);
+
+    const resolved = resolveReal(path.resolve(target));
     const ok = roots.some((root) => {
-      const r = path.resolve(root);
+      const r = resolveReal(path.resolve(root));
       return resolved === r || resolved.startsWith(r + path.sep);
     });
     if (!ok) throw new PolicyError(`Sandbox: putanja "${resolved}" je izvan dozvoljenih korijena (${mode})`, { target: resolved, roots });
     if (mode === 'write' && level === 'strict') throw new PolicyError('Sandbox "strict": upis na FS je zabranjen', { target: resolved });
     return resolved;
+  }
+
+  /** realpath najbližeg postojećeg pretka (radi i kad fajl još ne postoji). */
+  function resolveReal(p) {
+    let current = p;
+    const missing = [];
+    for (let i = 0; i < 32; i += 1) {
+      try {
+        const real = fs.realpathSync.native ? fs.realpathSync.native(current) : fs.realpathSync(current);
+        return missing.length ? path.join(real, ...missing.reverse()) : real;
+      } catch {
+        const parent = path.dirname(current);
+        if (parent === current) return p;
+        missing.push(path.basename(current));
+        current = parent;
+      }
+    }
+    return p;
   }
 
   /** Env za podproces: samo allowlist + NMQ_* + sistemski minimum. Nikad tajne hosta. */

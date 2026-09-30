@@ -1,5 +1,10 @@
 # 01 — Arhitektura
 
+> **v0.2 dopuna:** ovaj dokument opisuje sloj iz v0.1.0. Novi slojevi su dodati i opisani u
+> `docs/12-MAX-ARHITEKTURA.md` (kontrolna ravan, scheduler, sandbox, OTel) i `docs/13-KONTROLNA-RAVAN.md`.
+> Kod: `src/scheduler/`, `src/controlplane/`, `src/core/sandbox.js`, `src/observability/otel.js`.
+> Brojevi patterna/agenata u tekstu su stanje v0.1.0.
+
 > Kod je referenca: putanje u ovom dokumentu odgovaraju stvarnim fajlovima. Ugovor je u `DECISIONS.md`.
 
 ---
