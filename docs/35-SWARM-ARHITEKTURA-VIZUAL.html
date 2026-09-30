@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>NMQ Robot — decentralizovana swarm arhitektura (stvarno stanje v0.4.0)</title>
+<title>NMQ Robot — decentralizovana swarm arhitektura (stvarno stanje v0.5.0)</title>
 <style>
   :root{
     --bg:#04070f; --bg2:#070d1a; --ink:#eaf1ff; --muted:#93a4c4; --dim:#6d7d9c;
@@ -156,12 +156,12 @@
     <h1>NMQ ROBOT — DECENTRALIZOVANA SWARM ARHITEKTURA</h1>
     <p class="sub">Bez centralnog orkestratora · lokalna pravila · <b>stigmergija</b> · merena emergencija · <b>nadzor iznad svega</b></p>
     <div class="meta-chips">
-      <span class="chip">verzija <i>v0.4.0</i></span>
-      <span class="chip">testovi <i>191/191</i></span>
-      <span class="chip">rute <i>141</i></span>
+      <span class="chip">verzija <i>v0.5.0</i></span>
+      <span class="chip">testovi <i>205/205</i></span>
+      <span class="chip">rute <i>151</i></span>
       <span class="chip">eval <i>6/6 (100%)</i></span>
-      <span class="chip">demo <i>25 sekcija</i></span>
-      <span class="chip">smoke <i>38/38</i></span>
+      <span class="chip">demo <i>26 sekcija</i></span>
+      <span class="chip">smoke <i>41/41</i></span>
       <span class="chip">npm zavisnosti <i>0</i></span>
     </div>
     <div class="legend">
@@ -214,6 +214,16 @@
             <li>watcheri prate metrike i događaje → <b>inbox prijedloga</b></li>
             <li>ciljevi sa KPI, mjerenjem i <b>replan-om</b></li>
             <li>epizodična memorija + RAG po tenantu</li>
+          </ul>
+        </div>
+        <div class="card accent-violet">
+          <div class="dotline"><span class="dot v"></span><h3>CROSS-NODE CLUSTER</h3></div>
+          <p class="tag">naš dodatak — <b>nema ga na posteru</b></p>
+          <ul>
+            <li>zajednička tabla: <b>atomski claim</b> (mkdir lock / Redis Lua) + lease renewal</li>
+            <li>gossip membership: heartbeat, suspect/dead, <b>HMAC potpis</b></li>
+            <li>ulazna poruka prolazi <b>istu medijaciju</b>; karantin čvora je „sticky"</li>
+            <li>file store (više procesa) ili Redis — bez npm zavisnosti</li>
           </ul>
         </div>
         <div class="card accent-gold">
@@ -284,7 +294,7 @@
         <ul>
           <li><span class="st ok">STVARNO</span><span>Pub/Sub magistrala + `hook.*` događaji</span></li>
           <li><span class="st ok">STVARNO</span><span>Medijacija peer poruka (tip, pošiljalac, sadržaj, kvota)</span></li>
-          <li><span class="st part">DJELIMIČNO</span><span>Gossip protokol (in-process bus; cross-node u planu v0.5)</span></li>
+          <li><span class="st ok">STVARNO</span><span>Gossip preko TCP: membership, TTL hopova, HMAC potpis</span></li>
           <li><span class="st no">NE RADIMO</span><span>libp2p — teška zavisnost; sopstveni gossip je dovoljan</span></li>
         </ul>
       </div>
@@ -293,7 +303,7 @@
         <h4>COORDINATION LAYER</h4>
         <ul>
           <li><span class="st ok">STVARNO</span><span>Stigmergija: feromoni sa opadanjem (pola za 5 min)</span></li>
-          <li><span class="st ok">STVARNO</span><span>Work stealing: worker uzima najvrjedniji zadatak koji može</span></li>
+          <li><span class="st ok">STVARNO</span><span>Work stealing preko ZAJEDNIČKE table: atomski claim + lease renewal</span></li>
           <li><span class="st ok">STVARNO</span><span>Glasovanje + konsensus — <b>savjetodavno</b></span></li>
           <li><span class="st no">NE RADIMO</span><span>BFT konsenzus (2–3 mjeseca rada; ne rješava pravi rizik)</span></li>
         </ul>
@@ -334,7 +344,7 @@
             <tr><td>Work stealing / self-organizing clusters</td><td><b>izgrađeno</b> — workeri sami uzimaju posao</td><td class="good">DA</td></tr>
             <tr><td>Specijalizacija agenata</td><td><b>izgrađeno</b> — meri se iz završenih zadataka</td><td class="good">DA</td></tr>
             <tr><td>Voting / decentralized ballot</td><td><b>izgrađeno</b> — ali savjetodavno, ne obavezujuće</td><td class="warn">DJELIMIČNO</td></tr>
-            <tr><td>Gossip protokol + P2P transport</td><td>in-process bus; cross-node je plan</td><td class="warn">3–6 nedjelja</td></tr>
+            <tr><td>Gossip protokol + deljena tabla</td><td><b>izgrađeno</b> — TCP gossip + file/Redis store</td><td class="good">DA</td></tr>
             <tr><td>BFT konsensus (Byzantine-resistant)</td><td>nije implementiran</td><td class="warn">2–3 mjeseca</td></tr>
             <tr><td>Emergentni jezik (vocab evolves)</td><td><b>namjerno zabranjeno</b> — medijacija + čitljivost</td><td class="bad">NE</td></tr>
             <tr><td>„Genesis Brain" — centralni mozak</td><td>kontradikcija: centralni mozak = centralni kontroler</td><td class="bad">NE</td></tr>
@@ -347,7 +357,7 @@
         <table>
           <thead><tr><th>Posao</th><th>Obim</th><th>Rizik</th></tr></thead>
           <tbody>
-            <tr><td>Cross-node swarm: Redis/Postgres queue + feromoni u shared store</td><td>3–6 nedjelja</td><td class="warn">srednji</td></tr>
+            <tr><td>Postgres backend za tablu (Redis i file rade)</td><td>2–3 nedjelje</td><td class="warn">srednji</td></tr>
             <tr><td>Dinamičke kohorte (grupisanje po opterećenju)</td><td>2–3 nedjelje</td><td class="good">nizak</td></tr>
             <tr><td>Samo-specijalizacija (agent bira ulogu po rezultatu)</td><td>1–2 nedjelje</td><td class="good">nizak</td></tr>
             <tr><td>Nadzirani rječnik poruka (šema se širi uz odobrenje)</td><td>2 nedjelje</td><td class="good">nizak</td></tr>
@@ -372,8 +382,8 @@
   <footer>
     <b>Ključni principi (kako ih mi čitamo):</b> decentralizovana koordinacija · lokalna pravila · emergencija koja se
     <b>meri</b> · konsenzus koji <b>savjetuje</b> · nadzor na nivou roja · čovjek na granicama.<br/>
-    Dokazi za sve gore: <b>191/191 testova</b> · eval <b>6/6</b> · demo <b>25 sekcija</b> · smoke <b>38/38</b> · audit lanac ispravan ·
-    dokumenti <b>29–34</b> u repozitorijumu (<code>E:\NMQ-PROGRAMI\nmq-robot</code>).
+    Dokazi za sve gore: <b>205/205 testova</b> · eval <b>6/6</b> · demo <b>26 sekcija</b> · smoke <b>41/41</b> · audit lanac ispravan ·
+    dokumenti <b>29–36</b> u repozitorijumu (<code>E:\NMQ-PROGRAMI\nmq-robot</code>).
   </footer>
 </div>
 </body>
