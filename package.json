@@ -13,7 +13,7 @@
     "nmq-robot": "src/cli.js"
   },
   "scripts": {
-    "test": "node --test",
+    "test": "node --test --test-timeout=45000",
     "demo": "node scripts/demo.mjs",
     "serve": "node scripts/serve.mjs",
     "smoke": "node scripts/smoke.mjs",
