@@ -1,0 +1,28 @@
+{
+  "scope": "loopback, process kill (SIGKILL) — mrežna particija NIJE simulirana",
+  "runId": "chaos-1790774158150",
+  "nodes": [
+    "node-8541",
+    "node-8542",
+    "node-8543"
+  ],
+  "tasks": 30,
+  "runnerDelayMs": 250,
+  "victim": "node-8541",
+  "completedBeforeKill": 9,
+  "victimCompletedBeforeKill": 3,
+  "detectedMs": 1325,
+  "reclaimedMs": 135,
+  "completed": 30,
+  "lost": 0,
+  "lostReal": 0,
+  "inFlightAtCutoff": 0,
+  "duplicated": 8,
+  "duplicatedSameAttempt": 8,
+  "overlapping": 0,
+  "retried": 8,
+  "totalExecutions": 140,
+  "madeSpanMs": 10276,
+  "throughputPerSec": 13.62,
+  "logFile": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\chaos-1790774158150.jsonl"
+}

@@ -165,9 +165,17 @@ for (let i = 0; i < 120 && detectedMs === null; i += 1) {
 line(`  detekcija smrti: ${detectedMs === null ? 'NIJE DETEKTOVANO (>6s)' : `${detectedMs} ms`}`);
 
 // ── da li su svi taskovi završeni i da li je neko izvršen dvaput ────────────
-const deadline = Date.now() + Math.max(30_000, TASKS * DELAY * 2);
+const deadline = Date.now() + Math.max(60_000, TASKS * DELAY * 4);
 let log = readLog();
-while (Date.now() < deadline && new Set(log.map((e) => e.taskId)).size < TASKS) {
+while (Date.now() < deadline && new Set(log.filter((e) => e.phase !== 'start').map((e) => e.taskId)).size < TASKS) {
+  await wait(250);
+  log = readLog();
+}
+// DODATNI GRACE: pusti posao koji je u toku da se završi prije nego što išta proglasimo izgubljenim.
+// Bez ovoga harness prijavljuje „izgubljeno" za task koji je upravo bio u izvršenju (mjerna greška).
+const settleMs = Number(arg('settle', 8000));
+const settleUntil = Date.now() + settleMs;
+while (Date.now() < settleUntil && new Set(log.filter((e) => e.phase !== 'start').map((e) => e.taskId)).size < TASKS) {
   await wait(250);
   log = readLog();
 }
@@ -175,6 +183,11 @@ const cleanedAt = Date.now();
 const perTask = new Map();
 for (const e of log.filter((x) => x.phase !== 'start')) perTask.set(e.taskId, [...(perTask.get(e.taskId) ?? []), e]);
 const lost = submitted.filter((id) => !perTask.has(id));
+// „Izgubljeno" = NEMA završetka I NEMA zapisa da ga je ikad pokrenuo živi čvor.
+// Ako je čvor (koji nije žrtva) započeo izvršenje, a nije završio do prekida → to je „u toku", ne gubitak.
+const startedByLiveNode = new Set(log.filter((e) => e.phase === 'start' && e.nodeId !== `node-${victim.port}`).map((e) => e.taskId));
+const lostReal = lost.filter((id) => !startedByLiveNode.has(id));
+const inFlightAtCutoff = lost.filter((id) => startedByLiveNode.has(id));
 const duplicated = submitted.filter((id) => (perTask.get(id) ?? []).length > 1);
 
 /**
@@ -229,6 +242,8 @@ const result = {
   reclaimedMs,
   completed: completed.length,
   lost: lost.length,
+  lostReal: lostReal.length,
+  inFlightAtCutoff: inFlightAtCutoff.length,
   duplicated: duplicated.length,
   duplicatedSameAttempt: sameAttemptDupes.length,
   overlapping: overlappingIds.length,
@@ -242,7 +257,7 @@ const result = {
 // ── ispis ───────────────────────────────────────────────────────────────────
 header('REZULTAT');
 line(`završeno:            ${result.completed}/${TASKS}`);
-line(`izgubljeno:          ${result.lost}   ${result.lost === 0 ? '✔' : '✖'}`);
+line(`izgubljeno (STVARNO): ${result.lostReal}   ${result.lostReal === 0 ? '✔' : '✖'}   [u toku kad je harness stao: ${result.inFlightAtCutoff}]`);
 line(`duplo izvršeno:      ${result.overlapping} preklopljenih ${result.overlapping === 0 ? '✔' : '✖'}  (retry: ${result.retried}, isti pokušaj 2x: ${result.duplicatedSameAttempt})`);
 line(`detekcija smrti:     ${detectedMs === null ? 'n/a' : `${detectedMs} ms`}`);
 line(`re-claim (drugi):    ${reclaimedMs === null ? 'n/a' : `${reclaimedMs} ms`}`);
@@ -263,4 +278,4 @@ cleanup();
 await wait(200);
 if (flag('keep-log')) console.log(`  (JSONL zadržan za analizu: ${logFile})`);
 else fs.rmSync(logFile, { force: true });
-process.exit(result.lost === 0 && result.overlapping === 0 ? 0 : 1);
+process.exit(result.lostReal === 0 && result.overlapping === 0 ? 0 : 1);

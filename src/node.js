@@ -48,6 +48,9 @@ export const NODE_DEFAULTS = {
   minClaimConfirmMs: 600,
   /** Koliko čekamo odgovor roja na `result-query` prije ponovnog izvršavanja (2× gossip interval). */
   reclaimProbeMs: 600,
+  /** Durable submit: task se vraća tek kad ga bar jedan peer potvrdi (`task-received`). */
+  durableSubmit: true,
+  submitAckMs: 400,
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -82,6 +85,7 @@ export async function createSwarmNode({
   const emitter = new EventEmitter();
   const tasks = new Map(); // taskId -> task (lokalno poznati)
   const inFlight = new Map();
+  const pendingAcks = new Map(); // taskId -> { confirmedBy:Set, resolvers:[] } za durable submit
   const done = [];
   const startedAt = Date.now();
 
@@ -166,14 +170,55 @@ export async function createSwarmNode({
         }
       }
       if (!task.payload) task = { ...task, payload: {} };
-      if (!crdt.get(`task:${task.id}`)) crdt.set(`task:${task.id}`, task);
-      if (!tasks.has(task.id)) tasks.set(task.id, task);
+      if (!crdt.get(`task:${task.id}`)) crdt.set(`task:${task.id}`, metaOf(task));
+      if (!tasks.has(task.id)) tasks.set(task.id, task); // dekriptovan payload ostaje samo lokalno
+      // Potvrdi pošiljaocu da task imamo (durable submit) — jeftino, jedan mali UDP okvir
+      gossip.broadcast({ kind: 'task-received', taskId: task.id, from: id });
       emitter.emit('task', task);
+    }
+    if (item.kind === 'task-received' && item.taskId) {
+      acknowledgeTask(item.taskId, item.from ?? 'nepoznat');
+      return;
     }
   }
 
+  /**
+   * DURABLE SUBMIT: task je prihvaćen tek kad ga bar JEDAN peer potvrdi.
+   *
+   * Zašto: chaos test je pokazao da task koji čvor primi i umre prije nego što ga raširi (gossip je
+   * best-effort, interval 300 ms) nestaje zajedno s njim — 3 taska bez ijednog traga u runu 8/9.
+   * Ovim se „primljeno" pretvara u „primljeno i još negdje zapisano".
+   *
+   * Semantika (iskreno): ako u roju NEMA drugih čvorova, task je „durable" u smislu da nema kome da
+   * se izgubi — ali tada ne postoji replika. Zato odgovor nosi `confirmedBy` (ko ga ima) i `durable`.
+   */
+  async function waitForTaskAck(taskId, timeoutMs) {
+    const waiter = pendingAcks.get(taskId) ?? { confirmedBy: new Set(), resolvers: [] };
+    pendingAcks.set(taskId, waiter);
+    if (waiter.confirmedBy.size) return [...waiter.confirmedBy];
+    const result = await new Promise((resolve) => {
+      // NAPOMENA: tajmer se NE unref-uje — ako bi bio unref-ovan, `await` bi mogao ostati vječno
+      // nerazriješen kad nema drugog posla u event loop-u (zakačilo se u testovima).
+      const timer = setTimeout(() => resolve([...waiter.confirmedBy]), timeoutMs);
+      waiter.resolvers.push((by) => {
+        clearTimeout(timer);
+        resolve(by);
+      });
+    });
+    pendingAcks.delete(taskId);
+    return result;
+  }
+
+  function acknowledgeTask(taskId, from) {
+    const waiter = pendingAcks.get(taskId);
+    if (!waiter) return false;
+    waiter.confirmedBy.add(from);
+    for (const resolve of waiter.resolvers.splice(0)) resolve([...waiter.confirmedBy]);
+    return true;
+  }
+
   /** Objavi task SVIMA: lokalno + CRDT + gossip. */
-  async function submitTask(task) {
+  async function submitTask(task, { durable = cfg.durableSubmit } = {}) {
     const normalized = {
       id: task.id ?? uid('task'),
       type: task.type ?? 'generic',
@@ -199,7 +244,37 @@ export async function createSwarmNode({
     }
     metrics?.inc('node_tasks_submitted_total', { node: id });
     logger?.info?.('node.task_submitted', { nodeId: id, taskId: normalized.id, type: normalized.type });
-    return normalized;
+
+    if (!durable) return { ...normalized, durable: false, confirmedBy: [] };
+
+    const peersAlive = gossip.aliveCount() - 1;
+    if (peersAlive <= 0) {
+      // Nema kome da se izgubi — ali nema ni replike (iskreno u odgovoru)
+      return { ...normalized, durable: true, confirmedBy: [], note: 'single-node (nema peer-ova)' };
+    }
+    let confirmed = await waitForTaskAck(normalized.id, cfg.submitAckMs);
+    if (!confirmed.length) {
+      // Jedan ponovni pokušaj (jednostavan, bez backoff-a — gossip je ionako periodičan)
+      retryBroadcast(normalized);
+      confirmed = await waitForTaskAck(normalized.id, cfg.submitAckMs);
+    }
+    if (confirmed.length) {
+      metrics?.observe('node_submit_ack_ms', {}, Date.now() - Date.parse(normalized.createdAt));
+      return { ...normalized, durable: true, confirmedBy: confirmed };
+    }
+    metrics?.inc('node_submit_not_durable_total', { node: id });
+    logger?.warn?.('node.submit_not_durable', { nodeId: id, taskId: normalized.id, peersAlive });
+    return { ...normalized, durable: false, confirmedBy: [], warning: `nijedan od ${peersAlive} peer-ova nije potvrdio task u ${cfg.submitAckMs} ms` };
+  }
+
+  /** Ponovno oglašavanje taska (isti oblik kao u submitTask) — koristi se kad prvi ACK izostane. */
+  function retryBroadcast(normalized) {
+    if (cfg.encryptTaskPayload) {
+      const { payload, ...meta } = normalized;
+      gossip.broadcast({ kind: 'task', task: { ...meta, payloadEncrypted: true }, payloadEnc: encryptPayload(secret, payload, { aad: normalized.id }) });
+    } else {
+      gossip.broadcast({ kind: 'task', task: normalized });
+    }
   }
 
   /** Claim u CRDT-u + kratka verifikacija (deterministički LWW pobjednik). */

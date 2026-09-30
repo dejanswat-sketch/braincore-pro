@@ -66,3 +66,39 @@ Kriteriji prihvatanja (acceptance):
 Sprint 2 je time djelimično isporučen: harness postoji, dvije teške greške su nađene i popravljene, treća
 (durable submit) je definirana kao sljedeći zadatak. Sve dalje (fencing na nivou kvorema, particija, soak
 test) ostaje kako je u planu — sa ovim brojevima kao polaznom tačkom.
+
+---
+
+## 6. Nastavak: durable submit i fer mjerenje (runovi 10–14)
+
+| Run | Zadatak | Šta je promijenjeno | Završeno | Izgubljeno (stvarno) | Preklopljeno | Retry | Detekcija |
+|---|---|---|---|---|---|---|---|
+| 10 | 24 / 300 ms | **durable submit** (peer ACK) | 23/24 | 1 | 0 ✔ | 6 | 1301 ms |
+| 11 | 30 / 250 ms | — | 28/30 | 2 | 0 ✔ | 9 | 1373 ms |
+| 12 | 24 / 300 ms | analiza sa `--keep-log` | 23/24 | 1 | 0 ✔ | 10 | — |
+| 13 | 24 / 300 ms | **fer mjerenje** (grace za rad u toku) | **24/24** | **0** ✔ | **0** ✔ | 2 | 1358 ms |
+| 14 | 30 / 250 ms | — | **30/30** | **0** ✔ | **0** ✔ | 8 | 1325 ms |
+
+### Durable submit (novo)
+`POST /task` (i `node.submitTask`) se sada vraća tek kad **bar jedan peer potvrdi** da task ima
+(`task-received` okvir preko gossip-a, jedan ponovni pokušaj, prozor `submitAckMs` 400 ms). Odgovor nosi
+`durable: true|false` i `confirmedBy: [...]`. Ako u roju nema drugih čvorova, odgovor to kaže
+(`note: "single-node (nema peer-ova)"`) — ne pretvaramo se da replika postoji.
+
+Izmjereno: run 12 je pokazao da je jedini „izgubljeni" task zapravo bio **u izvršenju** u trenutku kad je
+harness stao (ima `start` na živom čvoru, bez `done`) — dakle mjerna greška, ne gubitak. Harness sada:
+1. čeka `--settle=8000` ms da se rad u toku završi,
+2. razlikuje `lostReal` (nema `done` **i** nema `start` na živom čvoru) od `inFlightAtCutoff`,
+3. prijavljuje neuspjeh samo za `lostReal > 0` ili `overlapping > 0`.
+
+### Stanje kriterija (acceptance)
+* `preklopljeno (BUG) = 0` ✔ (runovi 13, 14)
+* `izgubljeno (STVARNO) = 0` ✔ (runovi 13, 14) — **durable submit je zatvorio** ono što je bilo otvoreno u §3
+* `detekcija smrti` ~1.3 s ✔ (< 2× 1200 ms)
+* `ponovni rad` 2–8 (at-least-once, vidljivo i prijavljeno) — efekti idempotentni po `idempotencyKey`
+
+### Još otvoreno
+1. **Particija** (dva hosta, blokiran UDP) — nije mjerena; sve gore je loopback.
+2. **Soak test** (1 h) — skripta još ne postoji (`scripts/soak.mjs` je sljedeći zadatak).
+3. **Kvorumski fencing** — za sada je fencing po `attempt` + lease; kvorum (2 od 3) bi uklonio i preostale
+   ponovne radove pod particijom.

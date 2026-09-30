@@ -569,6 +569,9 @@ test('privatnost: payload taska preko UDP-a je šifrovan (bez tajne se ne čita)
   const frames = [];
   const a = await createSwarmNode({ nodeId: 'sec-A', port: 0, host: '127.0.0.1', secret: SECRET_A, config: { httpAdmin: false, autoLoop: false } });
   const watcher = await createGossip({ nodeId: 'sec-watch', port: 0, host: '127.0.0.1', secret: SECRET_A, config: { intervalMs: 60_000 } });
+  // Čvorovi se stvaraju u vanjskom scope-u da bi ih `finally` SIGURNO zatvorio i kad neka tvrdnja padne
+  let wrong = null;
+  let right = null;
   try {
     await a.start();
     await watcher.start();
@@ -591,23 +594,30 @@ test('privatnost: payload taska preko UDP-a je šifrovan (bez tajne se ne čita)
     assert.equal(taskFrame.payload.task.payloadEncrypted, true);
 
     // Node sa POGREŠNOM tajnom ne može dešifrovati i NE izvršava task (fail-closed)
-    const wrong = await createSwarmNode({ nodeId: 'sec-wrong', port: 0, host: '127.0.0.1', secret: 'pogresna-tajna-0000000000', config: { httpAdmin: false, autoLoop: false } });
+    wrong = await createSwarmNode({ nodeId: 'sec-wrong', port: 0, host: '127.0.0.1', secret: 'pogresna-tajna-0000000000', config: { httpAdmin: false, autoLoop: false } });
     await wrong.start();
     wrong.gossip.handleRaw(watcher.frame('DISSEMINATE', taskFrame.payload), { address: '127.0.0.1', port: 1 });
-    await wait(100);
-    assert.equal(wrong.crdt.get(`task:${taskFrame.payload.task.id}`), undefined, 'bez ključa task se ne prima');
-    await wrong.close();
+    await wait(150);
+    assert.equal(wrong.crdt.get(`task:${taskFrame.payload.task.id}`), undefined, 'bez ključa task se ne prima u CRDT');
+    assert.equal(wrong.tasks.has(taskFrame.payload.task.id), false, 'bez ključa se ne prima ni lokalno (fail-closed)');
 
-    // Isti task kod čvora SA ispravnom tajnom se dešifruje i vidi
-    const right = await createSwarmNode({ nodeId: 'sec-right', port: 0, host: '127.0.0.1', secret: SECRET_A, config: { httpAdmin: false, autoLoop: false } });
+    // Isti task kod čvora SA ispravnom tajnom se dešifruje i vidi — payload živi LOKALNO, ne u CRDT-u
+    right = await createSwarmNode({ nodeId: 'sec-right', port: 0, host: '127.0.0.1', secret: SECRET_A, config: { httpAdmin: false, autoLoop: false } });
     await right.start();
     right.gossip.handleRaw(watcher.frame('DISSEMINATE', taskFrame.payload), { address: '127.0.0.1', port: 1 });
-    await wait(100);
-    const received = right.crdt.get(`task:${taskFrame.payload.task.id}`);
-    assert.ok(received, 'sa ispravnom tajnom task se prima');
-    assert.equal(received.payload.text, SECRET_TEXT, 'sadržaj je ispravno dešifrovan');
-    await right.close();
+    await wait(150);
+    const local = right.tasks.get(taskFrame.payload.task.id);
+    assert.ok(local, 'sa ispravnom tajnom task se prima lokalno');
+    assert.equal(local.payload.text, SECRET_TEXT, 'sadržaj je ispravno dešifrovan (lokalno)');
+
+    // …a u CRDT-u (koji se širi rojem) NEMA čistog sadržaja — samo metapodaci
+    const meta = right.crdt.get(`task:${taskFrame.payload.task.id}`);
+    assert.ok(meta, 'metapodaci taska jesu u CRDT-u');
+    assert.equal(meta.payload, undefined, 'CRDT ne smije nositi payload');
+    assert.equal(JSON.stringify(meta).includes(SECRET_TEXT), false, 'ni dijelovi sadržaja u CRDT-u');
   } finally {
+    if (wrong) await wrong.close().catch(() => {});
+    if (right) await right.close().catch(() => {});
     await a.close();
     await watcher.stop();
   }

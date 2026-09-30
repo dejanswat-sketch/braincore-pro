@@ -14,12 +14,15 @@ import { uid } from '../core/ids.js';
 import { iso } from '../core/clock.js';
 import { ValidationError } from '../core/errors.js';
 
+// Napomena (EN tržište): engleski ključni pojmovi su DODATI postojećim srpskim obrascima, redoslijed
+// pravila je nepromijenjen. Bez toga bi svaki engleski ticket (osim slučajnih poklapanja poput "order"
+// ili "error") završio u `other`, pa zlatni set na engleskom ne bi mjerio stvarnu klasifikaciju.
 export const TICKET_RULES = [
-  { type: 'refund', agent: 'support', patterns: [/povra[ćc]aj|refund|vratite novac|storno/i], pheromone: 'hot', priority: 3 },
-  { type: 'billing', agent: 'finance', patterns: [/faktur|ra[čc]un|uplata|pdv|invoice|naplat/i], pheromone: 'hot', priority: 2 },
-  { type: 'technical', agent: 'dev', patterns: [/gre[šs]k|error|ne radi|puklo|bug|deploy|api/i], pheromone: 'problem', priority: 2 },
-  { type: 'ecommerce', agent: 'ecommerce', patterns: [/narud[žz]bin|dostav|isporuk|order|paket|status po[šs]iljke/i], pheromone: 'hot', priority: 2 },
-  { type: 'sales', agent: 'sales', patterns: [/ponud|cjen|kupovin|lead|popust|offer/i], pheromone: 'opportunity', priority: 1 },
+  { type: 'refund', agent: 'support', patterns: [/povra[ćc]aj|refund|vratite novac|storno|money back|chargeback/i], pheromone: 'hot', priority: 3 },
+  { type: 'billing', agent: 'finance', patterns: [/faktur|ra[čc]un|uplata|pdv|invoice|naplat|billing|charged|charge|payment|receipt|subscription/i], pheromone: 'hot', priority: 2 },
+  { type: 'technical', agent: 'dev', patterns: [/gre[šs]k|error|ne radi|puklo|bug|deploy|api|crash|not working|broken|stack trace|timeout|latency|downtime/i], pheromone: 'problem', priority: 2 },
+  { type: 'ecommerce', agent: 'ecommerce', patterns: [/narud[žz]bin|dostav|isporuk|order|paket|status po[šs]iljke|shipping|delivery|parcel|tracking|package|return label|in stock|restock/i], pheromone: 'hot', priority: 2 },
+  { type: 'sales', agent: 'sales', patterns: [/ponud|cjen|kupovin|lead|popust|offer|quote|quotation|pricing|price|purchase|demo|discount|interested in/i], pheromone: 'opportunity', priority: 1 },
   { type: 'other', agent: 'support', patterns: [], pheromone: 'help', priority: 1 },
 ];
 
