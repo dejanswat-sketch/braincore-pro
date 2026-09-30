@@ -484,3 +484,46 @@ Umjesto prstena po vremenu → **trag po zadatku + ispis NA ANOMALIJU**:
 * **`superseded`** → oba izvrsila, jedan rezultat ispravno odbacen (tada je „duplo" rijeseno, ne greska).
 
 Odluka o `confirm` prozoru (600 ms) **nije donesena** — ceka se trag iz soak-a #8.
+
+---
+
+## 17. SOAK #8 (trag po zadatku) — sud i ZAŠTO ANOMALIJA NEMA U LOGU (0)
+
+```
+trajanje:      3611 s (60 min) · 6 restarta
+poslano:       17 392 / izvrseno 17 387      (druge greske pri predaji: 4)
+shed:          0  ✔            rate-limited: 0  ✔
+p95:           784 ms (p50 759, p99 790)  ✔   · max 12 083 ms
+heap:          12,2 -> 56,4 MB (vrh 99,5)  ✔  (< 100 MB, granicno)
+CRDT:          8 711 / 8 710 / 6   ✔
+izgubljeno:    5   ✖
+duplo:         6   ✖
+node.duplicate_execution_detected: 0  ← dijagnostika NIJE uhvatila nijedan slucaj
+```
+
+### ZAŠTO JE 0 ANOMALIJA (treci put da mehanizam promasi — i zasto)
+Duplikati su **ISTOVREMENI**: oba cvora pocnu izvrsavanje **prije** nego ijedan upise `result:`. Zato:
+* `pre_execute` provjera („ako `result:` vec postoji") **ne moze da se aktivira** — u tom trenutku rezultata
+  jos nema ni kod jednog,
+* `superseded` se postavlja samo ako poslije izvrsavanja **provjera vlasnistva padne** — kod istovremenog
+  rada oba cvora zavrse i upisu rezultat, a LWW zadrzi jedan; drugi cesto **ne udje** u `superseded` granu.
+
+Dakle moja instrumentacija je mjerila **posljedicu koja se ne registruje**, a ne **sam dogadjaj** (dva
+istovremena claim-a). To je isti obrazac kao retencija u #7: mehanizam je radio, ali nije gledao pravo mjesto.
+
+### TACNA instrumentacija (prije soak-a #9)
+Dva signala koja hvataju SAM dogadjaj, a ne posljedicu:
+1. **`claim_set` sa tudjim ZIVIM claim-om**: ako pri preuzimanju `existing?.nodeId !== id` i
+   `existing?.nodeId` je **ziv** (`gossip.isAlive`) i `at` je unutar lease-a → `logger.warn` ODMAH. To je
+   direktan dokaz dvostrukog preuzimanja (domen `confirm`/LWW).
+2. **`result:` zapis kada rezultat VEC postoji**: ako pri `crdt.set('result:'+id, ...)` postoji prethodni
+   zapis sa **drugog** cvora → `logger.warn` sa oba zapisa (ko je prvi upisao, ko drugi i kada). To je
+   trenutak kada je duplo izvrsenje **postalo cinjenica**.
+
+### Sto je ovaj run ipak dokazao
+* `heap` ostaje ispod 100 MB (vrh **99,5**) — `gcAgeMs` 10 min drzi,
+* `p95` je **784 ms** — sedmi sat zaredom stabilno,
+* `shed = 0`, `rate-limited = 0`, `CRDT` ogranicen,
+* **`lost` i `duplo` variraju**: #7 = 1 lost / 4 dup · #8 = 5 lost / 6 dup. Mali brojevi, ali **varijacija**
+  znaci da je pojava uslovljena **vremenskim preklapanjem** (restart + istovremeni claim), a ne stalnim
+  stanjem. Zato je i mjerenje po dogadjaju (a ne po posljedici) jedini put do `duplo = 0`.
