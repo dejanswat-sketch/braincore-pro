@@ -3,6 +3,8 @@
  * Ovdje se spajaju svi slojevi: config → llm → memory → tools/MCP → agenti → orchestracija → server.
  */
 import { loadConfig } from './core/config.js';
+import { pathToFileURL } from 'node:url';
+import { createSwarmNode } from './node.js';
 import { createLogger } from './core/logger.js';
 import { createMetrics } from './observability/metrics.js';
 import { createTracer } from './observability/trace.js';
@@ -54,7 +56,7 @@ import { createSwarm } from './swarm/swarm.js';
 import { createEvolution } from './evolution/genome.js';
 import { createMetaRsi } from './rsi/meta.js';
 
-export const VERSION = '0.5.0';
+export const VERSION = '0.6.0';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -486,3 +488,59 @@ export { createFileStore, createRedisStore, createSharedStore } from './cluster/
 export { createRedisClient, encodeCommand, parseReply } from './cluster/redis.js';
 export { evaluate, resolvePolicy, redactPii, DECISIONS } from './core/policy.js';
 export * from './core/errors.js';
+
+// ── exporti slojeva po smernicama (poster → kod) ─────────────────────────────
+export { createGossip, GOSSIP_DEFAULTS } from './gossip.js';
+export { createRespClient, encodeCommand as encodeRespCommand, parseReply as parseRespReply } from './resp-client.js';
+export { createCrdtBlackboard } from './shared/blackboard.js';
+export { createPheromoneStore, PHEROMONE_DEFAULTS } from './shared/pheromone.js';
+export { createTaskQueue, createNatsClient, TASK_DEFAULTS } from './shared/queue.js';
+export { createTicketRouter } from './support/ticket-router.js';
+export { createToolRunner } from './execution/tool-runner.js';
+export { createExtractor } from './research/extractor.js';
+export { createGenomeRegistry, ALLOWED_REPORT_FIELDS } from './research/genome-registry.js';
+export { createFederationClient } from './research/federation.js';
+export { createSwarmNode, createSupportCluster, createExecutionCluster, createResearchCluster, NODE_DEFAULTS } from './node.js';
+
+// ── CLI: `node src/index.js --port=8001 --peers=127.0.0.1:8002,...` ──────────
+// Jedan proces = jedan node roja. Nema mastera; sve ide preko gossip-a i CRDT-a.
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+const hasPortArg = process.argv.some((a) => a === '--port' || a.startsWith('--port='));
+if (isMain && hasPortArg) {
+  const arg = (name, fallback = null) => {
+    const withEq = process.argv.find((a) => a.startsWith(`--${name}=`));
+    if (withEq) return withEq.split('=').slice(1).join('=');
+    const idx = process.argv.indexOf(`--${name}`);
+    return idx >= 0 && process.argv[idx + 1] ? process.argv[idx + 1] : fallback;
+  };
+  const nodePort = Number(arg('port', 8001));
+  const peers = String(arg('peers', '') || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const secret = arg('secret', process.env.NMQ_CLUSTER_SECRET ?? 'genesis-local-dev-secret');
+  const tenantId = arg('tenant', process.env.NMQ_DEFAULT_TENANT ?? 'nmq');
+  const logLevel = arg('log', process.env.NMQ_LOG_LEVEL ?? 'info');
+  const bootLogger = createLogger({ level: logLevel, service: `nmq-node-${nodePort}` });
+  const node = await createSwarmNode({
+    nodeId: arg('id', `node-${nodePort}`),
+    port: nodePort,
+    host: arg('host', '0.0.0.0'),
+    advertiseHost: arg('advertise', '127.0.0.1'),
+    peers,
+    secret,
+    tenantId,
+    logger: bootLogger,
+    runner: async (task) => ({ output: `node ${nodePort} obradio ${task.id}` }),
+  });
+  const started = await node.start();
+  bootLogger.info('node.boot', { ...started, peers: peers.length });
+  // Ispis u formatu iz smernica: „SYNCED in 1.2s, 3 peers alive"
+  const peersAlive = node.stats().peersAlive;
+  const humanMs = (started.syncMs / 1000).toFixed(1);
+  // eslint-disable-next-line no-console
+  console.log(`${started.synced ? 'SYNCED' : 'PARTIAL'} in ${humanMs}s, ${peersAlive + 1} nodes alive (udp :${started.port}, http :${started.httpPort}, tenant ${tenantId})`);
+  const shutdown = async () => {
+    await node.close();
+    process.exit(0);
+  };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}

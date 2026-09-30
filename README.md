@@ -237,6 +237,31 @@ curl -X POST localhost:8787/v1/admin/agents/executor/keys -d '{"scopes":["crm:wr
 
 ---
 
+
+## Mapiranje poster → kod (v0.6.0, po „Punim smernicama")
+
+| Element sa postera | Gdje je u kodu | Šta radi |
+|---|---|---|
+| SUPPORT CLUSTER | `src/support/ticket-router.js` | klasifikuje ticket (refund/billing/technical/ecommerce/sales) → bira agenta → queue + feromon |
+| RESEARCH CLUSTER | `src/research/{extractor,genome-registry,federation}.js` | izvlači činjenice u KB · registar genoma (tournament + top 10%) · edge šalje **samo fitness** |
+| EXECUTION CLUSTER | `src/execution/tool-runner.js` | jedina tačka izvršenja alata: politika + sandbox + audit + mjerenje |
+| SHARED ENVIRONMENT | `src/shared/{blackboard,queue,pheromone}.js` | CRDT tabla (LWW + vektorski sat) · queue (memory/RESP/NATS) · feromoni (TTL 30s + decay) |
+| COMMUNICATION LAYER | `src/gossip.js` | sopstveni UDP (dgram) SWIM gossip: PING/ACK/PING_REQ/LEAVE/DISSEMINATE, HMAC |
+| COORDINATION LAYER | `src/shared/pheromone.js` + `src/swarm/*` | stigmergija (jačina traga = prioritet), glasanje, konsenzus |
+| EMERGENCE LAYER | `src/swarm/swarm.js` | emergentna specijalizacija (mjeri se iz završenih zadataka) |
+| META (RSI) LOOP | `src/rsi/meta.js` | R0–R5 sa kapijama; meta-izmjene samo kao predlog |
+
+**Pokretanje roja (bez mastera):**
+
+```bash
+node src/index.js --port=8001
+node src/index.js --port=8002 --peers=127.0.0.1:8001
+node src/index.js --port=8003 --peers=127.0.0.1:8001,127.0.0.1:8002
+# očekivano: SYNCED in <2s, 3 nodes alive   (UDP gossip + HTTP :8001/status)
+```
+
+**Checklist iz smernica (dokazano u `tests/3-nodes.test.mjs`):** 3 node-a se nađu <2s · task u A izvršava B kad je B slobodniji ·
+CRM tabla konvergira (LWW + vektorski sat) · pheromone ispari posle 30s · nema `node_modules` · samo built-in moduli.
 ## GENESIS BRAIN (vizualni identitet)
 
 ![GENESIS BRAIN — kristalno staklo, zlatno jezgro](docs/37-genesis-brain.png)
@@ -251,7 +276,7 @@ Poster (stvarno stanje v0.4.0, sa oznakama STVARNO / DJELIMIČNO / NE RADIMO): `
 
 ## Status
 
-`v0.5.0` — cross-node swarm: **205/205 testova**, 19 agenata, 11 ulaza/patterna, 20 ugrađenih alata,
+`v0.6.0` — build po „Punim smernicama": **222/222 testova**, 19 agenata, 11 ulaza/patterna, 20 ugrađenih alata,
 persistentni agenti, kontrolna ravan, autonomija **L0–L4**, **ciljevi sa KPI i replan-om**, proaktivni watcheri,
 **self-improvement sa odobrenjem i A/B**, self-play i RSI, **AI organizacija (7 uloga)** i **A2A pregovaranje**
 sa internim settlement ledger-om — sve bez ijedne npm zavisnosti.

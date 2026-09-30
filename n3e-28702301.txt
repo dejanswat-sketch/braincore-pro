@@ -1,0 +1,45 @@
+✔ 3 node-a se nalaze za <2s (bez mastera, UDP gossip) (45.2955ms)
+✔ gossip: failure detection (suspect/dead) i zabrana lažnog potpisa (705.1958ms)
+✖ task ubačen u node A završava u node B ako je B slobodniji (286.9189ms)
+✔ atomski claim preko CRDT-a: dva node-a ne mogu uzeti isti task (119.6497ms)
+✔ CRDT: LWW + vektorski sat konvergira bez obzira na redoslijed i duple pakete (0.6818ms)
+✔ CRDT: delta i vektorski sat (sync bez slanja cijelog stanja) (0.3857ms)
+✔ pheromone: TTL 30s, decay (pola za 10s) i „heat" po zadatku (0.6247ms)
+✔ queue: LPUSH/BRPOP preko ručnog RESP klijenta + visibility timeout (16.7337ms)
+✔ RESP parser: kodiranje i parsiranje (uključujući NULL i grešku) (0.2773ms)
+✔ support cluster: ticket-router klasifikuje, stavlja u queue i ostavlja feromon (1.3706ms)
+✔ execution cluster: tool-runner poštuje politiku i sandbox (fail-closed) (1.0278ms)
+✔ research cluster: extractor izvlači činjenice i ne izmišlja (1.2374ms)
+✔ federation: šalje SAMO metrike (nikad sadržaj), HMAC obavezan, top 10% se distribuira (1.6983ms)
+✔ federation: hot-swap je isključen po defaultu (predlog), a sa uključenim radi kroz control plane (0.6508ms)
+✔ nema npm zavisnosti: samo Node built-in moduli u kodu (29.5271ms)
+✔ CLI: node src/index.js --port=... se diže i odgovara na /status (checklist) (464.8959ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 15
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2481.7456
+
+✖ failing tests:
+
+test at tests\3-nodes.test.mjs:121:1
+✖ task ubačen u node A završava u node B ako je B slobodniji (286.9189ms)
+  AssertionError [ERR_ASSERTION]: A mora vidjeti da je B slobodan
+  
+  null !== 0
+  
+      at TestContext.<anonymous> (file:///E:/NMQ-PROGRAMI/nmq-robot/tests/3-nodes.test.mjs:142:12)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processTimers (node:internal/timers:615:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

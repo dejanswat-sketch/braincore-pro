@@ -636,6 +636,73 @@ async function main() {
   line('  Sigurnosna pravila klastera: svaka poruka je HMAC-potpisana (NMQ_CLUSTER_SECRET), ulazna poruka prolazi');
   line('  istu medijaciju kao lokalna, pošiljalac mora biti POZNAT član, a karantin čvora je „sticky" (heartbeat ga ne vraća).');
 
+  // ── 27. Swarm node-ovi (po „Punim smernicama") ──────────────────────────────
+  head(27, 'SWARM NODE-OVI — 3 čvora bez mastera: UDP gossip, CRDT tabla, federacija (samo fitness)');
+  const { createSwarmNode, createFederationClient, createGenomeRegistry } = await import('../src/index.js');
+  const NODE_SECRET = 'demo-node-secret-lokalno';
+  const nodeCfg = { httpAdmin: false, autoLoop: false, claimConfirmMs: 80, gossip: { intervalMs: 120, failureTimeoutMs: 1200 } };
+  const nA = await createSwarmNode({ nodeId: 'demo-A', port: 0, host: '127.0.0.1', advertiseHost: '127.0.0.1', secret: NODE_SECRET, config: nodeCfg, runner: async (t) => { if (t.type === 'slow') await new Promise((r) => setTimeout(r, 1200)); return { output: `demo-A obradio ${t.id.slice(0, 10)}` }; } });
+  const nB = await createSwarmNode({ nodeId: 'demo-B', port: 0, host: '127.0.0.1', advertiseHost: '127.0.0.1', secret: NODE_SECRET, config: nodeCfg, runner: async (t) => ({ output: `demo-B obradio ${t.id.slice(0, 10)}` }) });
+  const nC = await createSwarmNode({ nodeId: 'demo-C', port: 0, host: '127.0.0.1', advertiseHost: '127.0.0.1', secret: NODE_SECRET, config: nodeCfg, runner: async (t) => ({ output: `demo-C obradio ${t.id.slice(0, 10)}` }) });
+  const t0 = Date.now();
+  await nA.start();
+  await nB.start();
+  await nC.start();
+  await nB.gossip.join([`127.0.0.1:${nA.port}`]);
+  await nC.gossip.join([`127.0.0.1:${nA.port}`, `127.0.0.1:${nB.port}`]);
+  const synced = await Promise.all([nA.waitForPeers({ expected: 2, timeoutMs: 2000 }), nB.waitForPeers({ expected: 2 }), nC.waitForPeers({ expected: 2 })]);
+  line(`  čvorovi: ${[nA, nB, nC].map((n) => `${n.nodeId}:udp ${n.port}`).join(' · ')}`);
+  line(`  discovery: ${synced.map((s, i) => `${['A', 'B', 'C'][i]}=${s.alivePeers} peera u ${s.syncMs}ms`).join(', ')} (ukupno ${Date.now() - t0}ms, bez mastera)`);
+  line(`  membership je obostran: ${nA.gossip.membershipList().map((m) => m.nodeId).sort().join(', ')}`);
+  line(`  protokol: PING svakih ${nA.gossip.settings.intervalMs}ms · fanout ${nA.gossip.settings.fanout} · failure timeout ${nA.gossip.settings.failureTimeoutMs}ms · HMAC potpis obavezan`);
+
+  // zauzmi A sporim taskom (bez await-a: runner traje 1.2s)
+  await nA.submitTask({ type: 'slow', payload: { text: 'dugi posao' }, ttl: 30_000, value: 5 });
+  const slowTick = nA.tick();
+  await new Promise((r) => setTimeout(r, 250));
+  for (let i = 0; i < 40 && nA.gossip.members.get('demo-B')?.load === null; i += 1) await new Promise((r) => setTimeout(r, 50));
+  line(`  A je zauzet (load=${nA.load()}), B je slobodan (load=${nA.minPeerLoad()}) — sada task ide u A, a izvršava ga B:`);
+  const sharedTask = await nA.submitTask({ type: 'support.ticket', payload: { text: 'Kako da resetujem lozinku?' }, ttl: 30_000, value: 10 });
+  const aRefused = await nA.tick();
+  let doneOn = null;
+  for (let i = 0; i < 40 && !doneOn; i += 1) {
+    await nB.tick();
+    doneOn = nB.done.find((d) => d.taskId === sharedTask.id) ?? null;
+    if (!doneOn) await new Promise((r) => setTimeout(r, 50));
+  }
+  line(`  A odbija: ${JSON.stringify({ idle: aRefused.idle, reason: aRefused.reason })} → task izvršio ${doneOn?.nodeId ?? 'NIKO'} (${doneOn?.ms ?? '-'}ms)`);
+  line(`  C vidi claim u CRDT-u: ${JSON.stringify(nC.crdt.get(`claim:${sharedTask.id}`) ?? null)}`);
+  await slowTick;
+
+  // CRDT konvergencija (sačekaj da epidemijsko širenje stigne do svih)
+  await new Promise((r) => setTimeout(r, 500));
+  const fps = [nA, nB, nC].map((n) => n.crdt.fingerprint());
+  line(`  CRDT (LWW + vektorski sat): sva tri čvora imaju identično stanje: ${fps[0] === fps[1] && fps[1] === fps[2]} (${nA.crdt.size} zapisa)`);
+
+  // pheromone TTL/decay
+  let clock = 1_000_000;
+  const ph = (await import('../src/shared/pheromone.js')).createPheromoneStore({ config: { ttlMs: 30_000, halfLifeMs: 10_000 }, now: () => clock });
+  await ph.deposit({ tenantId: 'nmq', type: 'hot', taskId: 'demo-task', strength: 1 });
+  line(`  pheromone: t=0 → jačina ${ph.active({ tenantId: 'nmq' })[0].currentStrength} · t=10s → ${(clock += 10_000, ph.active({ tenantId: 'nmq' })[0].currentStrength)} · t=20s → ${(clock += 10_000, ph.active({ tenantId: 'nmq' })[0].currentStrength)}`);
+  clock += 10_000;
+  line(`  pheromone poslije 30s (TTL): aktivnih ${ph.active({ tenantId: 'nmq' }).length} — trag je ispario (decay + expiry)`);
+
+  // federacija: samo fitness
+  const registry = createGenomeRegistry({ secret: NODE_SECRET, config: { minSamples: 3, topPercent: 10 } });
+  const edge = createFederationClient({ nodeId: 'demo-edge-us', secret: NODE_SECRET, registry });
+  for (let i = 0; i < 4; i += 1) registry.report(edge.buildReport({ fitness: 0.8 + i * 0.03, tasksDone: 100 + i, pheromoneEfficiency: 0.9, genomeId: 'genom-B' }));
+  for (let i = 0; i < 3; i += 1) registry.report(edge.buildReport({ fitness: 0.4, tasksDone: 20, genomeId: 'genom-C' }));
+  registry.publish({ genomeId: 'genom-B', blob: { systemPrompt: 'Poboljšan prompt iz federacije', temperature: 0.2 }, fitness: 0.92 });
+  const update = registry.bestUpdate().update;
+  line(`  federacija: edge šalje SAMO ${Object.keys(edge.buildReport({ fitness: 0.9 })).join(', ')} — nikad sadržaj`);
+  line(`  tournament + top 10%: pobjednik ${update.genomeId} (${update.samples} mjerenja, fitness ${update.fitness}) → blob "${update.blob.systemPrompt}"`);
+  const applyOff = await edge.applyUpdate(update, { agentId: 'support' });
+  line(`  hot-swap: ${applyOff.applied ? 'PRIMIJENJENO' : `nije primijenjeno — ${applyOff.reason}`} (safety default)`);
+
+  await nA.close();
+  await nB.close();
+  await nC.close();
+
   line('');
   line('╔════════════════════════════════════════════════════════════════════════════╗');
   line('║  DEMO ZAVRŠEN — sve radi bez interneta i bez troška (mock LLM)              ║');

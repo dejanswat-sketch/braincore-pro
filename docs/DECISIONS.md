@@ -287,3 +287,24 @@ udaljeni član je dobijao `self: true` iz membership liste pa ga watchdog **nika
 
 **Stanje dokaza (v0.5.0):** `node --test` → **205/205**, `node scripts/eval.mjs` → **6/6 (100%)**, `node scripts/demo.mjs` → **26 sekcija**,
 `node scripts/smoke.mjs` → **41/41**, `node src/cli.js audit-verify` → lanac ispravan.
+
+---
+
+## 13. Build po smernicama (v0.6.0) — odluke D65–D72
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D65 | Mapiranje poster → kod | `src/support/` (ticket-router), `src/research/` (extractor, genome-registry, federation), `src/execution/` (tool-runner), `src/shared/` (blackboard, queue, pheromone), `src/gossip.js`, `src/resp-client.js`, `src/node.js` | Smernice traže da se struktura poklapa sa slikom; svaki folder ima stvarnu funkciju, ne prazan kostur |
+| D66 | Gossip preko **UDP (dgram)**, ne TCP | PING/ACK/PING_REQ/LEAVE/DISSEMINATE, interval **300ms**, fanout **2**, failure timeout **1200ms**, inkarnacija + refutacija, deduplikacija, HMAC | UDP je jeftin za membership; gubitak paketa nije problem jer je protokol idempotentan |
+| D67 | CRDT tabla: **LWW + vektorski sat** | Pobjeda: veći `counter`, pa leksikografski veći `nodeId`; `merge` idempotentan; `delta(remoteClock)` za sync; tombstone za brisanje | Deterministička konvergencija bez koordinatora — svaki čvor na kraju ima identično stanje |
+| D68 | Claim kroz CRDT sa verifikacijom | Node se prijavljuje za task **samo ako je najslobodniji** (`load <= min(peer load)`); claim je LWW zapis + kratka verifikacija; gubitnik odustaje | „Task u A završava u B ako je B slobodniji" + tačno jedan izvršilac, bez centralnog lock-a |
+| D69 | Pheromone: TTL **i** decay | `ttlMs` 30s (spec), `halfLifeMs` 10s, `decayJob` briše isparilo; `heat()` sabira tragove po zadatku | Stigmergija mora postepeno da slabi; TTL sam po sebi ne daje prioritet |
+| D70 | Queue: `memory` / RESP (LPUSH+BRPOP) / NATS | Ručni RESP klijent (`net`) i minimalni NATS klijent; task = `{id,type,payload,ttl}`; `visibilityTimeoutMs` + `requeueStale` | Bez npm zavisnosti; at-least-once isporuka uz vidljiv `attempts` |
+| D71 | Federacija: **samo metrike** | Dozvoljena polja `node_id, genome_id, fitness, tasks_done, pheromone_efficiency, ts, tenant_hash, sig`; svako dodatno polje i svaki string >128 znakova se **odbija**; HMAC obavezan; tournament selection + top 10% + `minSamples` | Sadržaj klijenta nikad ne napušta edge; privatnost je provjerljiva testom, a ne obećanjem |
+| D72 | Hot-swap genoma je isključen po defaultu | `autoHotSwap: false`; bez toga update je **predlog**; sa uključenim ide kroz kontrolnu ravan sa rollback verzijom | Promjena ponašanja agenta je promjena granica — čovjek odlučuje |
+
+**Dokazi (checklist iz smernica):** `node src/index.js --port=...` se diže i odgovara na `/status`; **3 node-a se nađu za <2s** (mjereno u `tests/3-nodes.test.mjs`);
+task ubačen u A izvršava **B** kad je B slobodniji; pheromone ispari poslije **30s** (TTL + decay test); **nema `node_modules`** i skener koda odbija svaki bare import;
+sve bez ijedne npm zavisnosti (`dependencies: {}`).
+
+**Stanje dokaza (v0.6.0):** `node --test` → **222/222** (17 novih u `tests/3-nodes.test.mjs`), eval 6/6, demo 27 sekcija, smoke 41/41.

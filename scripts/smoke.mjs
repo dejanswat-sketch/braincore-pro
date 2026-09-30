@@ -370,6 +370,43 @@ async function main() {
     const res = await fetch(`${base}/v1/admin/cluster/broadcast`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-tenant': 'nmq', authorization: `Bearer ${issued.key}` }, body: JSON.stringify({ type: 'heartbeat' }) });
     return `članova=${members.members.length}, nepoznat član=${JSON.stringify(bad.ok)}, agent ključ=${res.status}`;
   });
+
+  // ── v0.6: swarm node (po smernicama) ──
+  await check('Swarm node CLI: --port se diže, /status i task rade', async () => {
+    const { spawn } = await import('node:child_process');
+    const port = 18700 + Math.floor(Math.random() * 200);
+    const child = spawn(process.execPath, ['src/index.js', `--port=${port}`, '--log=warn'], {
+      cwd: ROOT,
+      env: { ...process.env, NMQ_CLUSTER_SECRET: 'smoke-node-secret' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d.toString(); });
+    child.stderr.on('data', (d) => { out += d.toString(); });
+    try {
+      let status = null;
+      for (let i = 0; i < 50 && !status; i += 1) {
+        await new Promise((r) => setTimeout(r, 100));
+        try {
+          const res = await fetch(`http://127.0.0.1:${port}/status`);
+          if (res.ok) status = await res.json();
+        } catch { /* još se diže */ }
+      }
+      if (!status) throw new Error(`node nije odgovorio: ${out.slice(0, 200)}`);
+      const res = await fetch(`http://127.0.0.1:${port}/task`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'support.ticket', payload: { text: 'SMOKE node task' } }) });
+      const body = await res.json();
+      if (!body.accepted) throw new Error('task nije prihvaćen');
+      let done = 0;
+      for (let i = 0; i < 30 && !done; i += 1) {
+        await new Promise((r) => setTimeout(r, 100));
+        const t = await (await fetch(`http://127.0.0.1:${port}/tasks`)).json();
+        done = (t.done ?? []).length;
+      }
+      return `node=${status.nodeId}, udp=${status.port}, izvršeno=${done}, linija=${/SYNCED|PARTIAL/.test(out) ? 'SYNCED' : '-'}`;
+    } finally {
+      child.kill('SIGKILL');
+    }
+  });
   const failed = results.filter((r) => !r.ok);
   console.log('');
   console.log(`  ── SMOKE REZULTAT: ${results.length - failed.length}/${results.length} prošlo ──`);
