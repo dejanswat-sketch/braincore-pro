@@ -57,7 +57,7 @@ import { createSwarm } from './swarm/swarm.js';
 import { createEvolution } from './evolution/genome.js';
 import { createMetaRsi } from './rsi/meta.js';
 
-export const VERSION = '0.7.1';
+export const VERSION = '0.7.2';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.

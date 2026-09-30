@@ -37,8 +37,11 @@ export function createLiveFeed({ node, config = {}, logger, metrics } = {}) {
       results: node.done.slice(-cfg.maxTasks).map((d) => ({ taskId: d.taskId, nodeId: d.nodeId, ok: d.ok, ms: d.ms, at: d.at })),
       stats: {
         peersAlive: stats.peersAlive,
+        swarmNodes: stats.swarmNodes ?? stats.peersAlive + 1,
         tasksKnown: stats.tasksKnown,
-        tasksDone: stats.tasksDone,
+        // Roj-široko: koliko je zadataka završeno na SVIM čvorovima (ne samo na ovom)
+        tasksDone: stats.swarmTasksDone ?? stats.tasksDone,
+        tasksDoneLocal: stats.tasksDone,
         crdtSize: stats.crdtSize,
         claimsLost: node.claimsLost ?? 0,
         gossip: { sent: node.gossip.stats.sent, received: node.gossip.stats.received, rejected: node.gossip.stats.rejected, duplicates: node.gossip.stats.duplicates },

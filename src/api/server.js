@@ -116,10 +116,13 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         return send(200, { tasks: [...node.tasks.values()], done: node.done.slice(-100), crdt: node.crdt.toObject() });
       }
       if (req.method === 'GET' && url.pathname === '/metrics') {
+        const stats = node.stats();
         return send(200, {
-          peersAlive: node.stats().peersAlive,
-          tasksKnown: node.stats().tasksKnown,
-          tasksDone: node.stats().tasksDone,
+          peersAlive: stats.peersAlive,
+          swarmNodes: stats.swarmNodes,
+          tasksKnown: stats.tasksKnown,
+          tasksDone: stats.swarmTasksDone, // roj-široko (svi čvorovi), isto kao na sajtu
+          tasksDoneLocal: stats.tasksDone,
           crdtSize: node.crdt.size,
           pheromones: node.pheromone.stats(),
           gossip: node.gossip.stats,

@@ -6,7 +6,8 @@
    5. Stripe checkout guard when the payment link is not configured
 */
 (() => {
-  const API = 'https://api.braincore.pro';
+  // API base: produkcija je api.braincore.pro; lokalno se može preusmjeriti sa ?api=http://127.0.0.1:8081
+  const API = new URLSearchParams(location.search).get('api') || window.BRAINCORE_API || 'https://api.braincore.pro';
   const year = document.getElementById('year');
   if (year) year.textContent = String(new Date().getFullYear());
 

@@ -50,6 +50,10 @@ Zato su prva tri prioriteta iz tih oblasti, a ne „emergentni jezik".
 4. Rupa koju zatvaramo: „eval je 6/6" više ne smije biti rečenica bez modela i datuma.
 
 ### Sprint 2 — „Kvar nije iznenađenje" (kolosijek A)
+0. **Poznati flake (viđen 30.09.)**: `tests/server.test.mjs` → „per-agent ključ (service account) radi kroz HTTP
+   gateway" je pao jednom dok su paralelno radila 3 demo node-a + API; dva naredna puna prolaza su 240/240.
+   Zadatak: naći uzrok (vjerovatno zauzet port ili vremenska zavisnost), popraviti i dodati u CI kao „mora 3×
+   zaredom zeleno" da flake ne prolazi ispod radara.
 1. `scripts/chaos.mjs`: 3 node-a + load; ubij jedan (`SIGKILL`), mjeri: vrijeme detekcije, vrijeme re-claim-a,
    broj izgubljenih taskova (cilj **0**), broj duplo izvršenih (cilj **0**).
 2. **Idempotency key** na tasku + `fencing token` na claim-u (monotoni brojač po tasku) → duplo izvršenje

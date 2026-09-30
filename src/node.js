@@ -374,6 +374,9 @@ export async function createSwarmNode({
     },
 
     stats() {
+      // Roj-široki brojači: svoj `done` + ono što su peer-ovi objavili u statusu (PING/ACK nosi tasksDone).
+      const peers = gossip.membershipList().filter((m) => m.nodeId !== id && m.status === 'alive');
+      const swarmTasksDone = done.length + peers.reduce((sum, m) => sum + Number(m.tasksDone ?? 0), 0);
       return {
         nodeId: id,
         port: api.port,
@@ -384,6 +387,8 @@ export async function createSwarmNode({
         inFlight: inFlight.size,
         tasksKnown: tasks.size,
         tasksDone: done.length,
+        swarmTasksDone,
+        swarmNodes: peers.length + 1,
         peersAlive: gossip.aliveCount() - 1,
         alive: gossip.membershipList().filter((m) => m.status === 'alive').map((m) => `${m.nodeId}@${m.host}:${m.port}`),
         crdtSize: crdt.size,
