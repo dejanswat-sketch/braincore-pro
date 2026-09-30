@@ -51,7 +51,7 @@
           <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/health</td><td class="py-3 pr-4">Liveness and node identity</td><td class="py-3">—</td></tr>
           <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/status</td><td class="py-3 pr-4">Node stats + membership + live viewers</td><td class="py-3">—</td></tr>
           <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/metrics</td><td class="py-3 pr-4">Counters used by the landing page</td><td class="py-3">—</td></tr>
-          <tr><td class="py-3 pr-4 font-mono text-amber-300">POST</td><td class="py-3 pr-4 font-mono">/task</td><td class="py-3 pr-4">Submit work into the swarm</td><td class="py-3">optional key</td></tr>
+          <tr><td class="py-3 pr-4 font-mono text-amber-300">POST</td><td class="py-3 pr-4 font-mono">/task</td><td class="py-3 pr-4">Submit work into the swarm (optional <span class="font-mono">outputSchema</span>)</td><td class="py-3">optional key</td></tr>
           <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/tasks</td><td class="py-3 pr-4">Known tasks, results, CRDT snapshot</td><td class="py-3">—</td></tr>
           <tr><td class="py-3 pr-4 font-mono text-amber-300">POST</td><td class="py-3 pr-4 font-mono">/v1/fitness</td><td class="py-3 pr-4">Edge reports fitness (metrics only, HMAC)</td><td class="py-3">HMAC signature</td></tr>
           <tr><td class="py-3 pr-4 font-mono text-emerald-300">GET</td><td class="py-3 pr-4 font-mono">/v1/genome/best?k=1</td><td class="py-3 pr-4">Best genome from the top 10 %</td><td class="py-3">—</td></tr>
@@ -77,6 +77,20 @@
     "ttl": 30000
   }'</pre>
       <p class="mt-3 text-[12.5px] text-slate-400"><code>type</code> is required. <code>value</code> is the priority used to order claims; <code>ttl</code> is milliseconds before the task expires.</p>
+      <p class="mt-4 text-[12.5px] text-slate-300">Add <code>outputSchema</code> and the answer is enforced: extra fields are dropped, prose is stripped, enum values are checked, and one corrective retry happens if the model drifts.</p>
+      <pre class="mt-3 overflow-x-auto rounded-xl p-4 text-[12.5px] text-slate-200">{
+  "type": "support.ticket",
+  "payload": { "text": "Reset my password" },
+  "outputSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["category", "priority"],
+    "properties": {
+      "category": { "enum": ["refund","billing","technical","ecommerce","sales","other"] },
+      "priority": { "enum": ["low","normal","high"] }
+    }
+  }
+}</pre>
     </div>
 
     <div class="glass rounded-2xl p-6">

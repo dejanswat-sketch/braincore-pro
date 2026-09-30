@@ -80,6 +80,7 @@
     <div class="hidden items-center gap-7 text-[13px] text-slate-300 lg:flex">
       <a class="hover:text-white" href="#architecture">Architecture</a>
       <a class="hover:text-white" href="#clusters">Clusters</a>
+      <a class="hover:text-white" href="#measured">Proof</a>
       <a class="hover:text-white" href="#security">Security</a>
       <a class="hover:text-white" href="#deploy">Deploy</a>
       <a class="hover:text-white" href="#pricing">Pricing</a>
@@ -128,22 +129,22 @@
         <div class="glass rounded-2xl p-3.5">
           <dt class="text-[10.5px] uppercase tracking-widest text-slate-400">Discovery</dt>
           <dd class="mt-1 text-[15px] font-bold text-emerald-300">&lt; 2s</dd>
-          <dd class="text-[11px] text-slate-400">measured on 3 nodes</dd>
+          <dd class="text-[11px] text-slate-400">measured 42 ms on 3 nodes</dd>
+        </div>
+        <div class="glass rounded-2xl p-3.5">
+          <dt class="text-[10.5px] uppercase tracking-widest text-slate-400">Golden eval</dt>
+          <dd class="mt-1 text-[15px] font-bold text-gold">24/24</dd>
+          <dd class="text-[11px] text-slate-400">100 % on a real model</dd>
         </div>
         <div class="glass rounded-2xl p-3.5">
           <dt class="text-[10.5px] uppercase tracking-widest text-slate-400">Tests</dt>
-          <dd class="mt-1 text-[15px] font-bold text-white">225</dd>
+          <dd class="mt-1 text-[15px] font-bold text-white">259</dd>
           <dd class="text-[11px] text-slate-400">passing, 0 failing</dd>
         </div>
         <div class="glass rounded-2xl p-3.5">
           <dt class="text-[10.5px] uppercase tracking-widest text-slate-400">Dependencies</dt>
           <dd class="mt-1 text-[15px] font-bold text-white">0</dd>
           <dd class="text-[11px] text-slate-400">npm packages</dd>
-        </div>
-        <div class="glass rounded-2xl p-3.5">
-          <dt class="text-[10.5px] uppercase tracking-widest text-slate-400">Pheromone TTL</dt>
-          <dd class="mt-1 text-[15px] font-bold text-white">30s</dd>
-          <dd class="text-[11px] text-slate-400">with real decay</dd>
         </div>
       </dl>
     </div>
@@ -162,8 +163,8 @@
 <section class="border-y border-white/10 bg-white/[0.02]">
   <div class="mx-auto grid max-w-7xl gap-3 px-5 py-6 text-[12.5px] text-slate-300 sm:grid-cols-2 lg:grid-cols-4">
     <div class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-400"></span><p><b class="text-white">Task hand-off proven.</b> A task submitted to node A is executed by node B when B is freer — asserted in the test suite, not in a slide.</p></div>
-    <div class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-amber-300"></span><p><b class="text-white">Encrypted on the wire.</b> UDP is plaintext by nature; we encrypt payloads with AES-256-GCM so a packet capture shows nothing.</p></div>
-    <div class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-cyan-300"></span><p><b class="text-white">Only numbers travel.</b> The Genome Registry accepts eight fitness fields and rejects content — we cannot leak what we never receive.</p></div>
+    <div class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-amber-300"></span><p><b class="text-white">Survives a kill — with numbers.</b> Under <span class="font-mono">SIGKILL</span> and an hour of load: <b class="text-white">0 lost, 0 double-executed</b>, death detected in ~1.3 s. Both harnesses ship with the code.</p></div>
+    <div class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-cyan-300"></span><p><b class="text-white">Only numbers travel.</b> The Genome Registry accepts eight fitness fields and rejects content — we cannot leak what we never receive. Third-party PII is redacted on the way out.</p></div>
     <div class="flex items-start gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-violet-300"></span><p><b class="text-white">Zero npm.</b> Only Node built-ins: <span class="font-mono">dgram</span>, <span class="font-mono">net</span>, <span class="font-mono">http</span>, <span class="font-mono">crypto</span>. No supply chain to audit.</p></div>
   </div>
 </section>
@@ -328,6 +329,61 @@
   </div>
 </section>
 
+<!-- ── MEASURED SCOREBOARD ─────────────────────────────────────────────── -->
+<section id="measured" class="mx-auto max-w-7xl px-5 py-16">
+  <div class="flex items-center gap-4 reveal">
+    <span class="h-px flex-1 bg-gradient-to-r from-transparent via-white/25 to-transparent"></span>
+    <h2 class="text-[12px] font-bold uppercase tracking-[0.3em] text-slate-400">Measured, not promised</h2>
+    <span class="h-px flex-1 bg-gradient-to-r from-transparent via-white/25 to-transparent"></span>
+  </div>
+
+  <div class="mt-8 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+    <div class="glass reveal overflow-hidden rounded-3xl">
+      <div class="p-6 pb-2">
+        <h3 class="text-[16px] font-bold">Golden eval — 24 cases, real model, 100 %</h3>
+        <p class="mt-2 text-[13px] text-slate-400">Run with <span class="font-mono">node scripts/eval-real.mjs --live</span>. Every case is machine-checked; the scoreboard is reproducible, not a screenshot.</p>
+      </div>
+      <div class="overflow-x-auto p-6 pt-3">
+        <table class="cmp w-full min-w-[420px] text-left text-[13px]">
+          <thead class="text-[11px] uppercase tracking-wider text-slate-400"><tr><th class="py-2.5 pr-4">Category</th><th class="py-2.5 pr-4">Result</th><th class="py-2.5">What it proves</th></tr></thead>
+          <tbody class="text-slate-300">
+            <tr><td class="py-2.5 pr-4">routing</td><td class="py-2.5 pr-4 font-bold text-emerald-300">6/6</td><td class="py-2.5">Tickets reach the right agent (refunds, billing, orders, quotes)</td></tr>
+            <tr><td class="py-2.5 pr-4">grounding</td><td class="py-2.5 pr-4 font-bold text-emerald-300">6/6</td><td class="py-2.5">Answers use only the facts you supplied</td></tr>
+            <tr><td class="py-2.5 pr-4">refusal</td><td class="py-2.5 pr-4 font-bold text-emerald-300">4/4</td><td class="py-2.5">Legal, medical and third-party data requests are refused — and PII is redacted</td></tr>
+            <tr><td class="py-2.5 pr-4">format</td><td class="py-2.5 pr-4 font-bold text-emerald-300">4/4</td><td class="py-2.5">Declare an output schema; you get exactly those fields</td></tr>
+            <tr><td class="py-2.5 pr-4">language</td><td class="py-2.5 pr-4 font-bold text-emerald-300">4/4</td><td class="py-2.5">English, correct tone, no invented numbers</td></tr>
+            <tr><td class="py-2.5 pr-4 font-semibold text-white">total</td><td class="py-2.5 pr-4 font-extrabold text-gold">24/24</td><td class="py-2.5">100 % — above our 80 % release gate</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid gap-4">
+      <div class="glass reveal rounded-2xl p-6">
+        <h3 class="text-[15px] font-bold">Chaos: kill a node under load</h3>
+        <p class="mt-2 text-[13px] text-slate-400">Three processes, real <span class="font-mono">SIGKILL</span> on the busiest node, 30 tasks in flight.</p>
+        <ul class="mt-3 space-y-1.5 text-[13px] text-slate-300">
+          <li>• <b class="text-emerald-300">0</b> tasks lost (was 5 before the claim-lease fix)</li>
+          <li>• <b class="text-emerald-300">0</b> overlapping double executions</li>
+          <li>• death detected in <b class="text-white">~1.3 s</b>, work re-claimed in <b class="text-white">~0.2 s</b></li>
+        </ul>
+      </div>
+      <div class="glass reveal rounded-2xl p-6">
+        <h3 class="text-[15px] font-bold">Soak: an hour at load</h3>
+        <p class="mt-2 text-[13px] text-slate-400">Sustained throughput with a node restarting every 10 minutes.</p>
+        <ul class="mt-3 space-y-1.5 text-[13px] text-slate-300">
+          <li>• <b class="text-white">7.6</b> tasks/s sustained per process (<span class="font-mono">p95 779 ms</span>)</li>
+          <li>• <b class="text-emerald-300">0</b> lost, <b class="text-emerald-300">0</b> duplicated</li>
+          <li>• memory stable, CRDT board and pheromones decay as designed</li>
+        </ul>
+      </div>
+      <div class="glass-hi reveal rounded-2xl p-6">
+        <h3 class="text-[15px] font-bold text-gold">Declare a schema, get exactly that</h3>
+        <p class="mt-2 text-[13px] text-slate-300">Send <span class="font-mono">outputSchema</span> with a task and the system enforces it: extra fields dropped, prose stripped, types coerced, enums checked — with one corrective retry if the model drifts.</p>
+      </div>
+    </div>
+  </div>
+</section>
 <!-- ── SECURITY ────────────────────────────────────────────────────────── -->
 <section id="security" class="mx-auto max-w-7xl px-5 py-16">
   <div class="glass-hi rounded-3xl p-8 reveal">

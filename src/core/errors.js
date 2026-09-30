@@ -29,6 +29,20 @@ export class NotFoundError extends NmqError {
   }
 }
 
+/**
+ * BACKPRESSURE: red je pun — bolje odbiti odmah (429) nego pustiti da latencija eksplodira.
+ * Uvedeno poslije soak testa: iznad ~8 taskova/s po procesu (runner 120 ms) red raste, a p95 skače
+ * sa 0,8 s na 9 s. Klijent tada treba da uspori (Retry-After), a ne da čeka u nedogled.
+ */
+export class QueueFullError extends NmqError {
+  constructor(details = {}) {
+    super(
+      `Roj je preko kapaciteta (red ${details.queueDepth ?? '?'} ≥ ${details.maxQueueDepth ?? '?'}); pokušaj ponovo uskoro`,
+      { code: 'QUEUE_FULL', status: 429, retryable: true, details },
+    );
+  }
+}
+
 export class AuthError extends NmqError {
   constructor(message = 'Neautorizovan pristup') {
     super(message, { code: 'UNAUTHORIZED', status: 401 });

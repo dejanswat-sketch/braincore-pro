@@ -206,8 +206,10 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
       return send(404, { error: { code: 'NOT_FOUND', message: `Nema rute ${url.pathname}` } });
     } catch (err) {
       const status = err.status ?? (err.code === 'PAYLOAD_TOO_LARGE' ? 413 : 500);
+      if (status === 429) res.setHeader('retry-after', '1');
       logger?.warn?.('api.request_failed', { path: url.pathname, error: err.message, code: err.code ?? null });
-      return send(status, { error: { code: err.code ?? 'INTERNAL', message: err.message } });
+      // `toJSON()` nosi i `retryable` i `details` (npr. QUEUE_FULL nosi prag reda i trenutnu dubinu)
+      return send(status, typeof err.toJSON === 'function' ? err.toJSON() : { error: { code: err.code ?? 'INTERNAL', message: err.message } });
     }
   });
 

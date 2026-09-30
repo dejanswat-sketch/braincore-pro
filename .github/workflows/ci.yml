@@ -1,0 +1,54 @@
+name: CI
+
+# Nula npm zavisnosti: CI samo pokreće Node built-in testove i skripte.
+# Nema `npm install` — ako se pojavi node_modules ili zavisnost u package.json, build PADA.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Guard — zero npm dependencies
+        run: |
+          node -e "
+            const fs=require('node:fs');
+            const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+            const deps=Object.keys(pkg.dependencies||{});
+            if (deps.length) { console.error('ZABRANJENO: dependencies =', deps.join(', ')); process.exit(1); }
+            if (fs.existsSync('node_modules')) { console.error('ZABRANJENO: node_modules postoji'); process.exit(1); }
+            console.log('OK: dependencies = {} i nema node_modules');
+          "
+
+      - name: Syntax check (svih src fajlova)
+        run: |
+          find src scripts tests -name '*.js' -o -name '*.mjs' | while read f; do node --check "$f" || exit 1; done
+          echo "OK: sintaksa"
+
+      - name: Testovi (node --test)
+        run: node --test
+
+      - name: Smoke (42 provjere kroz sve slojeve)
+        run: node scripts/smoke.mjs
+
+      - name: Eval na MOCK modelu (bez troška, bez mreže)
+        run: node scripts/eval.mjs --threshold 0.8
+
+      - name: Eval runner — dry-run (provjera da je zlatni set validan, trošak $0)
+        run: node scripts/eval-real.mjs --dry-run
+
+      - name: Chaos (kratki: 12 taskova, SIGKILL) — 0 izgubljenih, 0 preklopljenih
+        run: node scripts/chaos.mjs --tasks=12 --delay=200 --base-port=8901 --settle=8000
+
+      - name: Soak (kratki: 0.5 min) — p95 u budžetu
+        run: node scripts/soak.mjs --minutes=0.5 --rate=6 --base-port=8911

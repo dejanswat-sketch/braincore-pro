@@ -31,7 +31,7 @@ import { createFederationClient } from './research/federation.js';
 import { encryptPayload, decryptPayload } from './shared/crypto.js';
 import { iso } from './core/clock.js';
 import { uid } from './core/ids.js';
-import { ValidationError } from './core/errors.js';
+import { ValidationError, QueueFullError } from './core/errors.js';
 
 export const NODE_DEFAULTS = {
   claimIntervalMs: 50,
@@ -51,6 +51,13 @@ export const NODE_DEFAULTS = {
   /** Durable submit: task se vraća tek kad ga bar jedan peer potvrdi (`task-received`). */
   durableSubmit: true,
   submitAckMs: 400,
+  /**
+   * BACKPRESSURE: koliko taskova smije čekati u redu prije nego počnemo odbijati (429).
+   * Mjereno soak testom: 3 node-a u jednom procesu drže ~8 taskova/s; iznad toga red raste i p95
+   * skače sa 0,8 s na 9 s. Odbijanje je iskrenije od neograničenog čekanja.
+   */
+  maxQueueDepth: 500,
+  shedWhenBusy: true,
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -219,6 +226,15 @@ export async function createSwarmNode({
 
   /** Objavi task SVIMA: lokalno + CRDT + gossip. */
   async function submitTask(task, { durable = cfg.durableSubmit } = {}) {
+    // BACKPRESSURE: ako je red pun, odbij odmah (klijent treba da uspori) — vidi QueueFullError
+    if (cfg.shedWhenBusy) {
+      const depth = queue.stats?.().queued ?? 0;
+      if (depth >= cfg.maxQueueDepth) {
+        metrics?.inc('node_submit_shed_total', { node: id });
+        logger?.warn?.('node.submit_shed', { nodeId: id, queueDepth: depth, maxQueueDepth: cfg.maxQueueDepth });
+        throw new QueueFullError({ queueDepth: depth, maxQueueDepth: cfg.maxQueueDepth, inFlight: inFlight.size });
+      }
+    }
     const normalized = {
       id: task.id ?? uid('task'),
       type: task.type ?? 'generic',
