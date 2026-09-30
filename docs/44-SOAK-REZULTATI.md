@@ -55,3 +55,34 @@ pa red raste i latencija eksplodira. To je sljedeći realan zadatak: **odbacivan
 2. **Restart čvora pod opterećenjem**: harness to podržava (`--restart-every`), mjeri se u 1h runu u toku.
 3. **Kapacitet sa 3 procesa** (umjesto 3 in-process node-a) — realnija slika za Hetzner.
 4. **Mrežna particija** (F6/F11) — dva hosta, blokiran UDP.
+
+---
+
+## 6. RESTART ČVORA pod opterećenjem (nalaz i popravka)
+
+Soak harness podržava restart čvora (`--restart-every=<sec>`): čvor se zatvori bez `LEAVE` (kao pravi pad),
+pa se podigne na istom portu i vrati u roj.
+
+**Nađena greška (treća koju je soak iznudio):** poslije `close()` su **claim/sync/queue tajmeri nastavljali da
+rade**, pa je log punio `node.tick_failed: "Not running"` — čvor je „mrtav", a još kuca. Popravka:
+`close()` sada gasi **sve** tajmere (`clearInterval` za claim, sync i queue), postavlja `closed` flag, a
+`tick()` na zatvorenom čvoru vraća `{ idle: true, reason: 'closed' }` umjesto da baca grešku.
+Regresioni test: `tests/close.test.mjs`.
+
+**Izmjereno poslije popravke** (`--minutes=1 --rate=6 --restart-every=20`, restart svakih 20 s — namjerno
+agresivno):
+
+| Mjera | Rezultat |
+|---|---|
+| restartovi | 3, svi uspješni, bez „Not running" |
+| latencija | p50 751 ms · **p95 11.7 s** · p99 12.0 s |
+| izgubljeno | 3 ✖ |
+| duplo izvršeno | 5 ✖ |
+
+**Iskreno tumačenje:** restart **svakih 20 sekundi** pod opterećenjem je ekstrem (12× češće od planiranog
+rasporeda od 10 min). Taskovi koji su bili „u letu" na ugašenom čvoru se preuzimaju ponovo, pa nastaju
+ponovni radovi (at-least-once) i, do `settle` prozora, par taskova ostane nedovršeno. Za prijemni test je
+mjerodavan 1h run sa restartom **svakih 10 min** (`docs/soak-1h.log`).
+
+**Sljedeće (ako zatreba):** skratiti `claimLeaseMs` na ~2× `failureTimeout` (2.4 s) da se taskovi sa mrtvog
+čvora vraćaju brže; sada je 10 s, što je konzervativno i sigurno, ali sporije.

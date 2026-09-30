@@ -93,6 +93,7 @@ export async function createSwarmNode({
   const tasks = new Map(); // taskId -> task (lokalno poznati)
   const inFlight = new Map();
   const pendingAcks = new Map(); // taskId -> { confirmedBy:Set, resolvers:[] } za durable submit
+  let closed = false; // poslije close() nijedna petlja ne smije raditi
   const done = [];
   const startedAt = Date.now();
 
@@ -392,6 +393,7 @@ export async function createSwarmNode({
 
   /** Jedan ciklus: pogledaj CRDT, claim-uj ako si najslobodniji, izvrši. */
   async function tick() {
+    if (closed) return { idle: true, reason: 'closed' }; // čvor je zatvoren — ne diraj ništa
     if (inFlight.size >= cfg.maxInFlight) return { idle: true, reason: 'maxInFlight' };
     const myLoad = load();
     const peerMin = minPeerLoad();
@@ -421,6 +423,7 @@ export async function createSwarmNode({
     return { ran: true, ...record };
   }
 
+  let loopRefs = null;
   function startLoops() {
     const claimTimer = setInterval(() => {
       tick().catch((err) => logger?.warn?.('node.tick_failed', { error: err.message }));
@@ -429,7 +432,8 @@ export async function createSwarmNode({
     const queueTimer = setInterval(() => queue.requeueStale().catch(() => {}), Math.max(1000, cfg.taskTtlMs));
     if (queueTimer.unref) queueTimer.unref();
     pheromone.startDecay();
-    return { claimTimer, queueTimer };
+    loopRefs = { claimTimer, queueTimer };
+    return loopRefs;
   }
 
   /**
@@ -508,6 +512,9 @@ export async function createSwarmNode({
     gossip,
     tasks,
     done,
+    get closed() {
+      return closed;
+    },
     get port() {
       return gossip.port;
     },
@@ -578,9 +585,21 @@ export async function createSwarmNode({
       };
     },
 
+    /**
+     * Zatvaranje čvora MORA zaustaviti sve njegove petlje.
+     * Soak test (restart čvora pod opterećenjem) je pokazao da su claim/sync/queue tajmeri nastavljali
+     * da rade poslije `close()`, pa je log punio `node.tick_failed: Not running` — čvor je „mrtav", a
+     * još kuca. Sada se svi tajmeri gase i `closed` flag sprječava dalji rad.
+     */
     async close() {
+      closed = true;
       pheromone.stopDecay();
       if (syncRef) clearInterval(syncRef);
+      if (loopRefs) {
+        clearInterval(loopRefs.claimTimer);
+        clearInterval(loopRefs.queueTimer);
+        loopRefs = null;
+      }
       await gossip.stop().catch(() => {});
       if (server) await new Promise((resolve) => server.close(resolve));
       await queue.close().catch(() => {});
