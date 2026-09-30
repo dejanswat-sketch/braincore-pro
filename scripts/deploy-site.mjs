@@ -30,7 +30,7 @@ const SSH_HOST = arg('host', process.env.HOSTINGER_SSH_HOST ?? 'u972051764@82.25
 const SSH_PORT = arg('port', process.env.HOSTINGER_SSH_PORT ?? '65002');
 const SSH_KEY = arg('key', process.env.HOSTINGER_SSH_KEY ?? 'C:\\Users\\Administrator\\.ssh\\id_ed25519');
 const REMOTE_DIR = arg('dir', process.env.HOSTINGER_SITE_DIR ?? `domains/${DOMAIN}/public_html`);
-const MARKER = 'BRAINCORE PRO';
+const MARKER = 'Genesis Brain'; // mora bukvalno postojati u index.html (ne „BRAINCORE PRO" — to je razdvojeno tagovima)
 const DRY = process.argv.includes('--dry-run');
 
 const ssh = (command, { inherit = false } = {}) =>
@@ -81,12 +81,19 @@ try {
   } else {
     ok(`~/${REMOTE_DIR} postoji`);
     const inside = ssh(`ls -A ~/${REMOTE_DIR} 2>/dev/null | head -20; echo "---MARKER---"; grep -l '${MARKER}' ~/${REMOTE_DIR}/index.html 2>/dev/null || true`);
-    const [before /* marker deo */] = inside.split('---MARKER---');
-    const existing = before.split('\n').map((s) => s.trim()).filter(Boolean);
+    const parts = inside.split('---MARKER---');
+    const existing = parts[0].split('\n').map((s) => s.trim()).filter(Boolean);
+    const isOurs = Boolean(parts[1] && parts[1].includes('index.html'));
     if (existing.length === 0) ok('folder je prazan (sigurno za upload)');
-    else if (inside.includes('index.html')) ok(`postojeći sajt je naš (marker „${MARKER}") — radim zamjenu`);
-    else {
-      bad(`folder NIJE prazan i ne izgleda kao naš sajt: ${existing.slice(0, 5).join(', ')} — stajem da ne pregazim tuđe`);
+    else if (isOurs) ok(`postojeći sajt je naš (marker „${MARKER}") — radim zamjenu`);
+    else if (process.argv.includes('--backup')) {
+      // Tuđa osnova (npr. „Coming Soon" stranica): prvo je sklanjamo u _osnova-<datum>, pa uploadujemo.
+      const stamp = new Date().toISOString().slice(0, 10);
+      const backupDir = `domains/${DOMAIN}/_osnova-${stamp}`;
+      ssh(`mkdir -p ~/${backupDir} && cd ~/${REMOTE_DIR} && (mv -f * .[!.]* ~/${backupDir}/ 2>/dev/null || true) && echo BACKUP_OK && ls -1 ~/${backupDir} | head -10`, { inherit: true });
+      ok(`postojeći sadržaj sklonjen u ~/${backupDir} (vraća se jednim mv) — nastavljam`);
+    } else {
+      bad(`folder NIJE prazan i ne izgleda kao naš sajt: ${existing.slice(0, 5).join(', ')} — stajem da ne pregazim tuđe (dodaj --backup da ga sklonim)`);
       failed = true;
     }
     remoteReady = true;

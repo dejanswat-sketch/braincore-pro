@@ -245,3 +245,30 @@ Backup rule from the workspace notes still applies: back up data before any depl
 6. Who gets `BRAINCORE_ADMIN_KEY` — only you, or also a future ops person (then we add roles instead of one key)?
 7. Do we publish the honest limitations section (§11 and the site's "Honest limits" line) to buyers as-is? It
    tests well with technical buyers and costs nothing to defend.
+
+---
+
+## 12. STATUS: sajt je ŽIV na braincore.pro (30.09.2026)
+
+Postavljeno preko `scripts/deploy-site.mjs`:
+
+| Provjera | Rezultat |
+|---|---|
+| `https://braincore.pro/` | **HTTP 200**, 37.707 B, sadrži „Genesis Brain", „Decentralized AI", „Talk to us", „$999" |
+| `/docs.html` | HTTP 200 (10.376 B) |
+| `/privacy.html` · `/terms.html` | HTTP 200 |
+| `/script.js` · `/favicon.svg` | HTTP 200 |
+| `/assets/brain-hero.png` | HTTP 200 (781 KB) |
+
+**DNS stanje (izmjereno):**
+* `braincore.pro` → **93.127.179.103** i **77.37.53.223** (dva A zapisa)
+* `www.braincore.pro` → **77.37.83.126** i **91.108.98.155** (dva A zapisa)
+* `api.braincore.pro`, `live.braincore.pro` → **još nemaju zapise** (Hetzner dio nije u DNS-u)
+
+Preporuka: ostaviti **jedan** A zapis po imenu (dva rade, ali unose neodređenost) i dodati `api`/`live` → Hetzner IP.
+
+**Iskreno o jednoj grešci pri deployu:** moja predprovjera je pogrešno zaključila da je postojeći sadržaj „naš"
+(gledala je da li fajl `index.html` postoji, a ne marker u njemu), pa je tvoja **„Braincore — Coming Soon"**
+stranica prepisana **bez bekapa**. `.htaccess` i `swarm.png` su ostali netaknuti. Greška je popravljena:
+preflight sada provjerava **marker**, a `--backup` režim sklanja tuđi sadržaj u `~/domains/<domen>/_osnova-<datum>/`
+prije uploada. Ako želiš Coming Soon stranicu nazad (npr. kao `soon.html`), mogu je rekonstruisati za 5 minuta.
