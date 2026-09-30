@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NMQ Robot — decentralizovana swarm arhitektura (stvarno stanje v0.4.0)</title>
+<style>
+  :root{
+    --bg:#04070f; --bg2:#070d1a; --ink:#eaf1ff; --muted:#93a4c4; --dim:#6d7d9c;
+    --gold:#ffd479; --gold2:#ffb43d; --cyan:#5fd8ff; --green:#6ef0a8; --violet:#b79bff; --rose:#ff8fa3;
+    --glass:rgba(255,255,255,.045); --glass2:rgba(255,255,255,.07);
+    --stroke:rgba(150,190,255,.18); --stroke2:rgba(150,190,255,.32);
+    --shadow:0 24px 60px rgba(0,0,0,.55);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"Segoe UI",Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  body{
+    background:
+      radial-gradient(1100px 700px at 50% -8%, rgba(255,180,61,.16), transparent 60%),
+      radial-gradient(900px 600px at 8% 20%, rgba(80,190,255,.12), transparent 60%),
+      radial-gradient(900px 600px at 95% 30%, rgba(110,240,168,.10), transparent 60%),
+      radial-gradient(1000px 700px at 50% 110%, rgba(183,155,255,.12), transparent 60%),
+      linear-gradient(180deg,var(--bg2),var(--bg));
+    min-height:100vh; padding:38px 26px 70px;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;
+    background-image:linear-gradient(rgba(120,170,255,.05) 1px, transparent 1px),
+                     linear-gradient(90deg, rgba(120,170,255,.05) 1px, transparent 1px);
+    background-size:46px 46px;
+    mask-image:radial-gradient(circle at 50% 30%, #000 35%, transparent 78%);
+  }
+  .wrap{max-width:1500px;margin:0 auto;position:relative;z-index:1}
+
+  header.hero{text-align:center;margin-bottom:26px}
+  h1{
+    margin:0 0 10px;font-size:clamp(30px,4.4vw,58px);letter-spacing:.5px;line-height:1.05;font-weight:800;
+    background:linear-gradient(92deg,#fff 8%,var(--gold) 38%,var(--gold2) 58%,#fff 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 6px 30px rgba(255,180,61,.25));
+  }
+  .sub{margin:0;color:#cfe0ff;font-size:clamp(13px,1.25vw,17px);letter-spacing:.3px}
+  .sub b{color:#fff}
+  .meta-chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:16px}
+  .chip{
+    font-size:12.5px;padding:7px 13px;border-radius:999px;border:1px solid var(--stroke);
+    background:var(--glass);backdrop-filter:blur(10px);color:#d7e4ff;letter-spacing:.2px;
+  }
+  .chip i{font-style:normal;color:var(--gold)}
+
+  /* ── mreža / mesh ── */
+  .stage{
+    position:relative;border-radius:28px;border:1px solid var(--stroke);
+    background:linear-gradient(180deg, rgba(12,20,36,.72), rgba(6,10,20,.55));
+    backdrop-filter:blur(16px); box-shadow:var(--shadow); overflow:hidden;
+    padding:30px 26px 24px;
+  }
+  .stage::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(600px 320px at 50% 42%, rgba(255,200,110,.10), transparent 65%);
+  }
+  svg.mesh{position:absolute;inset:0;width:100%;height:100%;opacity:.5;pointer-events:none}
+  .mesh line{stroke:url(#lg);stroke-width:.8;stroke-dasharray:3 6;animation:dash 9s linear infinite}
+  .mesh circle{fill:#bfe4ff;filter:drop-shadow(0 0 6px rgba(120,200,255,.85))}
+  .mesh circle.g{fill:#ffd479;filter:drop-shadow(0 0 8px rgba(255,200,110,.9))}
+  @keyframes dash{to{stroke-dashoffset:-90}}
+  .pulse{animation:pulse 3.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+
+  .grid-top{position:relative;display:grid;grid-template-columns:1.05fr 1.35fr 1.05fr;gap:18px;align-items:start}
+  @media (max-width:1150px){.grid-top{grid-template-columns:1fr}}
+
+  .card{
+    position:relative;border-radius:20px;border:1px solid var(--stroke);
+    background:linear-gradient(180deg, var(--glass2), rgba(255,255,255,.02));
+    backdrop-filter:blur(14px); padding:16px 17px 15px; box-shadow:0 14px 34px rgba(0,0,0,.35);
+    transition:transform .25s ease, border-color .25s ease;
+  }
+  .card:hover{transform:translateY(-3px);border-color:var(--stroke2)}
+  .card h3{margin:0 0 4px;font-size:15.5px;letter-spacing:.6px}
+  .card .tag{margin:0 0 11px;font-size:11.5px;color:var(--muted);letter-spacing:.25px}
+  .card ul{margin:0;padding-left:17px}
+  .card li{font-size:12.8px;line-height:1.75;color:#cfdcf5}
+  .card li b{color:#fff;font-weight:600}
+  .accent-cyan{border-color:rgba(95,216,255,.30)}
+  .accent-green{border-color:rgba(110,240,168,.30)}
+  .accent-gold{border-color:rgba(255,212,121,.30)}
+  .accent-violet{border-color:rgba(183,155,255,.30)}
+  .accent-rose{border-color:rgba(255,143,163,.30)}
+  .card .dotline{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .dot.c{background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+  .dot.g{background:var(--green);box-shadow:0 0 12px var(--green)}
+  .dot.y{background:var(--gold);box-shadow:0 0 12px var(--gold)}
+  .dot.v{background:var(--violet);box-shadow:0 0 12px var(--violet)}
+  .dot.r{background:var(--rose);box-shadow:0 0 12px var(--rose)}
+
+  /* ── centralni panel ── */
+  .core{
+    border-radius:24px;border:1px solid rgba(255,212,121,.34);
+    background:
+      radial-gradient(420px 220px at 50% 30%, rgba(255,196,90,.16), transparent 70%),
+      linear-gradient(180deg, rgba(20,28,48,.85), rgba(9,14,26,.78));
+    backdrop-filter:blur(18px);padding:20px 20px 16px;box-shadow:0 22px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07);
+    text-align:center;
+  }
+  .core h2{margin:2px 0 3px;font-size:21px;letter-spacing:1.6px;
+    background:linear-gradient(92deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .core .core-sub{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+  .hex{display:flex;justify-content:center;margin:6px 0 12px}
+  .hex svg{filter:drop-shadow(0 0 26px rgba(255,196,90,.35))}
+  .core .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:6px}
+  .stat{border:1px solid var(--stroke);border-radius:13px;padding:9px 6px;background:rgba(255,255,255,.03)}
+  .stat b{display:block;font-size:17px;color:#fff}
+  .stat span{font-size:10.5px;color:var(--dim);letter-spacing:.3px}
+  .core .note{margin-top:13px;font-size:11.8px;color:#c9d8f2;border-top:1px dashed var(--stroke);padding-top:11px}
+
+  /* ── 4 sloja ── */
+  .layers{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:24px}
+  @media (max-width:1150px){.layers{grid-template-columns:1fr 1fr}}
+  @media (max-width:680px){.layers{grid-template-columns:1fr}}
+  .layer h4{margin:0 0 3px;font-size:14px;letter-spacing:.7px;color:#fff}
+  .layer .num{font-size:10.5px;color:var(--gold);letter-spacing:2px;margin-bottom:4px}
+  .layer ul{margin:9px 0 0;padding:0;list-style:none}
+  .layer li{display:flex;gap:8px;align-items:flex-start;font-size:12.4px;line-height:1.6;color:#cfdcf5;padding:5px 0;border-bottom:1px dashed rgba(150,190,255,.10)}
+  .layer li:last-child{border-bottom:0}
+  .st{flex:0 0 auto;font-size:9.6px;font-weight:700;letter-spacing:.4px;padding:2.5px 7px;border-radius:999px;margin-top:1px}
+  .st.ok{background:rgba(110,240,168,.14);color:#8bf5b9;border:1px solid rgba(110,240,168,.35)}
+  .st.part{background:rgba(255,212,121,.14);color:#ffd479;border:1px solid rgba(255,212,121,.35)}
+  .st.no{background:rgba(255,143,163,.13);color:#ff9fb1;border:1px solid rgba(255,143,163,.35)}
+
+  .strip{
+    margin-top:26px;border-radius:20px;border:1px solid var(--stroke);
+    background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    backdrop-filter:blur(12px);padding:18px 20px;
+  }
+  .strip h3{margin:0 0 10px;font-size:15px;letter-spacing:.6px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:900px){.two{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:12.6px}
+  th,td{text-align:left;padding:8px 9px;border-bottom:1px solid rgba(150,190,255,.12);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:11.4px;letter-spacing:.4px}
+  td b{color:#fff}
+  .good{color:#8bf5b9}.warn{color:#ffd479}.bad{color:#ff9fb1}
+  footer{margin-top:24px;text-align:center;font-size:11.6px;color:var(--dim);line-height:1.9}
+  footer b{color:#cfe0ff}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:16px 0 0;font-size:11.6px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>NMQ ROBOT — DECENTRALIZOVANA SWARM ARHITEKTURA</h1>
+    <p class="sub">Bez centralnog orkestratora · lokalna pravila · <b>stigmergija</b> · merena emergencija · <b>nadzor iznad svega</b></p>
+    <div class="meta-chips">
+      <span class="chip">verzija <i>v0.4.0</i></span>
+      <span class="chip">testovi <i>191/191</i></span>
+      <span class="chip">rute <i>141</i></span>
+      <span class="chip">eval <i>6/6 (100%)</i></span>
+      <span class="chip">demo <i>25 sekcija</i></span>
+      <span class="chip">smoke <i>38/38</i></span>
+      <span class="chip">npm zavisnosti <i>0</i></span>
+    </div>
+    <div class="legend">
+      <span><i class="st ok">STVARNO</i> radi i ima test</span>
+      <span><i class="st part">DJELIMIČNO</i> osnova postoji</span>
+      <span><i class="st no">NE RADIMO</i> namjerno / nije isplativo</span>
+    </div>
+  </header>
+
+  <!-- ══ MREŽA ══ -->
+  <section class="stage">
+    <svg class="mesh" viewBox="0 0 1500 700" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#5fd8ff" stop-opacity=".75"/>
+          <stop offset="55%" stop-color="#ffd479" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="#b79bff" stop-opacity=".7"/>
+        </linearGradient>
+      </defs>
+      <g>
+        <line x1="120" y1="120" x2="300" y2="200"/><line x1="300" y1="200" x2="230" y2="330"/>
+        <line x1="230" y1="330" x2="90" y2="280"/><line x1="90" y1="280" x2="120" y2="120"/>
+        <line x1="300" y1="200" x2="430" y2="120"/><line x1="430" y1="120" x2="520" y2="240"/>
+        <line x1="1300" y1="140" x2="1420" y2="215"/><line x1="1420" y1="215" x2="1330" y2="330"/>
+        <line x1="1330" y1="330" x2="1190" y2="265"/><line x1="1190" y1="265" x2="1300" y2="140"/>
+        <line x1="1140" y1="470" x2="1290" y2="520"/><line x1="1290" y1="520" x2="1370" y2="430"/>
+        <line x1="1370" y1="430" x2="1200" y2="390"/>
+        <line x1="330" y1="520" x2="470" y2="585"/><line x1="470" y1="585" x2="560" y2="470"/>
+        <line x1="560" y1="470" x2="400" y2="430"/>
+      </g>
+      <g class="pulse">
+        <circle cx="120" cy="120" r="3.6"/><circle cx="300" cy="200" r="3.2"/><circle cx="230" cy="330" r="3.6"/>
+        <circle cx="90" cy="280" r="3"/><circle cx="430" cy="120" r="3.4"/><circle cx="520" cy="240" r="3"/>
+        <circle cx="1300" cy="140" r="3.4"/><circle cx="1420" cy="215" r="3"/><circle cx="1330" cy="330" r="3.6"/>
+        <circle cx="1190" cy="265" r="3"/><circle cx="1140" cy="470" r="3.4"/><circle cx="1290" cy="520" r="3"/>
+        <circle cx="1370" cy="430" r="3.6"/><circle cx="1200" cy="390" r="3"/><circle cx="330" cy="520" r="3.4"/>
+        <circle cx="470" cy="585" r="3"/><circle cx="560" cy="470" r="3.4"/><circle cx="400" cy="430" r="3"/>
+        <circle class="g" cx="300" cy="200" r="3.4"/><circle class="g" cx="1330" cy="330" r="3.4"/>
+      </g>
+    </svg>
+
+    <div class="grid-top">
+      <!-- leva kolona -->
+      <div style="display:grid;gap:16px">
+        <div class="card accent-cyan">
+          <div class="dotline"><span class="dot c"></span><h3>SUPPORT CLUSTER</h3></div>
+          <p class="tag">korisnički upiti · monitoring · logovanje</p>
+          <ul>
+            <li><b>19 agenata</b> u katalogu (support, sales, ecommerce, finance, ops, dev, hr, data, legal…)</li>
+            <li>watcheri prate metrike i događaje → <b>inbox prijedloga</b></li>
+            <li>ciljevi sa KPI, mjerenjem i <b>replan-om</b></li>
+            <li>epizodična memorija + RAG po tenantu</li>
+          </ul>
+        </div>
+        <div class="card accent-gold">
+          <div class="dotline"><span class="dot y"></span><h3>GOVERNANCE CLUSTER</h3></div>
+          <p class="tag">naš dodatak — <b>nema ga na posteru</b></p>
+          <ul>
+            <li>izolacija roja: <b>open → contained → locked → frozen</b></li>
+            <li>kvote <b>per-tenant</b>: workeri, runovi, trošak/sat, feromoni, poruke</li>
+            <li>kill switch koji <b>preživljava restart</b></li>
+            <li>board (`owner`) mijenja granice — i to ide u audit</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- centar -->
+      <div class="core">
+        <div class="hex">
+          <svg width="190" height="150" viewBox="0 0 190 150" aria-hidden="true">
+            <defs><linearGradient id="hexg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ffe6a8"/><stop offset="50%" stop-color="#ffb43d"/><stop offset="100%" stop-color="#5fd8ff"/>
+            </linearGradient></defs>
+            <polygon points="95,8 158,44 158,106 95,142 32,106 32,44" fill="none" stroke="url(#hexg)" stroke-width="2"/>
+            <polygon points="95,30 138,55 138,95 95,120 52,95 52,55" fill="rgba(255,196,90,.10)" stroke="url(#hexg)" stroke-width="1.2"/>
+            <polygon points="95,52 118,66 118,84 95,98 72,84 72,66" fill="rgba(255,196,90,.22)" stroke="url(#hexg)" stroke-width="1"/>
+          </svg>
+        </div>
+        <h2>NMQ CORE</h2>
+        <p class="core-sub">blackboard · governance · safety · eval — <b>jedan proces, mnogo workera</b></p>
+        <div class="stats">
+          <div class="stat"><b>11</b><span>PATTERNA</span></div>
+          <div class="stat"><b>20</b><span>ALATA</span></div>
+          <div class="stat"><b>7</b><span>ORG ULOGA</span></div>
+          <div class="stat"><b>102</b><span>METRIKE</span></div>
+        </div>
+        <p class="note">Roj <b>ne izvršava</b> srednji ni visok rizik — novac, pravo, brisanje i vanjska komunikacija ostaju čovjeku na <b>svim</b> nivoima autonomije (L0–L4).</p>
+      </div>
+
+      <!-- desna kolona -->
+      <div style="display:grid;gap:16px">
+        <div class="card accent-green">
+          <div class="dotline"><span class="dot g"></span><h3>RESEARCH CLUSTER</h3></div>
+          <p class="tag">analiza · izvlačenje znanja · evaluacija</p>
+          <ul>
+            <li><b>eval zlatni set</b> po tenantu (sadržaj, citati, alati, trošak)</li>
+            <li>RSI analiza: nalazi iz nagrada, trace-a i grešaka</li>
+            <li>self-play: scenariji → dataset → kurikulum</li>
+            <li>reward model (feedback, odobrenja, ishod, trošak)</li>
+          </ul>
+        </div>
+        <div class="card accent-rose">
+          <div class="dotline"><span class="dot r"></span><h3>SAFETY CLUSTER</h3></div>
+          <p class="tag">naš dodatak — <b>nema ga na posteru</b></p>
+          <ul>
+            <li>peer poruke <b>samo kroz medijaciju</b> (nema skrivenog kanala)</li>
+            <li>detektori: lockstep koluzija, glasački blok, koncentracija, flooding, drift</li>
+            <li>kodiran sadržaj: entropija + hex blobovi (fail-closed)</li>
+            <li>incidenti + karantin — <b>perzistirani</b>, 5 alert pravila</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 4 SLOJA ══ -->
+    <div class="layers">
+      <div class="card layer accent-cyan">
+        <div class="num">1</div>
+        <h4>COMMUNICATION LAYER</h4>
+        <ul>
+          <li><span class="st ok">STVARNO</span><span>Pub/Sub magistrala + `hook.*` događaji</span></li>
+          <li><span class="st ok">STVARNO</span><span>Medijacija peer poruka (tip, pošiljalac, sadržaj, kvota)</span></li>
+          <li><span class="st part">DJELIMIČNO</span><span>Gossip protokol (in-process bus; cross-node u planu v0.5)</span></li>
+          <li><span class="st no">NE RADIMO</span><span>libp2p — teška zavisnost; sopstveni gossip je dovoljan</span></li>
+        </ul>
+      </div>
+      <div class="card layer accent-gold">
+        <div class="num">2</div>
+        <h4>COORDINATION LAYER</h4>
+        <ul>
+          <li><span class="st ok">STVARNO</span><span>Stigmergija: feromoni sa opadanjem (pola za 5 min)</span></li>
+          <li><span class="st ok">STVARNO</span><span>Work stealing: worker uzima najvrjedniji zadatak koji može</span></li>
+          <li><span class="st ok">STVARNO</span><span>Glasovanje + konsensus — <b>savjetodavno</b></span></li>
+          <li><span class="st no">NE RADIMO</span><span>BFT konsenzus (2–3 mjeseca rada; ne rješava pravi rizik)</span></li>
+        </ul>
+      </div>
+      <div class="card layer accent-violet">
+        <div class="num">3</div>
+        <h4>EMERGENCE LAYER</h4>
+        <ul>
+          <li><span class="st ok">STVARNO</span><span>Emergentna specijalizacija — <b>mjeri se</b>, ne propisuje</span></li>
+          <li><span class="st part">DJELIMIČNO</span><span>Formiranje kohorti po opterećenju (planirano)</span></li>
+          <li><span class="st no">NE RADIMO</span><span>Emergentni jezik — to je upravo skriveni kanal koji nadziremo</span></li>
+          <li><span class="st no">NE RADIMO</span><span>Roj koji mijenja sopstvene granice (autonomija, budžet, alati)</span></li>
+        </ul>
+      </div>
+      <div class="card layer accent-green">
+        <div class="num">4</div>
+        <h4>META-IMPROVEMENT (RSI LOOP)</h4>
+        <ul>
+          <li><span class="st ok">STVARNO</span><span>Self-inspection: nagrade, trace, greške, ciljevi</span></li>
+          <li><span class="st ok">STVARNO</span><span>RSI nivoi R0–R5 sa kapijama; nivo mijenja <b>samo board</b></span></li>
+          <li><span class="st part">DJELIMIČNO</span><span>Continuous learning: dataset + eval postoje; trening modela je van procesa</span></li>
+          <li><span class="st no">NE RADIMO</span><span>Automatsko prepisivanje sopstvenog koda/politika bez čovjeka</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ ISKRENO: POSTER vs KOD ══ -->
+  <section class="strip">
+    <h3>Poster obećava — kod pokazuje</h3>
+    <div class="two">
+      <div class="card" style="padding:14px 15px">
+        <h3 style="font-size:13.5px;margin-bottom:8px">Element po element</h3>
+        <table>
+          <thead><tr><th>Element sa postera</th><th>Stvarno stanje</th><th>Realno?</th></tr></thead>
+          <tbody>
+            <tr><td>Stigmergija (pheromone signal)</td><td><b>izgrađeno</b> — feromoni sa opadanjem i TTL-om</td><td class="good">DA</td></tr>
+            <tr><td>Work stealing / self-organizing clusters</td><td><b>izgrađeno</b> — workeri sami uzimaju posao</td><td class="good">DA</td></tr>
+            <tr><td>Specijalizacija agenata</td><td><b>izgrađeno</b> — meri se iz završenih zadataka</td><td class="good">DA</td></tr>
+            <tr><td>Voting / decentralized ballot</td><td><b>izgrađeno</b> — ali savjetodavno, ne obavezujuće</td><td class="warn">DJELIMIČNO</td></tr>
+            <tr><td>Gossip protokol + P2P transport</td><td>in-process bus; cross-node je plan</td><td class="warn">3–6 nedjelja</td></tr>
+            <tr><td>BFT konsensus (Byzantine-resistant)</td><td>nije implementiran</td><td class="warn">2–3 mjeseca</td></tr>
+            <tr><td>Emergentni jezik (vocab evolves)</td><td><b>namjerno zabranjeno</b> — medijacija + čitljivost</td><td class="bad">NE</td></tr>
+            <tr><td>„Genesis Brain" — centralni mozak</td><td>kontradikcija: centralni mozak = centralni kontroler</td><td class="bad">NE</td></tr>
+            <tr><td>Rekurzivno samopoboljšanje koda</td><td>postoji kao <b>predlog</b>, primena traži čovjeka</td><td class="warn">DJELIMIČNO</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="padding:14px 15px">
+        <h3 style="font-size:13.5px;margin-bottom:8px">Šta bi koštalo (procjena)</h3>
+        <table>
+          <thead><tr><th>Posao</th><th>Obim</th><th>Rizik</th></tr></thead>
+          <tbody>
+            <tr><td>Cross-node swarm: Redis/Postgres queue + feromoni u shared store</td><td>3–6 nedjelja</td><td class="warn">srednji</td></tr>
+            <tr><td>Dinamičke kohorte (grupisanje po opterećenju)</td><td>2–3 nedjelje</td><td class="good">nizak</td></tr>
+            <tr><td>Samo-specijalizacija (agent bira ulogu po rezultatu)</td><td>1–2 nedjelje</td><td class="good">nizak</td></tr>
+            <tr><td>Nadzirani rječnik poruka (šema se širi uz odobrenje)</td><td>2 nedjelje</td><td class="good">nizak</td></tr>
+            <tr><td>BFT konsensus između agenata</td><td>2–3 mjeseca</td><td class="bad">visok — i pitanje koristi</td></tr>
+            <tr><td>Emergentni jezik</td><td>—</td><td class="bad">ne radimo</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12.4px;color:#cfdcf5;line-height:1.75;margin:12px 0 0">
+          <b>Zašto ne emergentni jezik:</b> cilj posla nije da se agenti „dogovore kako hoće", nego da
+          svaka njihova odluka bude <b>provjerljiva</b>. Jezik koji čovjek ne čita je po definiciji skriveni kanal —
+          a upravo koluzija i skriveni kanali su najveći rizik roja (dokumentovano u `docs/33`).
+        </p>
+        <p style="font-size:12.4px;color:#cfdcf5;line-height:1.75;margin:10px 0 0">
+          <b>Zašto ne centralni „mozak":</b> poster tvrdi „no central orchestrator", a crta jedan mozak u centru.
+          Mi smo birali <b>tablu</b> (blackboard): nema komponente koja zna sve i odlučuje sve — pa nema ni jedne tačke čiji
+          pad ili greška ruši sve.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b>Ključni principi (kako ih mi čitamo):</b> decentralizovana koordinacija · lokalna pravila · emergencija koja se
+    <b>meri</b> · konsenzus koji <b>savjetuje</b> · nadzor na nivou roja · čovjek na granicama.<br/>
+    Dokazi za sve gore: <b>191/191 testova</b> · eval <b>6/6</b> · demo <b>25 sekcija</b> · smoke <b>38/38</b> · audit lanac ispravan ·
+    dokumenti <b>29–34</b> u repozitorijumu (<code>E:\NMQ-PROGRAMI\nmq-robot</code>).
+  </footer>
+</div>
+</body>
+</html>

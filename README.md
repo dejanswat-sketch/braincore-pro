@@ -236,6 +236,12 @@ curl -X POST localhost:8787/v1/admin/agents/executor/keys -d '{"scopes":["crm:wr
 
 ---
 
+## Vizualni pregled arhitekture
+
+![NMQ Robot — swarm arhitektura](docs/35-swarm-arhitektura.png)
+
+Poster (stvarno stanje v0.4.0, sa oznakama STVARNO / DJELIMIČNO / NE RADIMO): `docs/35-SWARM-ARHITEKTURA-VIZUAL.html` (render: `node scripts/poster.mjs`).
+
 ## Status
 
 `v0.4.0` — swarm + evolucija + RSI meta-nivoi: **191/191 testova**, 19 agenata, 11 ulaza/patterna, 20 ugrađenih alata,

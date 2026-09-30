@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+/**
+ * Renderuje HTML dokument (poster arhitekture) u PNG preko instaliranog Edge/Chrome headless.
+ *
+ *   node scripts/poster.mjs
+ *   node scripts/poster.mjs docs/35-SWARM-ARHITEKTURA-VIZUAL.html docs/35-swarm-arhitektura.png 1600 1250
+ *
+ * Nema npm zavisnosti: koristi `msedge`/`chrome` koji su već na sistemu. Ako browser nije nađen,
+ * ispisuje putanju do HTML-a (poster se uvijek može otvoriti ručno).
+ */
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const [, , htmlArg = 'docs/35-SWARM-ARHITEKTURA-VIZUAL.html', pngArg = 'docs/35-swarm-arhitektura.png', wArg = '1600', hArg = '1250'] = process.argv;
+
+const html = path.resolve(ROOT, htmlArg);
+const png = path.resolve(ROOT, pngArg);
+if (!fs.existsSync(html)) {
+  console.error(`Nema HTML-a: ${html}`);
+  process.exit(1);
+}
+
+const CANDIDATES = [
+  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  '/usr/bin/google-chrome',
+  '/usr/bin/chromium',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+];
+const browser = CANDIDATES.find((p) => fs.existsSync(p));
+if (!browser) {
+  console.error(`Browser nije nađen. Otvori ručno: ${html}`);
+  process.exit(2);
+}
+
+fs.mkdirSync(path.dirname(png), { recursive: true });
+const args = [
+  '--headless=new',
+  '--disable-gpu',
+  '--hide-scrollbars',
+  '--force-device-scale-factor=1',
+  `--window-size=${wArg},${hArg}`,
+  `--screenshot=${png}`,
+  pathToFileURL(html).href,
+];
+const res = spawnSync(browser, args, { stdio: 'ignore', timeout: 120_000 });
+if (res.error) {
+  console.error(`Render greška: ${res.error.message}`);
+  process.exit(3);
+}
+if (!fs.existsSync(png)) {
+  console.error('Screenshot nije napravljen.');
+  process.exit(4);
+}
+const kb = (fs.statSync(png).size / 1024).toFixed(0);
+console.log(`OK: ${path.relative(ROOT, png)} (${kb} KB, ${wArg}x${hArg})`);
