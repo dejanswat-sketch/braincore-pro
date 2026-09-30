@@ -68,7 +68,9 @@ test('claim lease: task koji je držao mrtav/odustali čvor vraća se u igru (ne
     assert.equal(early.idle, true, 'u grace periodu se claim poštuje');
 
     // 2) Poslije grace-a → task se vraća u igru i ovaj čvor ga preuzima i izvršava
-    await wait(120);
+    // Čekanje izVEDENO iz stvarnog prozora čvora (ovdje su grace 50 ms i confirm donji prag 600 ms
+    // EKSPLICITNO zadati, pa ostaju tačno to) — nikad fiksni broj, da test prati konfiguraciju.
+    await wait(node.claimWindows().totalMs + 50);
     const later = await node.tick();
     assert.equal(later.ran, true, `task mora biti preuzet poslije grace-a (bilo: ${JSON.stringify(later)})`);
     assert.equal(later.taskId, task.id);
