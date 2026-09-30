@@ -12,6 +12,7 @@ import { createDebatePattern } from './debate.js';
 import { createTeamPattern } from './team.js';
 import { createPatternHelpers } from './helpers.js';
 import { createBudget } from '../core/budget.js';
+import { createGuardrails } from '../core/guardrails.js';
 import { NotFoundError, ValidationError, PolicyError } from '../core/errors.js';
 
 /**
@@ -41,6 +42,9 @@ export const PATTERN_STEP_BUDGET = {
 export function createOrchestrator(services) {
   const { catalog, runAgent, tools, tracer, cost, metrics, logger, policyResolver, config } = services;
   const helpers = services.helpers ?? createPatternHelpers(services);
+  // Guardrails: sigurnosna mreža na IZLAZU (PII redakcija, obavezno odbijanje, stroga JSON polja).
+  // Postavlja se jednom i primjenjuje na svaki run, bez obzira na pattern ili agenta.
+  const guardrails = services.guardrails ?? createGuardrails({ audit: services.audit, metrics, logger, config: config?.guardrails });
 
   const patterns = {
     agent: {
@@ -148,6 +152,21 @@ export function createOrchestrator(services) {
     try {
       if (initialPattern === 'router') {
         routing = await services.router.classify(input, { tenantId, useLlm: options.useLlmRouter !== false, signal, model: options.routerModel });
+        // DETERMINISTIČKA KOREKCIJA: samo za JEDNOZNAČNE poslovne kategorije (refund→support,
+        // billing→finance, ecommerce, sales). Tehnički/ostali zahtjevi idu kroz LLM/heuristički router —
+        // npr. „ne mogu da se ulogujem" je za support, ne za dev tim (test to čuva).
+        const OVERRIDE_RULES = new Set(['refund', 'billing', 'ecommerce', 'sales']);
+        if (services.ticketRouter?.classify) {
+          const rule = services.ticketRouter.classify(input);
+          if (rule && OVERRIDE_RULES.has(rule.type) && rule.agent) {
+            const target = tCatalog.get(rule.agent);
+            if (target && target.id !== routing.agentId) {
+              routing = { ...routing, agentId: target.id, method: 'rules', rule: rule.type, llmAgentId: routing.agentId };
+              metrics?.inc('router_overridden_by_rules_total', { rule: rule.type });
+              logger?.info?.('router.rules_override', { tenantId, rule: rule.type, from: routing.llmAgentId, to: target.id });
+            }
+          }
+        }
         const chosen = tCatalog.get(routing.agentId) ?? tCatalog.get('support');
         assertAgentAllowed(tenant, chosen.id);
         if (services.controlPlane?.assertAgentBudget) await services.controlPlane.assertAgentBudget(tenantId, chosen.id);
@@ -175,6 +194,31 @@ export function createOrchestrator(services) {
     }
 
     const durationMs = Date.now() - startedAt;
+
+    /**
+     * GUARDRAILS na izlazu — primjenjuju se na SVAKI run.
+     * Ako stroga JSON provjera traži popravku, radimo TAČNO JEDAN dodatni poziv sa eksplicitnom
+     * instrukcijom (i onda ponovo propuštamo kroz guardrails, bez daljeg popravljanja).
+     */
+    let guarded = guardrails.apply({ input, output: result.output, agentId: ctx.agentId, tenantId, runId: run0.runId });
+    if (guarded.needsRepair && patterns[usedPattern]) {
+      try {
+        metrics?.inc('guardrail_json_repair_total', { tenant: tenantId });
+        const repairInput = `${input}\n\n[OUTPUT REQUIREMENT] ${guarded.needsRepair.instruction}`;
+        const repaired = await patterns[usedPattern].run({ input: repairInput, ctx, config: patternConfigFor(ctx.agentId ? tCatalog.get(ctx.agentId) : tCatalog.get('support'), usedPattern, options) });
+        if (repaired?.output) {
+          const second = guardrails.apply({ input, output: repaired.output, agentId: ctx.agentId, tenantId, runId: run0.runId });
+          if (!second.needsRepair) {
+            result = { ...result, output: second.output };
+            guarded = { ...second, actions: [...guarded.actions, ...second.actions, { type: 'json_repaired' }] };
+          }
+        }
+      } catch (err) {
+        logger?.warn?.('guardrail.json_repair_failed', { tenantId, error: err.message });
+      }
+    }
+    result = { ...result, output: guarded.output };
+
     await tracer.endRun(run0, {
       output: result.output,
       status: result.status ?? 'ok',

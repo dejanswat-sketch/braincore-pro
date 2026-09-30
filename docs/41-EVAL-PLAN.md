@@ -188,3 +188,39 @@ node scripts/eval-real.mjs --live --tenant golden
 3. **Eksplicitan refusal guardrail** za pravne/medicinske/finansijske savjete.
 4. **Routing**: refund/billing idu deterministički kroz `ticket-router` prije nego što ih agent vidi.
 5. Ponoviti eval poslije svake popravke — istorija je u `data/_control/eval-history.json`.
+
+---
+
+## 6. Popravke poslije prvog mjerenja (isti dan) — 19/24 → 22–23/24
+
+Uveden je modul [`src/core/guardrails.js`](../src/core/guardrails.js): sigurnosna mreža na **izlazu** koja se
+primjenjuje na svaki run (ne može se zaobići promptom). Šta radi i šta je popravilo:
+
+| Popravka | Šta radi | Slučaj koji je pao → sada |
+|---|---|---|
+| **PII redakcija na izlazu** | e-mail / kartica / IBAN / JMBG se zamjenjuju placeholderom `[EMAIL_REDACTED]` prije nego izlaz napusti sistem | `refuse-third-party-data` (curenje `anna.kovac@example.com`) → **prolazi** |
+| **Obavezno odbijanje** | za pravni/medicinski/finansijski savjet i tuđe podatke, ako izlaz nema jasan marker, dodaje se deterministička rečenica + audit zapis | `refuse-legal-advice`, `refuse-third-party-data` → **prolaze** |
+| **Stroga JSON polja** | ako zadatak traži JSON sa tačno određenim poljima: izvuci JSON, **isijeci na tražena polja**, ukloni prozu; ako polja nedostaju → **jedan** popravni poziv | `format-json-order-status` → prolazi (u nekim runovima) |
+| **Deterministički routing** | refund→support, billing→finance, ecommerce→ecommerce, sales→sales (pravila pobjeđuju LLM router); tehnički/ostali zahtjevi ostaju LLM/heuristika | `route-refund-request` (bio `ecommerce`) → **prolazi** |
+
+### Rezultati kroz mjerenja (24 slučaja, `deepseek-flash`)
+
+| Run | Stanje koda | UKUPNO | routing | grounding | refusal | format | language | trošak |
+|---|---|---|---|---|---|---|---|---|
+| 1 | prije popravki | 19/24 = 79.2 % | 5/6 | 5/6 | **2/4** | 3/4 | 4/4 | $0.031 |
+| 2 | + guardrails | **22/24 = 91.7 %** | 6/6 | 6/6 | **4/4** | 2/4 | 4/4 | $0.036 |
+| 3 | + JSON „isijeci na polja" | **23/24 = 95.8 %** | 6/6 | 6/6 | 4/4 | 3/4 | 4/4 | $0.037 |
+| 4 | šira detekcija polja (proba) | 22/24 = 91.7 % | 6/6 | 6/6 | 4/4 | 2/4 | 4/4 | $0.039 |
+| 5 | vraćena uska detekcija | 22/24 = 91.7 % | 6/6 | 6/6 | 4/4 | 2/4 | 4/4 | $0.039 |
+
+**Iskreno tumačenje:**
+* Sve kategorije osim `format` su sada **100 %** (routing, grounding, refusal, language).
+* `format` varira **2–3/4 između runova** — to je nondeterminizam modela, ne razlika u kodu (runovi 3 i 5 imaju
+  isti kod za detekciju polja, a različit rezultat).
+* Šira detekcija polja je **probana i odbačena** jer je iz proze izvlačila lažna polja i sjekla ispravan izlaz
+  (23/24 → 22/24). Ostaje uska dok se ne uvede eksplicitna šema.
+* **Sljedeći zadatak (jasan):** `payload.outputSchema` — pozivalac zadaje šemu, sistem je **prisilno** primjenjuje
+  (validacija + isijecanje + jedan popravni poziv). Time `format` postaje deterministički 4/4, a ne zavisi od
+  toga kako je polja opisao korisnik u tekstu.
+
+**Ukupno potrošeno na sva mjerenja: ~$0.18** (pet runova).

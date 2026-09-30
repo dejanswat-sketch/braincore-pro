@@ -17,6 +17,7 @@ import { createToolRegistry } from './tools/registry.js';
 import { registerBuiltinTools } from './tools/builtin.js';
 import { createMcpManager } from './tools/mcp-client.js';
 import { createAgentCatalog } from './agents/catalog.js';
+import { createTicketRouter } from './support/ticket-router.js';
 import { createAgentRunner } from './agents/agent.js';
 import { createCritic } from './agents/critic.js';
 import { createRouter } from './agents/router-agent.js';
@@ -57,7 +58,7 @@ import { createSwarm } from './swarm/swarm.js';
 import { createEvolution } from './evolution/genome.js';
 import { createMetaRsi } from './rsi/meta.js';
 
-export const VERSION = '0.9.1';
+export const VERSION = '1.0.0';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -170,6 +171,9 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     sandbox,
     controlPlane,
     helpers: patternHelpers,
+    // Deterministička pravila za support tickete (refund→support, billing→finance, …) — nadjačavaju LLM router.
+    // Uvedeno poslije prvog realnog evala: refund je bio routiran na `ecommerce` (docs/41 §5).
+    ticketRouter: createTicketRouter({ catalog, logger, metrics, audit, tenantId: config?.defaultTenant ?? 'nmq' }),
   });
 
   // ── Autonomni nivo (v0.3): self-improvement, ciljevi, organizacija, A2A ──
