@@ -123,10 +123,24 @@ export async function createSwarmNode({
    * Bez ovoga bi svaka odluka o `confirm` prozoru bila pogađanje.
    */
   const CLAIM_TRACE_MAX = 1000;
-  const claimEvents = [];
+  const claimEvents = new Map(); // taskId -> [događaji] — samo za NEDOVRŠENE zadatke
   function noteClaimEvent(kind, task, extra = {}) {
-    claimEvents.push({ t: Date.now(), kind, taskId: task?.id ?? null, nodeId: id, instanceId, ...extra });
-    if (claimEvents.length > CLAIM_TRACE_MAX) claimEvents.shift();
+    const taskId = task?.id ?? null;
+    if (!taskId) return;
+    let arr = claimEvents.get(taskId);
+    if (!arr) {
+      arr = [];
+      claimEvents.set(taskId, arr);
+      // Retencija je po BROJU NEDOVRŠENIH zadataka, ne po vremenu: prsten od 1000 događaja je u soak-u #7
+      // držao samo zadnjih ~330 zadataka, pa su tragovi ranih duplikata bili izbačeni i dijagnostika je
+      // ostala bez odgovora. Završeni zadaci se brišu (`dropClaimTrace`), pa mapa ne raste.
+      if (claimEvents.size > CLAIM_TRACE_MAX) claimEvents.delete(claimEvents.keys().next().value);
+    }
+    arr.push({ t: Date.now(), kind, taskId, nodeId: id, instanceId, ...extra });
+    if (arr.length > 40) arr.shift();
+  }
+  function dropClaimTrace(taskId) {
+    claimEvents.delete(taskId);
   }
   const startedAt = Date.now();
 
@@ -416,6 +430,10 @@ export async function createSwarmNode({
 
   async function runTask(task, { attempt = 1 } = {}) {
     const started = Date.now();
+    // Ako rezultat VEĆ postoji, ovaj čvor izvršava isti zadatak drugi put → trag u log odmah.
+    if (crdt.get(`result:${task.id}`)) {
+      logger?.warn?.('node.duplicate_execution_detected', { taskId: task.id, nodeId: id, instanceId, attempt, phase: 'pre_execute', trace: claimTrace(task.id) });
+    }
     /**
      * OBNOVLJANJE CLAIM LEASE-A (obavezno).
      *
@@ -456,6 +474,12 @@ export async function createSwarmNode({
       const record = { taskId: task.id, nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: Date.now() - started, output: output?.output ?? null, at: iso() };
       done.push(record);
       noteClaimEvent(record.superseded ? 'superseded' : 'done', task, { attempt, superseded: Boolean(record.superseded), ms: record.ms });
+      // ANOMALIJA: ovaj čvor je izvršio zadatak koji je već imao rezultat → trag ide U LOG ODMAH
+      // (bez retencije), jer je to jedini način da se vidi ko je potvrdio i kada.
+      if (record.superseded) {
+        logger?.warn?.('node.duplicate_execution_detected', { taskId: task.id, nodeId: id, instanceId, attempt, trace: claimTrace(task.id) });
+      }
+      dropClaimTrace(task.id); // zadatak je završen — trag se oslobađa
       crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: record.ms, at: record.at });
       if (stillOwner) {
         crdt.set(`task:${task.id}`, { ...task, state: 'done', doneBy: id, attempt });
@@ -473,6 +497,12 @@ export async function createSwarmNode({
       const record = { taskId: task.id, nodeId: id, attempt, ok: false, error: err.message, ms: Date.now() - started, at: iso() };
       done.push(record);
       noteClaimEvent(record.superseded ? 'superseded' : 'done', task, { attempt, superseded: Boolean(record.superseded), ms: record.ms });
+      // ANOMALIJA: ovaj čvor je izvršio zadatak koji je već imao rezultat → trag ide U LOG ODMAH
+      // (bez retencije), jer je to jedini način da se vidi ko je potvrdio i kada.
+      if (record.superseded) {
+        logger?.warn?.('node.duplicate_execution_detected', { taskId: task.id, nodeId: id, instanceId, attempt, trace: claimTrace(task.id) });
+      }
+      dropClaimTrace(task.id); // zadatak je završen — trag se oslobađa
       crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: false, error: err.message, at: record.at });
       crdt.delete(`claim:${task.id}`); // vrati task u igru
       await pheromone.deposit({ tenantId: task.tenantId, type: 'problem', taskId: task.id, by: id, strength: 1.5 });
@@ -735,7 +765,7 @@ export async function createSwarmNode({
      * `explicit` = da li je pozivalac zadao vrijednost (tada derivacija NE smije da je prepiše).
      */
     /** Trag claim-ova za dati task (dijagnostika duplih izvršenja). Bez argumenta vraća zadnjih N. */
-    claimTrace: (taskId = null) => (taskId ? claimEvents.filter((e) => e.taskId === taskId) : claimEvents.slice(-50)),
+    claimTrace: (taskId = null) => (taskId ? (claimEvents.get(taskId) ?? []) : [...claimEvents.values()].slice(-5).flat()),
 
     claimWindows: () => {
       const derived = derivedWindows();
