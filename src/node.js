@@ -38,7 +38,7 @@ export const NODE_DEFAULTS = {
   claimIntervalMs: 50,
   syncIntervalMs: 300, // CRDT sync (delta lokalnih zapisa) — nezavisan od claim petlje
   claimLeaseMs: 10_000, // koliko claim važi ako vlasnik ne odgovara (poslije toga se task vraća u igru)
-  claimGraceMs: 1_500, // kratki grace kad vlasnik claim-a nije živ, da se ne otme task u verifikaciji
+  claimGraceMs: 3_000, // > najgora IZMJERENA detekcija smrti (2,2 s): bez ovoga nastaje restart-trka (soak #5: 11 duplih)
   /**
    * Koliko čekamo da vidimo da li je neko drugi preuzeo isti task.
    * MORA biti najmanje 2× gossip interval (300 ms) — inače claim drugog čvora stigne POSLIJE naše
