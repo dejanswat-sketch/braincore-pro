@@ -323,3 +323,24 @@ sve bez ijedne npm zavisnosti (`dependencies: {}`).
 
 **Dokazi (v0.6.1):** `node --test` → **225/225** (20 u `tests/3-nodes.test.mjs`, uključujući test koji snima mrežu i dokazuje da čist tekst ne izlazi,
 te da čvor sa pogrešnom tajnom **ne** prima task); demo 27 sekcija; smoke 42/42; `dependencies: {}`.
+
+---
+
+## 15. Izdržljivost pod kvarom (v0.8.0) — odluke D78–D84
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D78 | **Tračevi ne produžavaju život** | `upsertMember(info, { direct: false })` za članove iz tuđeg digest-a: smiju samo upisati nepoznatog, nikad osvježiti `lastSeen` | Chaos run 1: čvor ubijen `SIGKILL`-om nije bio proglašen mrtvim >6 s jer su ga tuđi PING-ovi „držali u životu" |
+| D79 | **Claim lease** (`claimLeaseMs` 10 s) + `claimGraceMs` 1.5 s | Task koji je držao mrtav/odustali čvor vraća se u igru; `isClaimLive()` provjerava i vlasnika i rok | Chaos run 1: 5 od 18 taskova izgubljeno jer je claim bio vječan |
+| D80 | **Claim verifikacija ≥ 2× gossip interval** (`claimConfirmMs` 600 ms, `minClaimConfirmMs`) | Ne može se podesiti niže od 2× `intervalMs` | Sa 120 ms dva čvora su izvršila isti task (2–4 preklapanja u 24–30 taskova) |
+| D81 | **Fencing token (`attempt`)** | Svaki novi claim nosi `attempt = prethodni + 1`; rezultat i izvršenje ga nose sa sobom | Razlikuje „isti pokušaj dva puta" (greška) od ponovnog pokušaja (očekivano) |
+| D82 | **`result-query` prije ponovnog rada** | Prije nego što task izvršimo drugi put, pitamo roj (600 ms) da li neko ima rezultat; ako ima — odustajemo | Najčešći realan slučaj: posao završen, čvor umro prije nego što je rezultat raširen |
+| D83 | **`superseded` rezultat** | Ako poslije izvršenja više nismo vlasnik claim-a, bilježimo rezultat sa `superseded: true` i **ne** proglašavamo task završenim | Sprečava dvostruku istinu u tabeli; dupli rad se vidi u tragovima umjesto da se skriva |
+| D84 | **Idempotency key na tasku** | `idempotencyKey` (default = `id`) ide u runner; isporuka je **at-least-once** | Efekti (mail, plaćanje) moraju biti idempotentni; ovo je ugovor prema klijentu |
+
+**Otvoreno (Sprint 2, sljedeće):** **durable submit** (task se smije izgubiti ako čvor umre prije nego što ga
+raširi — dokazano u runu 8/9: 3 taska bez ijednog zapisa), particija sa dva hosta, kvorumski fencing, soak test.
+
+**Dokazi (v0.8.0):** `node --test` → **243/243** (novi `tests/chaos.test.mjs`), chaos harness
+`scripts/chaos.mjs` + `docs/42-CHAOS-REZULTATI.md` (tabela kroz 9 runova: 5 izgubljenih → 0, >6 s detekcija →
+1.3 s, 4 preklopljena → 0).

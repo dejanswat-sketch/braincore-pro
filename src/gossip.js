@@ -105,8 +105,21 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
   }
 
   // ── membership ────────────────────────────────────────────────────────────
-  function upsertMember(info) {
+  /**
+   * Upiši/obnovi člana.
+   *
+   * `direct: true` = poruka je STIGLA OD TOG ČVORA (PING/ACK) → to je dokaz života, `lastSeen` se osvježava.
+   * `direct: false` = član je došao iz TUĐEG digest-a (tračevi) → smije ga samo UPISATI ako je nepoznat.
+   * Bez ovoga bi tračevi vječno "produžavali život" mrtvom čvoru i failure detection ne bi radio
+   * (dokazano chaos testom: node ubijen SIGKILL-om nije bio proglašen mrtvim >6s).
+   */
+  function upsertMember(info, { direct = true } = {}) {
     const existing = members.get(info.nodeId);
+    if (existing && !direct) {
+      // Znamo ga; liveness se NE dira na osnovu tuđih tračeva. Jedino karantin ostaje sticky.
+      if (existing.quarantinedAt && existing.status !== 'dead') existing.status = 'dead';
+      return existing;
+    }
     let status = 'alive';
     // Karantin (iz safety sloja) je „sticky": PING od karantinovanog člana ga ne vraća u život
     if (existing?.quarantinedAt && !info.released) status = 'dead';
@@ -248,13 +261,13 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
 
     if (body.type === 'PING') {
       send({ host: rinfo.address, port: body.payload?.port ?? rinfo.port }, frame('ACK', { host: advertiseHost, port: boundPort, members: gossipDigest().members, ackTo: body.id, ...statusPayload() }));
-      // nauči članove iz digest-a
-      for (const m of body.payload?.members ?? []) if (m.nodeId !== nodeId && m.status !== 'dead') upsertMember(m);
+      // nauči članove iz digest-a (samo ih UPISUJE; liveness se ne dira tuđim tračevima)
+      for (const m of body.payload?.members ?? []) if (m.nodeId !== nodeId && m.status !== 'dead') upsertMember(m, { direct: false });
       // primi disseminaciju
       for (const item of body.payload?.items ?? []) deliver(item);
     }
     if (body.type === 'ACK') {
-      for (const m of body.payload?.members ?? []) if (m.nodeId !== nodeId && m.status !== 'dead') upsertMember(m);
+      for (const m of body.payload?.members ?? []) if (m.nodeId !== nodeId && m.status !== 'dead') upsertMember(m, { direct: false });
     }
     if (body.type === 'PING_REQ') {
       // Indirektna sonda: zamoli treći čvor da pinguje cilj (SWIM)

@@ -36,6 +36,18 @@ import { ValidationError } from './core/errors.js';
 export const NODE_DEFAULTS = {
   claimIntervalMs: 50,
   syncIntervalMs: 300, // CRDT sync (delta lokalnih zapisa) — nezavisan od claim petlje
+  claimLeaseMs: 10_000, // koliko claim važi ako vlasnik ne odgovara (poslije toga se task vraća u igru)
+  claimGraceMs: 1_500, // kratki grace kad vlasnik claim-a nije živ, da se ne otme task u verifikaciji
+  /**
+   * Koliko čekamo da vidimo da li je neko drugi preuzeo isti task.
+   * MORA biti najmanje 2× gossip interval (300 ms) — inače claim drugog čvora stigne POSLIJE naše
+   * verifikacije i oba čvora izvrše isti task. Chaos test je to pokazao: sa 120 ms bilo je 2 dupla
+   * izvršenja u 24 taska; sa 600 ms (2× interval) to nestaje na loopback-u.
+   */
+  claimConfirmMs: 600,
+  minClaimConfirmMs: 600,
+  /** Koliko čekamo odgovor roja na `result-query` prije ponovnog izvršavanja (2× gossip interval). */
+  reclaimProbeMs: 600,
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -63,6 +75,9 @@ export async function createSwarmNode({
   registry = null,
 } = {}) {
   const cfg = { ...NODE_DEFAULTS, ...(config ?? {}) };
+  // Claim verifikacija nikad kraća od 2× gossip intervala (inače trka u claim-u, dokazano chaos testom)
+  const gossipInterval = Number(cfg.gossip?.intervalMs ?? 300);
+  cfg.claimConfirmMs = Math.max(Number(cfg.claimConfirmMs ?? 0), cfg.minClaimConfirmMs, gossipInterval * 2);
   const id = nodeId ?? `node-${port}`;
   const emitter = new EventEmitter();
   const tasks = new Map(); // taskId -> task (lokalno poznati)
@@ -80,6 +95,23 @@ export async function createSwarmNode({
     if (!peersAlive.length) return null;
     return Math.min(...peersAlive.map((m) => Number(m.load)));
   };
+
+  /**
+   * Da li je claim još „živ"? Claim je zapis u CRDT-u, ali onaj ko ga je uzeo može umrijeti.
+   * Zato claim ima **lease** (vremenski rok) i provjeru da je vlasnik živ:
+   *   • vlasnik je ovaj čvor → živ
+   *   • vlasnik je član koji je `alive` → živ
+   *   • inače: ako je istekao lease (ili je prošao kratki grace poslije claim-a) → task se vraća u igru
+   * Bez ovoga task koji je držao ubijeni čvor ostaje zauvijek „preuzet" (dokazano chaos testom: 5 izgubljenih).
+   */
+  function isClaimLive(claim) {
+    if (!claim) return false;
+    const age = Date.now() - Number(claim.at ?? 0);
+    if (claim.nodeId === id) return age < cfg.claimLeaseMs;
+    if (gossip.isAlive(claim.nodeId)) return age < cfg.claimLeaseMs;
+    // Vlasnik nije živ (ili nije poznat): kratki grace da ne otmemo task kolegi koji upravo verifikuje claim
+    return age < cfg.claimGraceMs;
+  }
 
   const gossip = createGossip({
     nodeId: id,
@@ -108,6 +140,17 @@ export async function createSwarmNode({
     if (item.kind === 'crdt') {
       const res = crdt.merge(item.entries);
       if (res.applied) emitter.emit('crdt', res);
+      return;
+    }
+    if (item.kind === 'result-query' && item.taskId) {
+      // Neko pita da li imamo rezultat za task (prije nego što ga ponovo izvrši) → odgovori svojim zapisima
+      const keys = [`result:${item.taskId}`, `task:${item.taskId}`, `claim:${item.taskId}`];
+      const entries = crdt.snapshot().filter((e) => keys.includes(e.key) && e.nodeId === id);
+      if (entries.length) {
+        gossip.broadcast({ kind: 'crdt', entries });
+        metrics?.inc('node_result_answers_total', { node: id });
+        logger?.debug?.('node.result_query_answered', { taskId: item.taskId, to: item.from ?? null, entries: entries.length });
+      }
       return;
     }
     if (item.kind === 'task' && item.task) {
@@ -141,6 +184,8 @@ export async function createSwarmNode({
       skills: task.skills ?? [],
       createdAt: iso(),
       origin: id,
+      // At-least-once isporuka: efekti MORAJU biti idempotentni po ovom ključu (default = id taska)
+      idempotencyKey: task.idempotencyKey ?? task.id,
     };
     tasks.set(normalized.id, normalized);
     crdt.set(`task:${normalized.id}`, metaOf(normalized)); // u CRDT idu SAMO metapodaci (payload ostaje lokalno)
@@ -161,8 +206,37 @@ export async function createSwarmNode({
   async function tryClaim(task) {
     const claimKey = `claim:${task.id}`;
     const existing = crdt.get(claimKey);
-    if (existing) return { claimed: false, reason: 'već preuzet', by: existing.nodeId };
-    crdt.set(claimKey, { nodeId: id, at: Date.now(), load: load() });
+    if (existing && isClaimLive(existing)) return { claimed: false, reason: 'već preuzet', by: existing.nodeId };
+
+    /**
+     * PONOVNO PREUZIMANJE: prije nego što task izvršimo DRUGI put, pitamo roj da li neko već ima
+     * rezultat. Ovo rješava najčešći realan slučaj — čvor je završio posao, pa umro PRIJE nego što
+     * je rezultat stigao do ostalih; bez ovog upita roj bi isti posao uradio ponovo.
+     * (Chaos test: 2–4 ponovna izvršenja u 24–30 taskova dok ovog upita nije bilo.)
+     */
+    if (existing) {
+      const known = crdt.get(`result:${task.id}`) ?? crdt.get(`task:${task.id}`);
+      const alreadyDone = crdt.get(`result:${task.id}`) || (crdt.get(`task:${task.id}`)?.state === 'done');
+      if (alreadyDone) {
+        metrics?.inc('node_claims_skipped_done_total', { node: id });
+        return { claimed: false, reason: 'već završen (rezultat poznat)', by: known?.nodeId ?? known?.doneBy ?? null };
+      }
+      gossip.broadcast({ kind: 'result-query', taskId: task.id, from: id });
+      metrics?.inc('node_result_queries_total', { node: id });
+      await new Promise((r) => setTimeout(r, cfg.reclaimProbeMs));
+      const answer = crdt.get(`result:${task.id}`);
+      if (answer || crdt.get(`task:${task.id}`)?.state === 'done') {
+        metrics?.inc('node_claims_skipped_after_probe_total', { node: id });
+        return { claimed: false, reason: 'rezultat nađen u roju (nema ponovnog rada)', by: answer?.nodeId ?? null };
+      }
+    }
+
+    if (existing) metrics?.inc('node_claims_reclaimed_total', { node: id });
+    // FENCING TOKEN: svaki novi claim nosi veći `attempt`. Tako se u tragovima vidi da li je task
+    // izvršen DVA PUTA u istom pokušaju (prava greška) ili je riječ o ponovnom pokušaju (očekivano
+    // kod „at-least-once" isporuke kad čvor umre poslije posla, a prije potvrde).
+    const attempt = Number(existing?.attempt ?? 0) + 1;
+    crdt.set(claimKey, { nodeId: id, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
     // Šaljemo SAMO novi claim zapis (ne cijeli snapshot) — ostatak širi periodični CRDT sync
     const fresh = crdt.delta({ [id]: lastBroadcast }).filter((e) => e.nodeId === id);
     if (fresh.length) {
@@ -183,32 +257,42 @@ export async function createSwarmNode({
     await pheromone.deposit({ tenantId: task.tenantId, type: 'claimed', taskId: task.id, by: id, strength: 0.8 });
     queue.inFlight.set(task.id, { task, at: Date.now() });
     metrics?.inc('node_tasks_claimed_total', { node: id, type: task.type });
-    return { claimed: true, task };
+    return { claimed: true, task, attempt };
   }
 
-  async function runTask(task) {
+  async function runTask(task, { attempt = 1 } = {}) {
     const started = Date.now();
     try {
-      const output = runner ? await runner(task, { nodeId: id, robot }) : { output: `obrađeno na ${id}` };
-      const record = { taskId: task.id, nodeId: id, ok: true, ms: Date.now() - started, output: output?.output ?? null, at: iso() };
+      const output = runner ? await runner(task, { nodeId: id, robot, attempt, idempotencyKey: task.idempotencyKey ?? task.id }) : { output: `obrađeno na ${id}` };
+      // Provjera vlasništva POSLIJE posla: ako je neko drugi u međuvremenu preuzeo claim, naš rezultat
+      // se bilježi kao `superseded` i NE proglašava task završenim (važi rezultat trenutnog vlasnika).
+      // Ovo ne sprječava dupli RAD (to je „at-least-once" priroda), ali sprečava dvostruku ISTINU u tabeli.
+      const owner = crdt.get(`claim:${task.id}`);
+      const stillOwner = !owner || owner.nodeId === id;
+      const record = { taskId: task.id, nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: Date.now() - started, output: output?.output ?? null, at: iso() };
       done.push(record);
-      crdt.set(`result:${task.id}`, { nodeId: id, ok: true, ms: record.ms, at: record.at });
-      crdt.set(`task:${task.id}`, { ...task, state: 'done', doneBy: id });
-      await pheromone.deposit({ tenantId: task.tenantId, type: 'done', taskId: task.id, by: id, strength: 1 });
+      crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: record.ms, at: record.at });
+      if (stillOwner) {
+        crdt.set(`task:${task.id}`, { ...task, state: 'done', doneBy: id, attempt });
+      } else {
+        metrics?.inc('node_tasks_superseded_total', { node: id });
+        logger?.warn?.('node.task_superseded', { nodeId: id, taskId: task.id, attempt, owner: owner.nodeId });
+      }
+      await pheromone.deposit({ tenantId: task.tenantId, type: 'done', taskId: task.id, by: id, strength: stillOwner ? 1 : 0.4 });
       await queue.ack(task.id, { success: true });
       metrics?.inc('node_tasks_done_total', { node: id, type: task.type });
       emitter.emit('done', record);
-      logger?.info?.('node.task_done', { nodeId: id, taskId: task.id, ms: record.ms });
+      logger?.info?.('node.task_done', { nodeId: id, taskId: task.id, ms: record.ms, attempt, superseded: record.superseded });
       return record;
     } catch (err) {
-      const record = { taskId: task.id, nodeId: id, ok: false, error: err.message, ms: Date.now() - started, at: iso() };
+      const record = { taskId: task.id, nodeId: id, attempt, ok: false, error: err.message, ms: Date.now() - started, at: iso() };
       done.push(record);
-      crdt.set(`result:${task.id}`, { nodeId: id, ok: false, error: err.message, at: record.at });
+      crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: false, error: err.message, at: record.at });
       crdt.delete(`claim:${task.id}`); // vrati task u igru
       await pheromone.deposit({ tenantId: task.tenantId, type: 'problem', taskId: task.id, by: id, strength: 1.5 });
       await queue.ack(task.id, { success: false });
       emitter.emit('failed', record);
-      logger?.warn?.('node.task_failed', { nodeId: id, taskId: task.id, error: err.message });
+      logger?.warn?.('node.task_failed', { nodeId: id, taskId: task.id, error: err.message, attempt });
       return record;
     } finally {
       inFlight.delete(task.id);
@@ -229,15 +313,20 @@ export async function createSwarmNode({
       .filter((e) => e.key.startsWith('task:'))
       .map((e) => e.value)
       .filter((t) => t && t.state !== 'done' && !inFlight.has(t.id))
-      .filter((t) => !crdt.get(`claim:${t.id}`))
+      .filter((t) => !crdt.get("result:" + t.id)) // vec ima rezultat (i ako state nije stigao) -> ne izvrsavaj ponovo
+      .filter((t) => !isClaimLive(crdt.get(`claim:${t.id}`)))
       .sort((a, b) => (b.value ?? 1) - (a.value ?? 1) || String(a.createdAt).localeCompare(String(b.createdAt)));
 
     const task = candidates[0];
-    if (!task) return { idle: true, reason: 'nema_posla' };
+    if (!task) {
+      // Razlikujemo „nema posla" od „sve je već preuzeto" — operateru to mnogo znači
+      const known = crdt.entries().filter((e) => e.key.startsWith('task:')).map((e) => e.value).filter((t) => t && t.state !== 'done');
+      return { idle: true, reason: known.length ? 'sva_preuzeta' : 'nema_posla', knownTasks: known.length };
+    }
     const full = tasks.get(task.id) ?? task; // payload je lokalno
     const claim = await tryClaim(full);
     if (!claim.claimed) return { idle: true, reason: claim.reason, by: claim.by ?? null, taskId: task.id };
-    const record = await runTask(task);
+    const record = await runTask(full, { attempt: claim.attempt ?? 1 });
     return { ran: true, ...record };
   }
 

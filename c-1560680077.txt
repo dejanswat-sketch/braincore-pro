@@ -1,0 +1,3 @@
+✖ gossip: tuđi tračevi NE produžavaju život mrtvom čvoru (failure detection radi) (755.1667ms)
+✖ claim lease: task koji je držao mrtav/odustali čvor vraća se u igru (nema izgubljenog posla) (4.095ms)
+✔ CRDT: claim lease ne kvari konvergenciju (stanje ostaje isto na svim čvorovima) (0.4419ms)
