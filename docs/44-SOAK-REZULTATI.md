@@ -210,3 +210,43 @@ pustiti da latencija eksplodira — a latencija je zato ostala 0,8 s!), ali je h
   ali znači da **8 t/s nije kapacitet jednog procesa**, nego cilj koji traži više procesa/hostova.
 * Zato 1h soak #3 ide na **5 t/s** (održivo) i traži: `shedByBackpressure = 0`, `izgubljeno = 0`,
   `duplo = 0`, `p95 ≤ 1,5 s`, heap stabilan.
+
+---
+
+## 10. SUD SOAK-a #4 (60 min, 5 t/s, 5 restarta) — 4/6 kriterija, ostaje 43 duplih
+
+```
+trajanje:      3601 s (60 min) · 5 restarta cvorova (svi prosli tiho)
+poslano:       17 342
+izvršeno:      17 342        ← 0 izgubljenih, 0 odbijenih
+propusnost:    4,82 t/s
+latencija:     p50 753 · p95 782 · p99 796 ms · max 34 604 ms
+duplo:         43            (prije popravki: 11 200 → 260x manje, ali NIJE 0)
+heap:          10,6 → 124,1 MB
+CRDT:          12 985 / 12 984 / 8 660
+gossip:        rate-limited 537 · odbijeno 0 · duplikata 0
+```
+
+| Kriterij | Cilj | Sud |
+|---|---|---|
+| Odbijeno (backpressure) | 0 | ✔ **0** |
+| Izgubljeno | 0 | ✔ **0** (17 342 / 17 342) |
+| p95 | ≤ 1,5 s | ✔ **782 ms** |
+| Duplo izvršeno | 0 | ✖ **43** (0,25 %) |
+| Heap | < 100 MB | ✖ **124 MB** |
+| CRDT | ograničen | ✔ objašnjeno: ~4 300 taskova × 15 min × 3 zapisa ≈ 13 k — **prozor, ne curenje** |
+
+### Dijagnoza preostalih 43 (0,25 %) — hipoteza sa jakim osnovom
+Duplikati se javljaju u **prozoru restarta** (5 restarta → ~8 po restartu). Uzrok: claim nosi **samo
+`nodeId`**, pa poslije restarta **novi proces istog `nodeId`-a vidi stari claim kao svoj** i (poslije isteka
+lease-a) ga preuzme — dok ga istovremeno preuzima i peer koji je detektovao smrt. Dva izvršenja istog taska.
+
+**Popravka (sljedeće):** claim dobija **`instanceId`** (slučajni ID procesa) + `attempt` fencing:
+* čvor smatra claim **svojim** samo ako se `instanceId` poklapa sa tekućim procesom;
+* poslije restarta svi stari claim-ovi su **tuđi** → preuzimanje ide kroz normalnu proceduru
+  (lease + `claimConfirmMs` + LWW verifikacija), pa nema dva izvršenja.
+
+**Heap 124 MB** (cilj <100): raste sa prozorom GC-a (15 min × 4,8 t/s ≈ 4 300 zadataka u memoriji). Ako
+kriterij ostaje <100 MB, `gcAgeMs` ide na 10 min ili se `result:` zapisi drže sažeto (samo status + broj).
+
+### Odluka: **video se NE snima** dok je `duplo > 0`
