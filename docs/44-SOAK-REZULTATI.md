@@ -86,3 +86,46 @@ mjerodavan 1h run sa restartom **svakih 10 min** (`docs/soak-1h.log`).
 
 **Sljedeće (ako zatreba):** skratiti `claimLeaseMs` na ~2× `failureTimeout` (2.4 s) da se taskovi sa mrtvog
 čvora vraćaju brže; sada je 10 s, što je konzervativno i sigurno, ali sporije.
+
+---
+
+## 7. ⚠️ 1h SOAK (30.09.2026) — kratki runovi su KRILI ozbiljnu degradaciju
+
+Prvi pravi 1-satni soak (`--minutes=60 --rate=8 --restart-every=600`) **nije prošao**:
+
+| Mjera | Rezultat |
+|---|---|
+| Trajanje | 3 610 s (60 min) |
+| Poslano / izvršeno | 25 707 / 25 697 |
+| Propušteno | **7,12 taskova/s** (cilj 8) |
+| Latencija | p50 **883 ms** · p95 **938 518 ms** · p99 1 011 956 ms · max 1 088 717 ms |
+| Izgubljeno | **10** ✖ |
+| Duplo izvršeno | **11 200** ✖ |
+| Memorija (heap) | start 16 MB → kraj **215 MB**, vrh 240 MB ⚠ |
+| CRDT po čvoru | 37 751 / 37 727 / **20** (treći je 6× restartovan) |
+| Gossip | 375 594 poslano · odbijeno 0 · **rate-limited 11 881** |
+| Restarti čvora | 6 (svakih 10 min) |
+
+### Dijagnoza (uzročno-posljedično)
+1. Pri 8 t/s u **jednom procesu** event loop se zasićuje → pojedini taskovi ostaju „u letu" **minutima**
+   (p95 ≈ 15 min).
+2. **Claim lease je 10 s**, a izvršenje pod zasićenjem traje duže → lease istekne **dok vlasnik još radi**,
+   pa drugi čvorovi preuzimaju isti task → **11 200 ponovnih izvršenja**.
+3. **Nema obnavljanja lease-a** dok task traje (owner ne javlja „još radim") — to je pravi uzrok.
+4. CRDT raste **neograničeno**: `task:`, `result:` i `claim:` zapisi su „živi" i nikad se ne uklanjaju
+   (kompakcija briše samo tombstone-e) → ~77k zapisa, i to je izvor rasta heapa.
+5. `rate-limited 11 881` pokazuje da gossip pod ovim opterećenjem odbacuje „teretne" poruke (PING/ACK su
+   izuzeti, pa membership nije pao — zato nema lažnih smrti).
+
+### Popravke (sljedeći sprint, po prioritetu)
+1. **Obnavljanje lease-a dok task traje** (`claim.at` se osvježava svakih `claimLeaseMs/3` iz `runTask`) —
+   time zdravi vlasnik nikad ne izgubi claim, a mrtvi ga izgubi odmah. Ovo je **obavezno** prije bilo kakvog
+   daljeg demo-a pod opterećenjem.
+2. **TTL/GC za `task:`/`result:`/`claim:` zapise** starije od npr. 15 min (uz zadržavanje brojača i statistike
+   odvojeno) — tabla i heap prestaju da rastu.
+3. **Odbacivanje umjesto gomilanja** (backpressure je već tu: `maxQueueDepth` 500) — podići svijest: pri 8 t/s
+   u jednom procesu sistem je **na granici**; realno skaliranje traži više procesa/hostova.
+4. Ponoviti 1h soak poslije 1–2 i zahtijevati: `duplo = 0`, `izgubljeno = 0`, `p95 ≤ 1,5 s`, heap stabilan.
+
+**Šta je ovo dobro pokazalo:** kratki runovi (1–3 min) daju lijepe brojeve i **lažnu sigurnost**; sat vremena
+otkrije klasu grešaka koja se inače vidi tek kod kupca.
