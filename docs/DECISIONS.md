@@ -266,3 +266,24 @@ satni budžet roja se provjerava prije runa (procjena troška), a ne samo poslij
 
 **Stanje dokaza (v0.4.0):** `node --test` → **191/191**, `node scripts/eval.mjs` → **6/6 (100%)**, `node scripts/demo.mjs` → **25 sekcija**,
 `node scripts/smoke.mjs` → **38/38**, `node src/cli.js audit-verify` → lanac ispravan.
+
+---
+
+## 12. Cross-node swarm (v0.5.0) — odluke D59–D64
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D59 | Zajednička tabla sa dva backenda | `file` (default): direktorijum + **atomski claim preko `mkdir` lock-a** i `leaseUntil`; `redis`: sopstveni RESP klijent (`src/cluster/redis.js`, bez npm zavisnosti) + Lua/`SET NX PX` claim | Jedan proces je jedna tačka otkaza: restart briše tablu, a rate-limit i karantin su bili in-memory. Postgres NIJE implementiran (wire protocol = previše koda za sada) — dokumentovano kao plan |
+| D60 | At-most-one claim, at-least-once izvršenje | Claim je atomski (tačno jedan pobjednik), ali pad čvora poslije claim-a **vraća zadatak** poslije isteka lease-a; `renewLease` produžava lease dok posao traje | Exactly-once preko mreže bez transakcija nije realan; umjesto lažne garancije — idempotentnost i vidljiv `attempts` |
+| D61 | Gossip membership i širenje | TCP, `heartbeat`/`join`/`welcome`/`membership`/`disseminate`/`swarm_message`, `suspect`/`dead` po tišini, `incarnation` refutacija, TTL hopova, deduplikacija poruka po `id`, rate limit na ulazu | Bez membership-a nema „cross-node": čvor mora znati ko je živ, a poruka ne smije kružiti beskonačno |
+| D62 | HMAC na svakoj poruci | `NMQ_CLUSTER_SECRET` potpisuje okvir; nepotpisan/tuđ potpis/istekao timestamp se odbija; bez tajne se klaster **ne pokreće** (fail-closed) | Otvoren gossip port je poziv na lažno predstavljanje; tajna se nikad ne upisuje u config fajl |
+| D63 | Ista medijacija na mreži | Ulazna `swarm_message` prolazi kroz `safety.mediateMessage`; pošiljalac mora biti **poznat član** (`node:<id>`); sumnjiv sadržaj → karantin **stvarnog pošiljaoca sa žice** + incident na oba sloja | Roj koji komunicira preko mreže nije sigurniji od lokalnog; granica se ne smije izgubiti na žici |
+| D64 | Karantin čvora je „sticky" | Heartbeat ne vraća karantinovan član u život; skida ga isključivo `POST /v1/admin/cluster/release/:nodeId` (role `owner`), auditovano | Inače bi čvor koji je poslao skriveni kanal „ozdravio" čim pošalje sljedeći heartbeat |
+
+**Popravljeno iz nezavisne revizije v0.5 (svaka stavka ima test):** `NMQ_CLUSTER_PORT=0` je bio falsy i gasio efemerni port (uzimao se 8790 iz config-a → `EADDRINUSE`);
+stale lock nad `open` zadatkom trajno je blokirao zadatak (sada se orphan lock prekida); nedostajao je `renewLease` (posao duži od lease-a mogao je biti preuzet drugi put);
+udaljeni član je dobijao `self: true` iz membership liste pa ga watchdog **nikad** nije nadzirao; `seen` se punio a nikad čitao (nema deduplikacije); `incarnation` je bio mrtvo polje;
+`robot.close()` nije gasio klaster (test proces se nije zatvarao); poruke na žici nisu imale delimiter (frame se nije obrađivao).
+
+**Stanje dokaza (v0.5.0):** `node --test` → **205/205**, `node scripts/eval.mjs` → **6/6 (100%)**, `node scripts/demo.mjs` → **26 sekcija**,
+`node scripts/smoke.mjs` → **41/41**, `node src/cli.js audit-verify` → lanac ispravan.

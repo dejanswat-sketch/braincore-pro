@@ -1,0 +1,21 @@
+{
+  "$comment": "Cross-node swarm (docs/36). Bez `redisUrl` koristi se `file` store (deljena tabla preko direktorijuma — radi za više procesa na istoj mašini). `secret` se NIKAD ne upisuje ovdje — dolazi iz NMQ_CLUSTER_SECRET.",
+  "enabled": false,
+  "host": "127.0.0.1",
+  "port": 8790,
+  "advertiseHost": null,
+  "peers": [],
+  "store": {
+    "redisUrl": null,
+    "keyPrefix": "nmq:board:"
+  },
+  "gossip": {
+    "intervalMs": 2000,
+    "suspectMs": 6000,
+    "deadMs": 15000,
+    "fanout": 3,
+    "ttl": 4,
+    "maxMessageBytes": 32768,
+    "maxInboundPerMin": 600
+  }
+}

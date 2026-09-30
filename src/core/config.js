@@ -18,6 +18,10 @@ export function envConfig(env = process.env) {
     httpAllowlist: parseList(env.NMQ_HTTP_ALLOWLIST, { separator: ',' }),
     maxSteps: parseNumber(env.NMQ_MAX_STEPS, 12),
     maxTokens: parseNumber(env.NMQ_MAX_TOKENS, 0) || null, // null = bez tvrdog limita tokena
+    cluster: env.NMQ_CLUSTER === '1' || env.NMQ_CLUSTER === 'true',
+    clusterPort: parseNumber(env.NMQ_CLUSTER_PORT, 0),
+    clusterSecret: env.NMQ_CLUSTER_SECRET ?? null, // nikad se ne upisuje u config fajl
+    redisUrl: env.NMQ_REDIS_URL ?? null,
     rateLimitPerMin: parseNumber(env.NMQ_RATE_LIMIT_PER_MIN, 60),
     /** Persistentni agenti: scheduler i OTel izvoz */
     scheduler: parseBool(env.NMQ_SCHEDULER, true),
@@ -74,6 +78,7 @@ export async function loadConfig({ root = process.cwd(), env = process.env, data
   const swarm = await readJson(path.join(configDir, 'swarm.json'), { defaultIsolation: 'contained', quotas: {}, safety: {}, tenants: {} });
   const rsiConfig = await readJson(path.join(configDir, 'rsi.json'), { defaultLevel: 'R1', autoMetaPromote: false, tenants: {} });
   const evolutionConfig = await readJson(path.join(configDir, 'evolution.json'), { populationSize: 6, generations: 3, autoPromote: false });
+  const cluster = await readJson(path.join(configDir, 'cluster.json'), { enabled: false, peers: [], store: {}, gossip: {} });
 
   const resolvedDataDir = path.resolve(root, dataDir ?? envCfg.dataDir);
 
@@ -91,6 +96,7 @@ export async function loadConfig({ root = process.cwd(), env = process.env, data
     swarm,
     rsi: rsiConfig,
     evolution: evolutionConfig,
+    cluster,
     tenants: tenantsFile.tenants ?? [],
     requireAuth: parseBool(tenantsFile.requireAuth, false),
 

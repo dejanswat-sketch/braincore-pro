@@ -45,6 +45,8 @@ import { createSettlement, createNegotiator } from './a2a/negotiation.js';
 import { createAutonomyRoutes } from './server/routes-autonomy.js';
 import { createEvalHarness } from './eval/harness.js';
 import { createSwarmRoutes } from './server/routes-swarm.js';
+import { createClusterRoutes } from './server/routes-cluster.js';
+import { createClusterNode } from './cluster/node.js';
 import { createBlackboard } from './swarm/blackboard.js';
 import { createSwarmGovernance } from './swarm/governance.js';
 import { createSwarmSafety } from './swarm/safety.js';
@@ -52,7 +54,7 @@ import { createSwarm } from './swarm/swarm.js';
 import { createEvolution } from './evolution/genome.js';
 import { createMetaRsi } from './rsi/meta.js';
 
-export const VERSION = '0.4.0';
+export const VERSION = '0.5.0';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -239,6 +241,33 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     if (tc?.quotas) await swarmGovernance.setQuotas(tenantId, tc.quotas, { by: 'config' });
   }
   blackboard.setGuard?.((tenantId, openCount) => swarmGovernance.assertTaskQuota(tenantId, openCount));
+
+  // ── v0.5: cross-node klaster (gossip + zajednička tabla) ──────────────────
+  const clusterEnabled = Boolean(overrides.cluster) || config.env.cluster || config.cluster?.enabled;
+  const clusterSecret = config.env.clusterSecret ?? process.env.NMQ_CLUSTER_SECRET ?? overrides.clusterSecret ?? null;
+  if (clusterEnabled && !clusterSecret && !overrides.cluster) {
+    // Fail-closed: bez tajne svaki čvor bi mogao da se lažno predstavi u mreži
+    throw new Error('Klaster je uključen ali NMQ_CLUSTER_SECRET nije postavljen (fail-closed: bez potpisa nema klaster poruka)');
+  }
+  const cluster =
+    overrides.cluster ??
+    (clusterEnabled
+      ? await createClusterNode({
+          config: {
+            ...(config.cluster ?? {}),
+            secret: clusterSecret,
+            store: { ...(config.cluster?.store ?? {}), redisUrl: config.env.redisUrl ?? config.cluster?.store?.redisUrl ?? null },
+          },
+          dataDir: config.dataDir,
+          logger,
+          metrics,
+          audit,
+          bus,
+          host: config.cluster?.host ?? '127.0.0.1',
+          port: config.env.clusterPort ?? config.cluster?.port ?? 0,
+        })
+      : null);
+
   const swarmSafety =
     overrides.swarmSafety ??
     createSwarmSafety({
@@ -250,11 +279,19 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
       bus,
       governance: swarmGovernance,
       blackboard,
-      // spoofing zaštita: pošiljalac peer poruke mora biti registrovan worker
-      isKnownWorker: (id) => Boolean(robot?.swarm?.workers?.has?.(id)),
+      // spoofing zaštita: pošiljalac je registrovan worker ILI POZNAT član klastera (`node:<id>`)
+      isKnownWorker: (id) => {
+        if (robot?.swarm?.workers?.has?.(id)) return true;
+        if (typeof id === 'string' && id.startsWith('node:') && cluster) return cluster.isKnownNode(id.slice(5));
+        return false;
+      },
     });
   await swarmSafety.load();
   const swarm = overrides.swarm ?? createSwarm({ config: config.swarm ?? {}, blackboard, governance: swarmGovernance, safety: swarmSafety, orchestrator, catalog, autonomy, rewards, audit, metrics, logger });
+  if (cluster) {
+    cluster.attach({ swarm, safety: swarmSafety, governance: swarmGovernance, blackboard, orchestrator, catalog, rewards, audit });
+    if (clusterEnabled) await cluster.start();
+  }
   // Interne rute swarm-a (tick/run) takođe prolaze kroz governance: zaključavamo mrežu u sandboxu kad je contained
   const swarmWorkersSeed = config.swarm?.workers ?? null;
 
@@ -310,6 +347,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     swarmSafety,
     evolution: evolutionEngine,
     metaRsi,
+    cluster,
     swarmWorkersSeed,
     overrides,
     scheduler,
@@ -370,6 +408,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     ...createAdminRoutes({ robot, config, tenants, logger, metrics }),
     ...createAutonomyRoutes({ robot, config, tenants, logger, metrics }),
     ...createSwarmRoutes({ robot, config, tenants, logger, metrics }),
+    ...createClusterRoutes({ robot, config, tenants, logger, metrics }),
   ];
   // Gauge mora postojati i kad je nula — inače alert/panel ne vidi metriku
   for (const t of config.tenants) metrics.set('approvals_pending', { tenant: t.id }, 0);
@@ -396,6 +435,8 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
   robot.close = async () => {
     robot.scheduler?.stop?.();
     if (robot.watchersTimer) clearInterval(robot.watchersTimer);
+    // Klaster drži TCP server i (opciono) Redis vezu — moraju se zatvoriti da proces može da se ugasi
+    await robot.cluster?.stop?.().catch(() => {});
     await mcp.closeAll().catch(() => {});
     await new Promise((resolve) => robot.server.close(() => resolve()));
     logger.info('robot.closed', {});
@@ -439,5 +480,9 @@ export { createSwarmSafety, MESSAGE_TYPES } from './swarm/safety.js';
 export { createSwarm } from './swarm/swarm.js';
 export { createEvolution, MUTABLE_FIELDS, FORBIDDEN_FIELDS } from './evolution/genome.js';
 export { createMetaRsi, RSI_LEVELS } from './rsi/meta.js';
+export { createClusterNode } from './cluster/node.js';
+export { createGossipNode, ALLOWED_MESSAGE_TYPES } from './cluster/gossip.js';
+export { createFileStore, createRedisStore, createSharedStore } from './cluster/store.js';
+export { createRedisClient, encodeCommand, parseReply } from './cluster/redis.js';
 export { evaluate, resolvePolicy, redactPii, DECISIONS } from './core/policy.js';
 export * from './core/errors.js';

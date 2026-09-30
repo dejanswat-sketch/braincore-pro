@@ -71,6 +71,19 @@ export class TimeoutError extends NmqError {
   }
 }
 
+/** Greška u klaster sloju (Redis/gossip/store) — retryable po defaultu jer je najčešće mrežna. */
+export class RedisError extends NmqError {
+  constructor(message, details) {
+    super(message, { code: 'REDIS_ERROR', status: 502, retryable: true, details });
+  }
+}
+
+export class ClusterError extends NmqError {
+  constructor(message, details, { retryable = true } = {}) {
+    super(message, { code: 'CLUSTER_ERROR', status: 503, retryable, details });
+  }
+}
+
 /** Klasifikacija za retry/eskalaciju. */
 export function classifyError(err) {
   if (err instanceof NmqError) {

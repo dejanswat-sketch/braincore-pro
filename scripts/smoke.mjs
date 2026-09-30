@@ -50,7 +50,15 @@ async function ensureServer() {
     root: ROOT,
     dataDir,
     connectMcp: true,
-    env: { ...process.env, NMQ_LLM_PROVIDER: process.env.NMQ_LLM_API_KEY ? process.env.NMQ_LLM_PROVIDER ?? 'openai-compatible' : 'mock', NMQ_LOG_LEVEL: 'warn' },
+    env: {
+      ...process.env,
+      NMQ_LLM_PROVIDER: process.env.NMQ_LLM_API_KEY ? process.env.NMQ_LLM_PROVIDER ?? 'openai-compatible' : 'mock',
+      NMQ_LOG_LEVEL: 'warn',
+      // cross-node klaster: efemerni port + lokalna HMAC tajna (test klaster sloja u smoke-u)
+      NMQ_CLUSTER: '1',
+      NMQ_CLUSTER_PORT: '0',
+      NMQ_CLUSTER_SECRET: process.env.NMQ_CLUSTER_SECRET ?? 'smoke-cluster-secret-lokalno',
+    },
     overrides: process.env.NMQ_LLM_API_KEY ? {} : { llm: createMockProvider({ script: createScriptedLlm(), model: 'deepseek-chat' }), logLevel: 'warn' },
   });
   const addr = await robot.listen({ port: 0, host: '127.0.0.1' });
@@ -335,6 +343,32 @@ async function main() {
     if (exp.error) throw new Error(exp.error.message);
     const research = await (await api('/v1/admin/rsi/research')).json();
     return `nivo=${status.level}→${lvl.level}, lift=${exp.experiment.lift} (${exp.experiment.verdict}), zapisa=${research.log.length}`;
+  });
+
+  // ── v0.5: cross-node klaster ──
+  await check('GET /v1/admin/cluster (čvor + store)', async () => {
+    const j = await (await api('/v1/admin/cluster')).json();
+    if (!j.nodeId) throw new Error('klaster nije aktivan');
+    return `čvor=${String(j.nodeId).slice(0, 18)} port=${j.port} store=${j.store.kind} članova=${j.members}`;
+  });
+
+  await check('POST /v1/admin/cluster/tasks + run (deljena tabla)', async () => {
+    await api('/v1/admin/swarm/workers', { method: 'POST', body: JSON.stringify({ agents: [{ agentId: 'ecommerce', skills: ['ecommerce', 'general'] }] }) });
+    const tasks = await (await api('/v1/admin/cluster/tasks', { method: 'POST', body: JSON.stringify({ tasks: [{ title: 'SMOKE cross-node', payload: { input: 'Status narudžbine 1042?', tag: 'ecommerce' }, requiredSkills: ['ecommerce'], value: 3 }] }) })).json();
+    if (tasks.error) throw new Error(tasks.error.message);
+    const board = await (await api('/v1/admin/cluster/board')).json();
+    const run = await (await api('/v1/admin/cluster/run', { method: 'POST', body: JSON.stringify({ maxRuns: 2 }) })).json();
+    if (run.error) throw new Error(run.error.message);
+    const done = (await (await api('/v1/admin/cluster/board')).json()).open.length;
+    return `zadatak=${tasks.created.length}, otvorenih prije=${board.open.length}, runova=${run.ran}, otvorenih poslije=${done}`;
+  });
+
+  await check('Cluster: članovi + karantin nepoznatog člana (403 bez owner role)', async () => {
+    const members = await (await api('/v1/admin/cluster/members')).json();
+    const bad = await (await api('/v1/admin/cluster/quarantine/nema-ovog', { method: 'POST', body: JSON.stringify({ reason: 'smoke' }) })).json();
+    const issued = await (await api('/v1/admin/agents/executor/keys', { method: 'POST', body: JSON.stringify({ name: 'cluster-smoke' }) })).json();
+    const res = await fetch(`${base}/v1/admin/cluster/broadcast`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-tenant': 'nmq', authorization: `Bearer ${issued.key}` }, body: JSON.stringify({ type: 'heartbeat' }) });
+    return `članova=${members.members.length}, nepoznat član=${JSON.stringify(bad.ok)}, agent ključ=${res.status}`;
   });
   const failed = results.filter((r) => !r.ok);
   console.log('');

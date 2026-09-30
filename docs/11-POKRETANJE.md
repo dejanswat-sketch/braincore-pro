@@ -252,3 +252,20 @@ node src/cli.js audit-verify        # hash lanac mora biti ispravan
 
 **Redoslijed puštanja u rad (preporuka):** `contained` izolacija + R1 nivo + `autoPromote:false` (tvornički default).
 Izolaciju otvarajte (`open`) samo za tenanta kojem je mreža stvarno potrebna; RSI nivo podižite tek kad eval prolaznost pređe 80% na **pravom** modelu.
+
+### Cross-node klaster (v0.5): roj preko više procesa/mašina
+
+| Želim da… | Komanda |
+|---|---|
+| uključim klaster | `NMQ_CLUSTER=1 NMQ_CLUSTER_SECRET=<tajna> NMQ_CLUSTER_PORT=8790` (bez tajne se klaster NE pokreće) |
+| koristim Redis za tablu | `NMQ_REDIS_URL=redis://127.0.0.1:6379` (bez toga: deljeni direktorijum u `data/_cluster/board`) |
+| vidim stanje čvora | `GET /v1/admin/cluster` · članovi: `GET /v1/admin/cluster/members` |
+| pridružim čvor klasteru | `POST /v1/admin/cluster/join {"peers":["10.0.0.2:8790"]}` (role `owner`) |
+| objavim zadatak na zajedničku tablu | `POST /v1/admin/cluster/tasks {"tasks":[{"title":"...","payload":{"input":"..."},"value":3}]}` |
+| pustim cross-node izvršavanje | `POST /v1/admin/cluster/run {"maxRuns":4}` (lease se produžava dok posao traje) |
+| vidim tablu i feromone | `GET /v1/admin/cluster/board` |
+| pošaljem poruku kroz mrežu | `POST /v1/admin/cluster/message {"from":"wrk_...","type":"status","payload":{"text":"..."}}` |
+| karantin čvora | `POST /v1/admin/cluster/quarantine/:nodeId {"reason":"incident"}` · skidanje: `POST /v1/admin/cluster/release/:nodeId` (role `owner`) |
+
+**Sigurnosna pravila:** svaka poruka je HMAC-potpisana; nepotpisan/tuđ potpis, istekao timestamp i prekoračenje rate limita se odbijaju;
+ulazna poruka prolazi **istu medijaciju** kao lokalna, a karantin čvora je „sticky" (heartbeat ga ne vraća u život).

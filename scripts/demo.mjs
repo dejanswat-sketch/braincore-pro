@@ -94,8 +94,8 @@ async function main() {
     root: ROOT,
     dataDir: DATA,
     connectMcp: true,
-    env: { ...process.env, NMQ_LOG_LEVEL: 'warn' },
-    overrides: { llm, logLevel: 'warn' },
+    env: { ...process.env, NMQ_LOG_LEVEL: 'warn', NMQ_CLUSTER: '1', NMQ_CLUSTER_PORT: '0' },
+    overrides: { llm, logLevel: 'warn', clusterSecret: 'demo-cluster-secret-lokalno' },
   });
 
   line('');
@@ -601,6 +601,40 @@ async function main() {
   const rsiStatus = await robot.metaRsi.status('nmq');
   line(`  status: nivo=${rsiStatus.level}, eksperimenata=${rsiStatus.experiments}, prosječan lift=${rsiStatus.avgLift}, meta-ciklusa=${rsiStatus.metaCycles}`);
   line(`  ${rsiStatus.nextStep}`);
+
+  // ── 26. Cross-node klaster ──────────────────────────────────────────────────
+  head(26, 'CROSS-NODE SWARM — deljena tabla, gossip membership i nadzor na ulazu sa mreže');
+  const cstats = await robot.cluster.stats({ tenantId: 'nmq' });
+  line(`  čvor: ${cstats.nodeId} (port ${cstats.port}) · store: ${cstats.store.kind} · članova: ${cstats.members} (živih ${cstats.alive})`);
+  line(`  bez NMQ_REDIS_URL tabla je deljena preko direktorijuma: ${cstats.board.dir ?? cstats.board.prefix}`);
+  const cw = robot.swarm.registerWorker({ tenantId: 'nmq', agentId: 'ecommerce', skills: ['ecommerce', 'general'] });
+  line(`  worker na ovom čvoru: ${cw.name} (${cw.skills.join('/')})`);
+  const ct = await robot.cluster.postTask({ tenantId: 'nmq', title: 'Cross-node: status narudžbine 1042', payload: { input: 'Status narudžbine 1042?', tag: 'ecommerce' }, requiredSkills: ['ecommerce'], value: 5 });
+  line(`  zadatak na ZAJEDNIČKOJ tabli: ${ct.id} (vidljiv svim čvorovima) · otvorenih: ${(await robot.cluster.store.openTasks('nmq')).length}`);
+
+  const [raceA, raceB] = await Promise.all([robot.cluster.claimTask({ tenantId: 'nmq', workerId: 'w-A', skills: ['ecommerce'] }), robot.cluster.claimTask({ tenantId: 'nmq', workerId: 'w-B', skills: ['ecommerce'] })]);
+  const raceWinners = [raceA, raceB].filter(Boolean);
+  line(`  atomski claim: dva workera u istom trenutku → pobjednika ${raceWinners.length} (nikad dva!) — drži ga na čvoru ${robot.cluster.nodeId}`);
+  await robot.cluster.store.completeTask(ct.id, { workerId: 'reset', success: false, result: null }); // vrati u open za pravi run
+  const cRun = await robot.cluster.runOnce({ tenantId: 'nmq', maxRuns: 2 });
+  const ranDetails = cRun.results.filter((r) => r.status || r.error);
+  line(`  cross-node izvršavanje: ${cRun.ran} run(ova) · ${ranDetails.map((r) => r.status ?? r.code).join(', ') || 'nijedan'} · lease se produžava dok posao traje`);
+  line(`  tabla poslije: ${JSON.stringify(await robot.cluster.store.stats())}`);
+
+  const goodMsg = await robot.cluster.gossip.broadcast('disseminate', { note: 'Preuzimam ticket 1042' }, { ttl: 1 });
+  line(`  gossip širenje: poruka poslata na ${goodMsg.targets} čvor(ova) (TTL ${robot.cluster.gossip.settings.ttl}, fanout ${robot.cluster.gossip.settings.fanout})`);
+  line(`  članovi: ${robot.cluster.membership().map((m) => `${m.nodeId}(${m.status})`).join(', ')}`);
+
+  robot.swarmSafety.reset();
+  const hiddenBlocked = await robot.swarmSafety
+    .mediateMessage({ tenantId: 'nmq', from: `node:${robot.cluster.nodeId}`, to: 'swarm', type: 'status', payload: { blob: 'aB3xK9mQ2zP7wL4nR8tY6uI1oJ5hG0fD2sA9qW3eZ7xC4vB6nM8kL1pO5iU2yT4rE6wQ9' } })
+    .then(() => 'prošla (LOŠE!)')
+    .catch((err) => `ODBIJENA (${err.code})`);
+  line(`  skriveni kanal sa „mreže": ${hiddenBlocked}`);
+  line(`  → karantin čvora: ${robot.swarmSafety.report({ tenantId: 'nmq' }).quarantined.map((q) => q.workerId).join(', ')}`);
+  line('');
+  line('  Sigurnosna pravila klastera: svaka poruka je HMAC-potpisana (NMQ_CLUSTER_SECRET), ulazna poruka prolazi');
+  line('  istu medijaciju kao lokalna, pošiljalac mora biti POZNAT član, a karantin čvora je „sticky" (heartbeat ga ne vraća).');
 
   line('');
   line('╔════════════════════════════════════════════════════════════════════════════╗');
