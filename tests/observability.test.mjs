@@ -14,7 +14,9 @@ import { redact } from '../src/core/logger.js';
 
 test('cost: cijena se računa po modelu, nepoznat model ima fallback', () => {
   const known = computeCost('deepseek-chat', { promptTokens: 1_000_000, completionTokens: 1_000_000 });
-  assert.equal(known.usd, Number((0.27 + 1.1).toFixed(8)));
+  // Zvanični (peak-safe) cjenovnik: 0.30 / 1.20 USD po 1M tokena
+  assert.equal(known.usd, Number((0.3 + 1.2).toFixed(8)));
+  assert.equal(computeCost('deepseek-flash', { promptTokens: 1_000_000, completionTokens: 0 }).usd, 0.3, 'alias deepseek-flash ima istu cijenu');
   const unknown = computeCost('nepoznat-model-9000', { promptTokens: 1_000_000, completionTokens: 0 });
   assert.equal(unknown.usd, 1.0, 'fallback cijena je 1 USD / 1M ulaznih tokena');
   assert.equal(computeCost('mock', { promptTokens: 999999, completionTokens: 999999 }).usd, 0);

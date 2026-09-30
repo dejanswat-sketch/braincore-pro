@@ -37,6 +37,19 @@
         "email": { "agentId": "support" },
         "shopify": { "agentId": "ecommerce" }
       }
+    },
+    {
+      "id": "golden",
+      "name": "Golden eval set (Sprint 1 — mjerenje kvaliteta)",
+      "plan": "starter",
+      "locale": "en",
+      "timezone": "Europe/Belgrade",
+      "apiKeys": [],
+      "budget": { "monthlyUsd": 20, "runUsd": 0.5 },
+      "agentBudgets": { "support": 5, "sales": 5 },
+      "rateLimitPerMin": 120,
+      "allowedAgents": "*",
+      "hooks": {}
     }
   ]
 }

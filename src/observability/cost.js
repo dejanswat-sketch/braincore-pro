@@ -9,8 +9,15 @@ import { appendJsonl, readJsonl } from '../core/fsx.js';
 import { iso } from '../core/clock.js';
 
 export const PRICING = {
-  // OpenAI-kompatibilni provideri (provjeriti!)
-  'deepseek-chat': { in: 0.27, out: 1.1 },
+  /**
+   * Zvanični cjenovnik DeepSeek (provjeren 30.09.2026, https://api-docs.deepseek.com/quick_start/pricing):
+   *   deepseek-chat  → $0.15 / 1M ulaz, $0.60 / 1M izlaz (off-peak, keširani ulaz je jeftiniji)
+   *   peak tarifa je 2× (0.30 / 1.20) — ovdje držimo gornju, „sigurnu" cijenu da trošak ne podcijenimo.
+   * `deepseek-flash` je alias koji vraća naš provajder — isti cjenovnik kao `deepseek-chat`.
+   * NAPOMENA: stariji unosi (0.27 / 1.10) bili su interni i ZASTARJELI — zamijenjeni zvaničnim.
+   */
+  'deepseek-chat': { in: 0.3, out: 1.2 },
+  'deepseek-flash': { in: 0.3, out: 1.2 },
   'deepseek-reasoner': { in: 0.55, out: 2.19 },
   'gpt-4o-mini': { in: 0.15, out: 0.6 },
   'gpt-4o': { in: 2.5, out: 10.0 },
