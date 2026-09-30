@@ -130,7 +130,9 @@ test('task ubačen u node A završava u node B ako je B slobodniji', async () =>
     // 1) Zauzmi A sporim taskom — tick se NE await-uje jer runner traje 1.5s (A je tada „zauzet")
     await a.submitTask({ type: 'slow', payload: { text: 'dugi posao' }, ttl: 30_000, value: 5 });
     const slowTick = a.tick();
-    await wait(250); // claim je prošao, runner još radi
+    // Claim verifikacija je najmanje 2× gossip interval (600 ms) — bez toga dva čvora mogu izvršiti
+    // isti task (chaos test je to dokazao). Zato čekamo duže od verifikacije prije provjere load-a.
+    await wait(900);
     assert.ok(a.load() >= 1, `A load je ${a.load()}`);
 
     // 2) Sačekaj da A VIDI da je B slobodan (load 0 dolazi uz PING/ACK)
