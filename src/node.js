@@ -114,6 +114,20 @@ export async function createSwarmNode({
   const pendingAcks = new Map(); // taskId -> { confirmedBy:Set, resolvers:[] } za durable submit
   let closed = false; // poslije close() nijedna petlja ne smije raditi
   const done = [];
+  /**
+   * TRAG CLAIM-OVA (ograničen prsten, za dijagnostiku duplih izvršenja).
+   *
+   * Zašto: soak #6 je ostavio **4 duplo izvršena** taska i nije bilo moguće reći KO je potvrdio i KADA.
+   * Ovaj trag to zapisuje: `claim_set` (ko je uzeo, sa kojim `instanceId`/`attempt` i šta je zatekao),
+   * `confirm_passed` (kada je verifikacija prošla i da li je claim još naš) i `done`/`superseded`.
+   * Bez ovoga bi svaka odluka o `confirm` prozoru bila pogađanje.
+   */
+  const CLAIM_TRACE_MAX = 1000;
+  const claimEvents = [];
+  function noteClaimEvent(kind, task, extra = {}) {
+    claimEvents.push({ t: Date.now(), kind, taskId: task?.id ?? null, nodeId: id, instanceId, ...extra });
+    if (claimEvents.length > CLAIM_TRACE_MAX) claimEvents.shift();
+  }
   const startedAt = Date.now();
 
   const crdt = createCrdtBlackboard({ nodeId: id, logger, metrics });
@@ -375,6 +389,7 @@ export async function createSwarmNode({
     // kod „at-least-once" isporuke kad čvor umre poslije posla, a prije potvrde).
     const attempt = Number(existing?.attempt ?? 0) + 1;
     crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
+    noteClaimEvent('claim_set', task, { attempt, existingNode: existing?.nodeId ?? null, existingInstance: existing?.instanceId ?? null, existingAttempt: existing?.attempt ?? null });
     // Šaljemo SAMO novi claim zapis (ne cijeli snapshot) — ostatak širi periodični CRDT sync
     const fresh = crdt.delta({ [id]: lastBroadcast }).filter((e) => e.nodeId === id);
     if (fresh.length) {
@@ -382,6 +397,7 @@ export async function createSwarmNode({
       gossip.broadcast({ kind: 'crdt', entries: fresh });
     }
     await new Promise((r) => setTimeout(r, cfg.claimConfirmMs));
+    noteClaimEvent('confirm_passed', task, { attempt, stillOwner: crdt.get(claimKey)?.instanceId === instanceId, ownerNow: crdt.get(claimKey)?.nodeId ?? null });
     const winner = crdt.get(claimKey);
     if (!winner || winner.nodeId !== id) {
       metrics?.inc('node_claims_lost_total', { node: id });
@@ -439,6 +455,7 @@ export async function createSwarmNode({
       const stillOwner = !owner || owner.nodeId === id;
       const record = { taskId: task.id, nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: Date.now() - started, output: output?.output ?? null, at: iso() };
       done.push(record);
+      noteClaimEvent(record.superseded ? 'superseded' : 'done', task, { attempt, superseded: Boolean(record.superseded), ms: record.ms });
       crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: record.ms, at: record.at });
       if (stillOwner) {
         crdt.set(`task:${task.id}`, { ...task, state: 'done', doneBy: id, attempt });
@@ -455,6 +472,7 @@ export async function createSwarmNode({
     } catch (err) {
       const record = { taskId: task.id, nodeId: id, attempt, ok: false, error: err.message, ms: Date.now() - started, at: iso() };
       done.push(record);
+      noteClaimEvent(record.superseded ? 'superseded' : 'done', task, { attempt, superseded: Boolean(record.superseded), ms: record.ms });
       crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: false, error: err.message, at: record.at });
       crdt.delete(`claim:${task.id}`); // vrati task u igru
       await pheromone.deposit({ tenantId: task.tenantId, type: 'problem', taskId: task.id, by: id, strength: 1.5 });
@@ -716,6 +734,9 @@ export async function createSwarmNode({
      * `active` = trenutne vrijednosti, `derived` = izračunati minimum (prozor > izmjerena detekcija),
      * `explicit` = da li je pozivalac zadao vrijednost (tada derivacija NE smije da je prepiše).
      */
+    /** Trag claim-ova za dati task (dijagnostika duplih izvršenja). Bez argumenta vraća zadnjih N. */
+    claimTrace: (taskId = null) => (taskId ? claimEvents.filter((e) => e.taskId === taskId) : claimEvents.slice(-50)),
+
     claimWindows: () => {
       const derived = derivedWindows();
       return {

@@ -186,6 +186,14 @@ const completedSubmitted = [...executions.keys()].filter((id) => submitted.has(i
 const executedNotSubmitted = [...executions.keys()].filter((id) => !submitted.has(id));
 const lost = Math.max(0, submitted.size - completedSubmitted);
 const duplicated = [...executions.values()].filter((n) => n > 1).length; // taskovi izvršeni više od jednom
+// Za svaki DUPLIRANI task ispisi trag claim-ova sa svih cvorova: vidi se KO je potvrdio i KADA
+// (i sta je zatekao pri preuzimanju). Ovo je jedini nacin da se odluka o `confirm` prozoru donese
+// mjerenjem, a ne poganjanjem.
+const dupIds = [...executions.entries()].filter(([, c]) => c > 1).map(([id]) => id).slice(0, 6);
+for (const id of dupIds) {
+  const traces = nodes.map((n) => ({ node: n.nodeId, events: n.claimTrace(id) })).filter((t) => t.events.length);
+  console.error(`[dup-trace] ${id} ${JSON.stringify(traces)}`);
+}
 const extraExecutions = [...executions.values()].reduce((s, n) => s + Math.max(0, n - 1), 0);
 const durationSec = (Date.now() - t0) / 1000;
 const sorted = [...latencies].sort((a, b) => a - b);
