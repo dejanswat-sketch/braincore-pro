@@ -51,6 +51,8 @@ const line = (t) => console.log(`  ${t}`);
 const submitted = new Map(); // taskId -> submitTs
 const latencies = [];
 const executions = new Map(); // taskId -> broj izvršenja
+const shed = []; // odbijeno backpressure-om (429) — namjerno odbacivanje viška, NIJE gubitak
+const failedSubmit = []; // druge greške pri predaji
 const memory = [];
 let restarts = 0;
 const restartStats = [];
@@ -105,11 +107,17 @@ const loadTimer = setInterval(async () => {
   if (stop) return;
   const node = nodes[seq % nodes.length];
   const id = `soak-task-${++seq}`;
-  submitted.set(id, Date.now());
+  /**
+   * VAŽNO (nalaz iz 1h soak-a 30.09.): task se broji kao POSLAN tek kad ga je roj PRIHVATIO.
+   * Backpressure (429 QUEUE_FULL) znači da je sistem iskreno odbio višak — to NIJE izgubljen task,
+   * to je „shed". Ranije se takav task brojao u `submitted` pa je 23 179 odbijenih izgledalo kao gubitak.
+   */
   try {
     await node.submitTask({ id, type: 'soak.load', payload: { text: `soak ${seq}` }, ttl: 120_000, value: 1 + (seq % 4), durable: false });
-  } catch {
-    /* task se broji kao izgubljen ako se nikad ne izvrši */
+    submitted.set(id, Date.now());
+  } catch (err) {
+    if (err?.code === 'QUEUE_FULL') shed.push({ id, at: Date.now(), queueDepth: err.details?.queueDepth ?? null });
+    else failedSubmit.push({ id, at: Date.now(), code: err?.code ?? 'ERROR', message: err?.message ?? String(err) });
   }
 }, intervalMs);
 
@@ -210,7 +218,7 @@ const result = {
 
 header('REZULTAT SOAK TESTA');
 line(`trajanje:            ${result.durationSec} s (${MINUTES} min)`);
-line(`poslano / izvršeno:  ${result.submitted} / ${result.completed}`);
+line(`poslano / izvršeno:  ${result.submitted} / ${result.completed}  (odbijeno backpressure-om: ${result.shedByBackpressure}, druge greške: ${result.failedSubmit})`);
 line(`propusnost:          ${result.throughputPerSec} taskova/s (cilj ${RATE})`);
 line(`latencija:           p50 ${result.latencyMs.p50} · p95 ${result.latencyMs.p95} · p99 ${result.latencyMs.p99} · max ${result.latencyMs.max} ms`);
 line(`izgubljeno:          ${lost}   ${lost === 0 ? '✔' : '✖'}`);

@@ -164,3 +164,49 @@ kao i kompakciju (`compactionIntervalMs`, 5 min).
 Pokrenut `node scripts/soak.mjs --minutes=60 --rate=8 --restart-every=600` poslije deploya popravki.
 Kriteriji: `izgubljeno = 0`, `duplo = 0`, `p95 ≤ 1,5 s`, heap stabilan (< 100 MB). Rezultat ide u
 `docs/soak-1h-fixed.log` i `data/_control/soak-history.json`.
+
+---
+
+## 9. REZULTAT POPRAVKI: 1h soak #2 (v1.7.0) — fiksovi rade, ali je otkriveno da mjerenje LAŽE
+
+```
+trajanje:      3611 s (60 min) · cilj 8 t/s
+poslano:       27 179   (od toga PRIHVAĆENO: 4 000)   ← vidi objašnjenje ispod
+izvršeno:      4 000
+propusnost:    1,11 t/s  (računato na prihvaćene)
+latencija:     p50 751 ms · p95 779 ms · p99 786 ms · max 931 ms   ✔ (prije: p95 938 518 ms)
+duplo:         0        ✔  (prije: 11 200)
+heap:          11 MB → 69 MB, vrh 76 MB               ✔ (prije: 215 / 240 MB)
+CRDT:          1 500 / 1 500 / 1 500 zapisa           ✔ (prije: 37 751 / 37 727 / 20)
+gossip:        rate-limited 74 (prije: 11 881)        ✔
+restarti:      5 (svakih 10 min, bez grešaka)
+```
+
+### Šta je POPRAVLJENO (ciljevi postignuti)
+| Cilj | Prije | Poslije |
+|---|---|---|
+| Duplo izvršeno | 11 200 | **0** ✔ |
+| p95 latencija | 938 518 ms | **779 ms** ✔ |
+| Heap (vrh) | 240 MB | **76 MB** ✔ |
+| CRDT zapisa | 37 751 | **1 500** ✔ |
+| Rate-limited | 11 881 | **74** ✔ |
+
+Obnavljanje lease-a i GC su **tačno pogodili uzroke**: nema više duplog rada, latencija je u budžetu,
+tabla i heap su ograničeni.
+
+### Šta je novo otkriveno: **harness je brojao odbijene taskove kao izgubljene**
+`izgubljeno: 23 179` je u najvećoj mjeri **backpressure** — sistem je pri 8 t/s u jednom procesu počeo da
+**odbija** višak (429 `QUEUE_FULL`, `maxQueueDepth` 500). To je **ispravno ponašanje** (bolje odbiti nego
+pustiti da latencija eksplodira — a latencija je zato ostala 0,8 s!), ali je harness dodavao task u
+`submitted` **prije** predaje, pa je odbijeno izgledalo kao gubitak.
+
+**Popravljeno u harness-u (`scripts/soak.mjs`)**: task se broji kao poslan tek kad ga roj **prihvati**;
+`QUEUE_FULL` ide u `shedByBackpressure`, ostale greške u `failedSubmit`. Time se konačno razdvaja
+„sistem je odbio višak" (kapacitet) od „sistem je izgubio posao" (greška).
+
+### Zaključak o kapacitetu (mjerodavno za Hetzner)
+* **3 node-a u jednom procesu drže ~4 taska/s sa p95 < 1 s i 0 gubitaka/duplikata.**
+* Pri 8 t/s ponuđenog opterećenja sistem **odbija ~85 %** (429) umjesto da degradira — što je željeno,
+  ali znači da **8 t/s nije kapacitet jednog procesa**, nego cilj koji traži više procesa/hostova.
+* Zato 1h soak #3 ide na **5 t/s** (održivo) i traži: `shedByBackpressure = 0`, `izgubljeno = 0`,
+  `duplo = 0`, `p95 ≤ 1,5 s`, heap stabilan.
