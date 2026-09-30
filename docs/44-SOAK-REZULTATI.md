@@ -439,3 +439,48 @@ sljedeci korak je **log ko je potvrdio i kada** za duplirane taskove
 (`nodeId`, `instanceId`, `attempt`, `at`, redoslijed CRDT zapisa), pa tek onda odluka.
 
 ### Odluka: video se **jos ne snima** (duplo > 0)
+
+---
+
+## 16. SOAK #7 (v1.9.1 + claim trace) — sud i ZAŠTO TRAG NIJE POKAZAO NIŠTA
+
+```
+trajanje:      3601 s (60 min) · 6 restarta
+poslano:       17 386 / izvrseno 17 386   (druge greske pri predaji: 6)
+shed:          0  ✔            rate-limited: 0  ✔
+p95:           783 ms (p50 755, p99 788)  ✔   · max 12 383 ms
+heap:          11,9 -> 54,4 MB (vrh 96,5)  ✔  (< 100 MB — gcAgeMs 10 min radi)
+CRDT:          8 704 / 8 703 / 9   ✔
+izgubljeno:    1   ✖   (ispravna formula: ovo je PRAVI gubitak, ne artefakt)
+duplo:         4   ✖
+```
+
+| Kriterij | Cilj | Sud |
+|---|---|---|
+| Odbijeno | 0 | ✔ |
+| Izgubljeno | 0 | ✖ **1** (novi, ispravno izmjeren) |
+| Duplo | 0 | ✖ **4** |
+| p95 | ≤ 1,5 s | ✔ 783 ms |
+| Heap | < 100 MB | ✔ **96,5 MB vrh** (prvi put u budzetu) |
+| CRDT | ogranicen | ✔ 8 704 |
+| Rate-limited | 0 | ✔ |
+
+### ZAŠTO `[dup-trace]` REDOVI SU PRAZNI (`[]`) — greška u MOJOJ instrumentaciji
+Prsten je **1000 događaja**, a run napravi ~17 000 zadataka × 3 događaja ≈ **52 000 događaja** — dakle
+prsten drži samo zadnjih ~330 zadataka. Duplikati (`soak-task-2899`, `-2900`) su se dogodili **u prvih
+10 minuta**, pa su njihovi tragovi **odavno izbaceni** iz prstena. Instrumentacija RADI (dokazano na
+normalnom tasku: `claim_set -> confirm_passed -> done`), ali **retencija je bila pogrešna za 1h run**.
+
+### Popravka instrumentacije (sljedece, prije soak-a #8)
+Umjesto prstena po vremenu → **trag po zadatku + ispis NA ANOMALIJU**:
+1. `Map<taskId, events[]>` za zadatke koji **jos nisu zavrseni** (kada se zavrse, zapis se oslobadja),
+2. kada cvor pri izvrsavanju **zatekne da `result:` vec postoji** (ili da je rezultat `superseded`) →
+   **odmah** `logger.warn('node.duplicate_execution_detected', { taskId, trace, attempt, instanceId })`,
+3. tako trag ide u log **u trenutku anomalije**, bez obzira na to koliko run traje.
+
+### Ostaje da se odgovori (dva razlicita domena)
+* **dva `claim_set`-a sa razlicitih cvorova prije nego ijedan vidi tudji zapis** → `confirm`/LWW,
+* **`claim_set` poslije `done`** → lease/`grace`,
+* **`superseded`** → oba izvrsila, jedan rezultat ispravno odbacen (tada je „duplo" rijeseno, ne greska).
+
+Odluka o `confirm` prozoru (600 ms) **nije donesena** — ceka se trag iz soak-a #8.
