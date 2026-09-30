@@ -36,11 +36,13 @@ echo "npm je namjerno NEPOTREBAN: projekat ima dependencies: {}"
 log "2/6 Korisnik i folderi"
 id -u "$SERVICE_USER" >/dev/null 2>&1 || useradd --system --create-home --shell /usr/sbin/nologin "$SERVICE_USER"
 mkdir -p "$APP_DIR" "$CONF_DIR" /var/log/braincore "$APP_DIR/data"
-chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR" /var/log/braincore
+chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
+mkdir -p "$APP_DIR/releases" && ln -sfn "$APP_DIR" "$APP_DIR/current" /var/log/braincore
 
 log "3/6 Kod"
 rsync -a --delete --exclude '.git' --exclude 'data' --exclude 'node_modules' "$REPO_DIR"/ "$APP_DIR"/
 chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR"
+mkdir -p "$APP_DIR/releases" && ln -sfn "$APP_DIR" "$APP_DIR/current"
 
 log "4/6 Konfiguracija"
 if [ ! -f "$CONF_DIR/braincore.env" ]; then

@@ -27,7 +27,7 @@ CUR="$(readlink -f "$CURRENT" 2>/dev/null || true)"
 ln -sfn "$TARGET" "$CURRENT"
 
 for s in $SERVICES; do
-  if systemctl list-unit-files | grep -q "^$s.service"; then
+  if systemctl cat "$s" >/dev/null 2>&1; then
     systemctl restart "$s" && echo "restartovano: $s"
   fi
 done

@@ -4,6 +4,7 @@
  */
 import { loadConfig } from './core/config.js';
 import { pathToFileURL } from 'node:url';
+import fs from 'node:fs';
 import path from 'node:path';
 import { createSwarmNode } from './node.js';
 import { createLogger } from './core/logger.js';
@@ -58,7 +59,7 @@ import { createSwarm } from './swarm/swarm.js';
 import { createEvolution } from './evolution/genome.js';
 import { createMetaRsi } from './rsi/meta.js';
 
-export const VERSION = '1.5.0';
+export const VERSION = '1.6.0';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -518,7 +519,11 @@ export { encryptPayload, decryptPayload, deriveKey } from './shared/crypto.js';
 
 // ── CLI: `node src/index.js --port=8001 --peers=127.0.0.1:8002,...` ──────────
 // Jedan proces = jedan node roja. Nema mastera; sve ide preko gossip-a i CRDT-a.
-const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+// `realpath` je OBAVEZAN: kad se kod pokreće preko symlinka (`/opt/braincore/current/src/index.js`),
+// Node razriješi `import.meta.url` na pravi put, pa bi poređenje sa `process.argv[1]` palo i CLI blok
+// se nikad ne bi izvršio (proces izađe sa statusom 0 — tačno ono što se desilo na Hetzneru).
+const invokedPath = process.argv[1] ? fs.realpathSync(process.argv[1]) : null;
+const isMain = Boolean(invokedPath) && import.meta.url === pathToFileURL(invokedPath).href;
 const hasPortArg = process.argv.some((a) => a === '--port' || a.startsWith('--port='));
 if (isMain && hasPortArg) {
   const arg = (name, fallback = null) => {

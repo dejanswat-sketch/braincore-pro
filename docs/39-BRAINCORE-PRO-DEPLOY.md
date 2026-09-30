@@ -319,3 +319,43 @@ bash /opt/braincore/current/deploy/alertcheck.sh      # API, peers, red, odbijen
 bash /opt/braincore/current/deploy/release.sh         # nova verzija + backup podataka
 bash /opt/braincore/current/deploy/rollback.sh        # povratak (<60 s)
 ```
+
+---
+
+## 14. CHAOS DUGME (KILL NODE) — živo na live.braincore.pro (30.09.2026)
+
+### Kako radi
+1. Posjetilac na `https://live.braincore.pro/live` uključi **CHAOS MODE** (potvrda) i pritisne **KILL NODE**.
+2. `POST /v1/chaos/kill` izabere **živi peer** (nikad čvor koji drži API), pošalje mu `POST /shutdown`
+   (ruta je isključena osim ako je `NMQ_ALLOW_SHUTDOWN=1`).
+3. Čvor se ugasi, a **systemd (`Restart=always`) ga vrati** u roku od ~2 s.
+4. Dashboard uživo prikazuje: hex postane crven, posao preuzme slobodniji peer, pa čvor ponovo uđe u roj.
+
+### Zaštite (fail-safe)
+| Mjera | Vrijednost |
+|---|---|
+| Naoružavanje | `ALLOW_CHAOS_KILL=1` u `/etc/braincore/braincore.env` (bez toga ruta vraća 403) |
+| Rate limit | **1 ubijanje u 60 s** (429 sa `retryInMs`) |
+| Nikad API čvor | bira se samo peer iz membership-a |
+| Audit | svako ubijanje ide u hash-chained audit log |
+| UI | „arm" + `confirm()` prije izvršenja; dugme se zaključava 3 s poslije klika |
+
+### Izmjereno (stvarni klik, preko interneta)
+| Faza | Vrijeme |
+|---|---|
+| Prihvatanje zahtjeva | **39 ms** |
+| Detekcija smrti (peer → `suspect`) | **2 207 ms** |
+| Povratak u roj (`alive`) | **3 209 ms** |
+| Ukupno (kill → rejoin) | **3,2 s** |
+
+### Dvije prave greške koje je ovaj deploy otkrio (i koje su popravljene)
+1. **systemd jedinice nisu koristile `current/`** — radile su iz statičnog `/opt/braincore`, pa `release.sh`
+   nije imao efekta (nova verzija na disku, stara u procesu). Popravljeno: `WorkingDirectory`/`ExecStart`
+   pokazuju na `/opt/braincore/current`, a `install.sh` odmah pravi `current` symlink.
+2. **`import.meta.url` vs symlink** — kad se kod pokreće preko symlinka, Node razriješi put, pa poređenje sa
+   `process.argv[1]` padne i CLI blok se **nikad ne izvrši** (proces izađe sa statusom 0). Popravljeno:
+   `fs.realpathSync(process.argv[1])` prije poređenja.
+
+### Poznato ograničenje (iskreno)
+Brojači (`swarmTasksDone`, `tasksDone`) su **per-process** i resetuju se kad se čvor restartuje — zato poslije
+ubijanja dashboard kratko pokazuje manje „done". Trajni brojači (u `data/` ili Redis-u) su sljedeći zadatak.

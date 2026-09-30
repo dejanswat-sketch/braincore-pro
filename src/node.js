@@ -58,6 +58,9 @@ export const NODE_DEFAULTS = {
    */
   maxQueueDepth: 500,
   shedWhenBusy: true,
+  /** Chaos demo: dozvoli `POST /shutdown` (systemd `Restart=always` ga vrati). Default: isključeno. */
+  allowShutdown: false,
+  shutdownToken: null,
   /** Kompakcija CRDT-a (GC tombstone-a) — koliko često i koliko star zapis smije biti obrisan. */
   compactionIntervalMs: 300_000,
   compactionAgeMs: 600_000,
@@ -508,6 +511,29 @@ export async function createSwarmNode({
           tick()
             .then((r) => send(200, r))
             .catch((err) => send(500, { error: { message: err.message } }));
+          return undefined;
+        }
+        /**
+         * /shutdown — „chaos dugme" za DEMO: čvor se sam ugasi, a systemd ga vrati (`Restart=always`).
+         * Zašto tako: API proces nema root i ne treba mu — dovoljno je da čvor izađe, a supervisor ga
+         * podigne. Posjetilac na live.braincore.pro tako vidi stvarnu smrt i stvarni oporavak roja.
+         * Sigurnost: ruta je ISKLJUČENA osim ako je `NMQ_ALLOW_SHUTDOWN=1` (ili config), i traži token ako je zadan.
+         */
+        if (req.method === 'POST' && url.pathname === '/shutdown') {
+          const allowed = cfg.allowShutdown === true || process.env.NMQ_ALLOW_SHUTDOWN === '1';
+          if (!allowed) return send(403, { error: { code: 'SHUTDOWN_DISABLED', message: 'Gašenje čvora nije dozvoljeno' } });
+          const token = req.headers['x-shutdown-token'] ?? null;
+          if (cfg.shutdownToken && token !== cfg.shutdownToken) return send(401, { error: { code: 'BAD_TOKEN', message: 'Neispravan token za gašenje' } });
+          const reason = url.searchParams.get('reason') ?? 'chaos';
+          logger?.warn?.('node.shutdown_requested', { nodeId: id, reason });
+          audit
+            ?.append({ tenantId, actor: 'chaos', action: 'node_shutdown', args: { nodeId: id, reason }, decision: 'allow', outcome: 'ok' })
+            .catch(() => {});
+          send(200, { shuttingDown: true, nodeId: id, reason, expectedRestartSec: 2 });
+          setTimeout(async () => {
+            await api.close().catch(() => {});
+            process.exit(0); // systemd `Restart=always` ga vraća u roj
+          }, 150);
           return undefined;
         }
         return send(404, { error: { code: 'NOT_FOUND', message: `nema rute ${url.pathname}` } });

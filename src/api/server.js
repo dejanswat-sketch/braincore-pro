@@ -45,6 +45,7 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
   const issuer = keyIssuer ?? createKeyIssuer({ dataDir: cfg.dataDir ?? null, logger, metrics, audit });
   const feed = createLiveFeed({ node, config: cfg.feed ?? {}, logger, metrics });
   const rateWindow = [];
+  const chaos = { lastKillAt: null, kills: 0, history: [] }; // stanje chaos dugmeta (kill peer-a)
   const startedAt = Date.now();
 
   // Live feed: kad se nešto desi u roju, pošalji event svim WS klijentima
@@ -138,7 +139,64 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         put('braincore_gossip_prev_key_total', 'Prihvaćenih potpisa STARIM ključem (rotacija)', 'counter', node.gossip.stats.acceptedWithPrevKey ?? 0);
         put('braincore_uptime_seconds', 'Vrijeme rada čvora', 'gauge', Math.round(stats.uptimeMs / 1000));
         return send(200, `${m.join('\n')}\n`, { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' });
-      }      if (req.method === 'GET' && url.pathname === '/metrics') {
+      }      /**
+       * CHAOS DEMO — „KILL NODE" dugme na live.braincore.pro.
+       *
+       * Šta radi: izabere ŽIVI peer (nikad čvor koji drži API), pošalje mu `POST /shutdown`, a systemd
+       * (`Restart=always`) ga vrati u roku od ~2 s. Posjetilac vidi: detekciju smrti (~1.3 s), preuzimanje
+       * posla i povratak čvora — na stvarnom roju, ne na snimku.
+       *
+       * Zaštite: (1) rate limit 1 ubijanje u 60 s, (2) nikad API čvor, (3) mora biti „naoružano"
+       * (`ALLOW_CHAOS_KILL=1` u okruženju), (4) sve ide u audit, (5) vraća očekivano vrijeme oporavka.
+       */
+      if (req.method === 'POST' && url.pathname === '/v1/chaos/kill') {
+        const armed = env.ALLOW_CHAOS_KILL === '1' || env.NMQ_ALLOW_SHUTDOWN === '1';
+        if (!armed) return send(403, { error: { code: 'CHAOS_DISABLED', message: 'Chaos dugme je isključeno na ovoj mašini' } });
+        const now = Date.now();
+        const cooldownMs = Number(env.CHAOS_COOLDOWN_MS ?? 60_000);
+        if (chaos.lastKillAt && now - chaos.lastKillAt < cooldownMs) {
+          return send(429, { error: { code: 'CHAOS_COOLDOWN', message: `Sačekaj ${Math.ceil((cooldownMs - (now - chaos.lastKillAt)) / 1000)} s prije sljedećeg ubijanja`, details: { retryInMs: cooldownMs - (now - chaos.lastKillAt) } } });
+        }
+        const peers = node.gossip.membershipList().filter((m) => m.nodeId !== node.nodeId && m.status === 'alive');
+        if (!peers.length) return send(409, { error: { code: 'NO_PEERS', message: 'Nema živih peer-ova za ubijanje (roj je sam)' } });
+        const victim = peers[Math.floor(Math.random() * peers.length)];
+        const target = `http://127.0.0.1:${victim.port}/shutdown?reason=live-demo`;
+        const startedAt = Date.now();
+        try {
+          const res = await fetch(target, { method: 'POST', headers: { 'x-caller': 'api-chaos', ...(env.CHAOS_TOKEN ? { 'x-shutdown-token': env.CHAOS_TOKEN } : {}) }, signal: AbortSignal.timeout(4000) });
+          if (!res.ok) throw new Error(`node ${victim.nodeId} je odbio gašenje (HTTP ${res.status})`);
+        } catch (err) {
+          return send(502, { error: { code: 'KILL_FAILED', message: `Gašenje nije uspjelo: ${err.message}`, details: { nodeId: victim.nodeId, port: victim.port } } });
+        }
+        chaos.lastKillAt = now;
+        chaos.kills = (chaos.kills ?? 0) + 1;
+        chaos.history = [...(chaos.history ?? []), { at: new Date(now).toISOString(), nodeId: victim.nodeId, port: victim.port }].slice(-20);
+        metrics?.inc('chaos_kills_total', {});
+        logger?.warn?.('chaos.kill_requested', { nodeId: victim.nodeId, port: victim.port, kills: chaos.kills });
+        await audit?.append({ tenantId: 'nmq', actor: 'visitor:live', action: 'chaos_kill_node', args: { nodeId: victim.nodeId, port: victim.port }, decision: 'allow', outcome: 'ok' }).catch(() => {});
+        return send(200, {
+          killed: true,
+          nodeId: victim.nodeId,
+          port: victim.port,
+          acceptedInMs: Date.now() - startedAt,
+          expectedRecoverySec: 2,
+          expectedDetectionMs: 1300,
+          killsTotal: chaos.kills,
+          nextAllowedInMs: cooldownMs,
+          note: 'systemd (Restart=always) vraća čvor; posao preuzima najslobodniji peer',
+        });
+      }
+      if (req.method === 'GET' && url.pathname === '/v1/chaos/status') {
+        return send(200, {
+          armed: env.ALLOW_CHAOS_KILL === '1' || env.NMQ_ALLOW_SHUTDOWN === '1',
+          cooldownMs: Number(env.CHAOS_COOLDOWN_MS ?? 60_000),
+          lastKillAt: chaos.lastKillAt ?? null,
+          killsTotal: chaos.kills ?? 0,
+          history: chaos.history ?? [],
+          peersAlive: node.gossip.membershipList().filter((m) => m.status === 'alive').length,
+        });
+      }
+      if (req.method === 'GET' && url.pathname === '/metrics') {
         const stats = node.stats();
         return send(200, {
           peersAlive: stats.peersAlive,

@@ -13,12 +13,12 @@ Wants=network-online.target
 Type=simple
 User=braincore
 Group=braincore
-WorkingDirectory=/opt/braincore
+WorkingDirectory=/opt/braincore/current
 
 EnvironmentFile=/etc/braincore/braincore.env
 EnvironmentFile=-/etc/braincore/node-8001.env
 
-ExecStart=/usr/bin/node src/index.js \
+ExecStart=/usr/bin/node /opt/braincore/current/src/index.js \
   --port=8001 \
   --api-port=8081 \
   --peers=${PEERS} \

@@ -206,7 +206,9 @@ test('API: health/status/metrics/live stranica + task bez ključa (demo tenant)'
     const live = await fetch(`${base}/live`);
     assert.equal(live.status, 200);
     assert.match(live.headers.get('content-type'), /text\/html/);
-    assert.match(await live.text(), /BRAINCORE PRO/);
+    const liveHtml = await live.text();
+    assert.match(liveHtml, /SWARM DASHBOARD/);
+    assert.match(liveHtml, /KILL NODE/);
 
     const jsRes = await fetch(`${base}/live.js`);
     assert.equal(jsRes.status, 200);

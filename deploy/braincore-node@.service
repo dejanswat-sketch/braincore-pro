@@ -25,12 +25,12 @@ Wants=redis-server.service
 Type=simple
 User=braincore
 Group=braincore
-WorkingDirectory=/opt/braincore
+WorkingDirectory=/opt/braincore/current
 
 EnvironmentFile=/etc/braincore/braincore.env
 EnvironmentFile=-/etc/braincore/node-%i.env
 
-ExecStart=/usr/bin/node src/index.js \
+ExecStart=/usr/bin/node /opt/braincore/current/src/index.js \
   --port=${PORT} \
   --peers=${PEERS} \
   --tenant=${NMQ_DEFAULT_TENANT} \

@@ -44,6 +44,12 @@ export function createLiveFeed({ node, config = {}, logger, metrics } = {}) {
         tasksDoneLocal: stats.tasksDone,
         crdtSize: stats.crdtSize,
         claimsLost: node.claimsLost ?? 0,
+        // Za dashboard: red, dupli rad (superseded) i zadnjih 30 latencija za p95 u browseru
+        queueDepth: stats.queue?.queued ?? 0,
+        inFlight: stats.inFlight ?? 0,
+        superseded: node.done.filter((d) => d.superseded).length,
+        dropped: 0, // taskovi koji su stigli do roja, a nisu završeni (računa se u browseru)
+        recentLatenciesMs: node.done.slice(-30).map((d) => d.ms),
         gossip: { sent: node.gossip.stats.sent, received: node.gossip.stats.received, rejected: node.gossip.stats.rejected, duplicates: node.gossip.stats.duplicates },
       },
     };

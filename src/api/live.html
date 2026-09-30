@@ -3,106 +3,149 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Braincore Pro — Live Swarm</title>
-<meta name="description" content="Live view of a decentralized AI swarm: nodes, stigmergy pheromones and task flow. No central orchestrator." />
+<title>Braincore Pro — Swarm Dashboard · live.braincore.pro</title>
+<meta name="description" content="Live swarm dashboard: real nodes, real pheromone decay, real chaos. Kill a node and watch the swarm survive." />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <style>
-  :root{--ink:#eaf2ff;--muted:#8ea3c6;--gold:#ffd479;--cyan:#8fe4ff;--green:#7df0b0;--rose:#ff9fb1;
-    --glass:rgba(255,255,255,.06);--stroke:rgba(190,220,255,.20)}
+  :root{
+    --bg:#03070a; --panel:rgba(10,20,18,.72); --line:rgba(80,255,190,.22);
+    --green:#4dffb5; --green2:#19d98c; --cyan:#5ce1ff; --amber:#ffd479; --red:#ff6b6b; --ink:#dffaef; --muted:#7fa79a;
+  }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:#02040a;color:var(--ink);
-    font-family:"Segoe UI",Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1400px;margin:0 auto;padding:22px 20px 40px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px}
-  .brand{display:flex;align-items:center;gap:12px}
-  .logo{width:34px;height:34px;border-radius:10px;background:radial-gradient(circle at 35% 30%,#ffe9b0,#ffb43d 45%,#7a4c0c);
-    box-shadow:0 0 26px rgba(255,190,90,.45)}
-  h1{margin:0;font-size:19px;letter-spacing:2.4px;font-weight:800;
-    background:linear-gradient(92deg,#fff,var(--gold) 60%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .sub{margin:2px 0 0;font-size:11.5px;letter-spacing:1.6px;color:var(--muted);text-transform:uppercase}
-  .badge{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid var(--stroke);
-    background:var(--glass);backdrop-filter:blur(10px);font-size:12px;color:#d7e4ff}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
-  .dot.off{background:var(--rose);box-shadow:0 0 10px var(--rose)}
-  .grid{display:grid;grid-template-columns:1fr 320px;gap:16px}
-  @media (max-width:940px){.grid{grid-template-columns:1fr}}
-  .panel{border:1px solid var(--stroke);border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
-    backdrop-filter:blur(16px);box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
-  .panel h2{margin:0;padding:12px 14px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);
-    border-bottom:1px solid rgba(190,220,255,.14)}
-  #stage{position:relative;height:520px;background:
-    radial-gradient(700px 380px at 50% 45%,rgba(255,186,70,.10),transparent 65%),
-    linear-gradient(180deg,#05080f,#02040a)}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;-webkit-font-smoothing:antialiased}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
+    background:linear-gradient(rgba(70,255,190,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(70,255,190,.035) 1px,transparent 1px);
+    background-size:34px 34px;mask-image:radial-gradient(circle at 50% 30%,#000 40%,transparent 88%)}
+  .wrap{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:16px 18px 26px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  h1{margin:0;font-size:26px;letter-spacing:2px;color:var(--green);text-shadow:0 0 22px rgba(77,255,181,.35)}
+  .sub{margin:6px 0 0;font-size:11.5px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
+  .right{text-align:right;font-size:11.5px;color:var(--muted);line-height:1.9}
+  .right b{color:var(--green)}
+  .bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));margin:14px 0 12px;border:1px solid var(--line);background:var(--panel)}
+  .bar div{padding:9px 14px;font-size:12px;letter-spacing:1.4px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+  @media(min-width:900px){.bar{grid-template-columns:repeat(4,minmax(0,1fr))}.bar div{border-bottom:0}.bar div:last-child{border-right:0}}
+  .bar span.k{color:var(--muted)} .bar b{color:var(--green)}
+  .grid{display:grid;gap:14px;grid-template-columns:1fr}
+  @media(min-width:1100px){.grid{grid-template-columns:1.55fr 1fr}}
+  .panel{border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(6px);box-shadow:0 18px 40px rgba(0,0,0,.55)}
+  .panel > h2{margin:0;padding:9px 13px;font-size:11.5px;letter-spacing:2.4px;color:var(--green);text-transform:uppercase;
+    border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .panel > h2 em{font-style:normal;color:var(--muted);letter-spacing:1px}
+  #stage{position:relative;height:470px;background:
+    radial-gradient(620px 340px at 50% 45%,rgba(25,217,140,.10),transparent 70%),
+    linear-gradient(180deg,rgba(4,12,10,.6),rgba(2,6,5,.9))}
   canvas{display:block;width:100%;height:100%}
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
-  .stat{border:1px solid var(--stroke);border-radius:12px;padding:9px 10px;background:rgba(255,255,255,.03)}
-  .stat b{display:block;font-size:19px}
-  .stat span{font-size:10.5px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
-  .legend{padding:10px 12px;font-size:11.5px;color:var(--muted);line-height:2}
-  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
-  #log{padding:8px 12px;font-size:11px;line-height:1.85;height:190px;overflow:auto;color:#c9d8f2}
-  #log div{border-bottom:1px dashed rgba(160,195,255,.12);padding:3px 0}
-  .t{color:var(--muted)}
-  footer{margin-top:16px;font-size:11.5px;color:var(--muted);text-align:center}
+  .stats{display:grid;grid-template-columns:1fr 1fr}
+  .stat{padding:13px 15px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .stat:nth-child(2n){border-right:0}
+  .stat .lab{font-size:10.5px;letter-spacing:1.6px;color:var(--muted);text-transform:uppercase}
+  .stat .val{font-size:32px;line-height:1.15;font-weight:700;color:var(--green);text-shadow:0 0 18px rgba(77,255,181,.28)}
+  .stat .val.cyan{color:var(--cyan);text-shadow:0 0 18px rgba(92,225,255,.28)}
+  .stat .val.red{color:var(--red)} .stat .val.amber{color:var(--amber)}
+  .stat .note{font-size:11px;color:var(--muted);margin-top:3px}
+  .pad{padding:12px 14px}
+  .spark{width:100%;height:74px;display:block}
+  #log{padding:10px 13px;height:230px;overflow:auto;font-size:11.5px;line-height:1.75;color:#bff3dd}
+  #log div{border-bottom:1px dashed rgba(80,255,190,.12);padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #log .t{color:var(--muted)}
+  .chaos{border-color:rgba(255,107,107,.42)}
+  .chaos > h2{color:var(--red);border-bottom-color:rgba(255,107,107,.35)}
+  .kill{width:calc(100% - 28px);margin:14px;padding:20px 16px;border:2px solid var(--red);
+    background:linear-gradient(180deg,rgba(255,107,107,.16),rgba(255,107,107,.05));color:#ffd9d9;font-family:inherit;
+    font-size:19px;letter-spacing:2.5px;font-weight:700;cursor:pointer;text-shadow:0 0 16px rgba(255,107,107,.5);transition:.15s}
+  .kill:hover:not(:disabled){background:linear-gradient(180deg,rgba(255,107,107,.28),rgba(255,107,107,.10));transform:translateY(-1px)}
+  .kill:disabled{opacity:.42;cursor:not-allowed;border-color:rgba(255,107,107,.4)}
+  .chaos .row{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--muted);padding:3px 14px}
+  .chaos .row b{color:var(--ink)}
+  .arm{display:flex;align-items:center;gap:9px;padding:10px 14px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none}
+  .arm input{accent-color:var(--red);width:16px;height:16px}
+  #killResult{margin:6px 14px 14px;padding:10px 12px;border-left:2px solid var(--green);font-size:11.5px;color:var(--ink);
+    background:rgba(77,255,181,.06);min-height:38px;white-space:pre-wrap}
+  footer{margin-top:14px;border:1px solid var(--line);background:var(--panel);padding:9px 14px;font-size:11px;letter-spacing:1.6px;
+    color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  footer b{color:var(--green)}
+  .pill{display:inline-block;padding:2px 8px;border:1px solid var(--line);font-size:10.5px;letter-spacing:1.4px;color:var(--green)}
   a{color:var(--cyan);text-decoration:none}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div>
-        <h1>BRAINCORE PRO</h1>
-        <p class="sub">Live swarm · no central orchestrator</p>
-      </div>
+    <div>
+      <h1>SWARM DASHBOARD <span style="color:var(--muted);font-size:16px">v2.5</span></h1>
+      <p class="sub">Measured · not promised — zero npm · CRDT board · UDP gossip</p>
     </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <span class="badge"><span class="dot" id="conn"></span><span id="connText">connecting…</span></span>
-      <span class="badge">WS <b id="wsUrl" style="margin-left:6px"></b></span>
-      <a class="badge" href="https://braincore.pro">← braincore.pro</a>
+    <div class="right">
+      <div><b>LIVE.BRAINCORE.PRO</b> — DEMO</div>
+      <div><span class="pill" id="statusPill">CONNECTING…</span></div>
+      <div id="clock">UTC —</div>
     </div>
   </header>
 
+  <div class="bar">
+    <div><span class="k">STATUS</span><b id="barStatus">—</b></div>
+    <div><span class="k">UPTIME</span><b id="barUptime">—</b></div>
+    <div><span class="k">SESSION</span><b id="barSession">—</b></div>
+    <div><span class="k">NODES</span><b id="barNodes">—</b></div>
+  </div>
+
   <div class="grid">
-    <div class="panel">
-      <h2>Swarm topology · stigmergy &amp; task flow</h2>
+    <section class="panel">
+      <h2>[ MAP — SWARM ] <em id="mapNodeCount">—</em></h2>
       <div id="stage"><canvas id="c"></canvas></div>
-    </div>
+    </section>
 
-    <div style="display:grid;gap:16px;align-content:start">
-      <div class="panel">
-        <h2>Counters</h2>
+    <div style="display:grid;gap:14px;align-content:start">
+      <section class="panel">
+        <h2>[ METRICS — LIVE ] <em>refresh 1s</em></h2>
         <div class="stats">
-          <div class="stat"><b id="sNodes">0</b><span>nodes alive</span></div>
-          <div class="stat"><b id="sTasks">0</b><span>tasks known</span></div>
-          <div class="stat"><b id="sDone">0</b><span>tasks done</span></div>
-          <div class="stat"><b id="sPher">0</b><span>active pheromones</span></div>
-          <div class="stat"><b id="sCrdt">0</b><span>CRDT entries</span></div>
-          <div class="stat"><b id="sLoad">0</b><span>this node load</span></div>
+          <div class="stat"><div class="lab">Tasks / sec</div><div class="val" id="mTps">0.0</div><div class="note" id="mTpsNote">rolling 10 s</div></div>
+          <div class="stat"><div class="lab">p95 latency</div><div class="val cyan" id="mP95">—</div><div class="note" id="mP95Note">p50 — · p99 —</div></div>
+          <div class="stat"><div class="lab">Dropped</div><div class="val" id="mDropped">0</div><div class="note" id="mDroppedNote">0 lost</div></div>
+          <div class="stat"><div class="lab">Overlaps</div><div class="val" id="mOverlaps">0</div><div class="note">0 double-executed</div></div>
         </div>
-      </div>
-
-      <div class="panel">
-        <h2>Legend</h2>
-        <div class="legend">
-          <div><i style="background:var(--gold);box-shadow:0 0 10px var(--gold)"></i>node (this one is larger)</div>
-          <div><i style="background:var(--cyan);box-shadow:0 0 10px var(--cyan)"></i>peer node</div>
-          <div><i style="background:var(--rose);box-shadow:0 0 10px var(--rose)"></i>suspect / dead</div>
-          <div><i style="background:#fff;opacity:.7"></i>pheromone trail (fades with decay)</div>
-          <div><i style="background:var(--green);box-shadow:0 0 10px var(--green)"></i>task completed here</div>
+        <div class="pad">
+          <div style="font-size:11px;letter-spacing:1.6px;color:var(--muted);text-transform:uppercase">Queue depth — last 60s
+            <span style="float:right;color:var(--ink)">current: <b id="qNow">0</b></span></div>
+          <canvas id="spark" class="spark" width="600" height="148"></canvas>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <h2>Event stream</h2>
-        <div id="log"></div>
-      </div>
+      <section class="panel">
+        <h2>[ PHEROMONE EVAPORATION — TIMER ] <em>cycle 30s</em></h2>
+        <div class="pad">
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span class="k">active trails</span><b id="phCount">0</b></div>
+          <div style="margin:9px 0 5px;height:10px;border:1px solid var(--line);background:rgba(255,255,255,.03)">
+            <div id="phBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--green2),var(--green));transition:width .4s"></div>
+          </div>
+          <div id="phText" style="font-size:11.5px;color:var(--muted)">no active trails — deposit a task</div>
+        </div>
+      </section>
+
+      <section class="panel chaos">
+        <h2>[ CHAOS CONTROLS ] <em>real cluster</em></h2>
+        <label class="arm"><input type="checkbox" id="arm" /> CHAOS MODE: <b id="armState" style="color:var(--red)">OFF</b> — confirm required to execute</label>
+        <button class="kill" id="kill" disabled>⚠ KILL NODE</button>
+        <div class="row"><span>Kills this session</span><b id="killsTotal">0</b></div>
+        <div class="row"><span>Cooldown</span><b id="cooldown">—</b></div>
+        <div class="row"><span>Fail-safes</span><b>never the API node · 1/60s · audited</b></div>
+        <div id="killResult">Arm chaos mode, then press KILL NODE. The node shuts itself down over HTTP and systemd brings it back — you watch detection, re-claim and rejoin live.</div>
+      </section>
     </div>
   </div>
 
+  <section class="panel" style="margin-top:14px">
+    <h2>[ SYSTEM LOG — STREAM ] <em id="logCount">0 events</em></h2>
+    <div id="log"></div>
+  </section>
+
   <footer>
-    Zero-npm swarm · UDP gossip (dgram) · CRDT blackboard (LWW + vector clock) · pheromones with TTL &amp; decay ·
-    <span id="nodeId"></span>
+    <span><b>MEASURED — NOT PROMISED</b> · data refresh 1s</span>
+    <span>swarm consensus: <b id="fConsensus">—</b></span>
+    <span>integrity: <b id="fIntegrity">0 lost · 0 overlaps</b></span>
+    <span><a href="https://braincore.pro">← braincore.pro</a></span>
   </footer>
 </div>
 <script src="live.js"></script>

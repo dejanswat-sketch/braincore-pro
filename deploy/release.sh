@@ -47,7 +47,7 @@ chown -R braincore:braincore "$DEST" "$APP_DIR/data" 2>/dev/null || true
 
 log "4/5 Restart servisa"
 for s in $SERVICES; do
-  if systemctl list-unit-files | grep -q "^$s.service"; then
+  if systemctl cat "$s" >/dev/null 2>&1; then
     systemctl restart "$s" && echo "restartovano: $s"
   fi
 done
