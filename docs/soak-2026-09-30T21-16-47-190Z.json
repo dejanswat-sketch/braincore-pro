@@ -1,0 +1,55 @@
+{
+  "scope": "single machine (loopback), in-process nodes — mrežna particija nije simulirana",
+  "runId": "2026-09-30T21-16-47-190Z",
+  "startedAt": "2026-09-30T21:16:47.194Z",
+  "minutes": 1,
+  "nodes": 3,
+  "targetRate": 5,
+  "runnerDelayMs": 120,
+  "durationSec": 61.5,
+  "submitted": 294,
+  "shedByBackpressure": 0,
+  "failedSubmit": 0,
+  "completed": 294,
+  "lost": 0,
+  "duplicated": 0,
+  "extraExecutions": 0,
+  "completedSubmitted": 294,
+  "executedNotSubmitted": 0,
+  "executedNotSubmittedIds": [],
+  "throughputPerSec": 4.78,
+  "latencyMs": {
+    "p50": 749,
+    "p95": 772,
+    "p99": 783,
+    "max": 785,
+    "samples": 294
+  },
+  "memoryMb": {
+    "start": 10.7,
+    "end": 13.8,
+    "peak": 13.8,
+    "samples": 4
+  },
+  "crdtSizePerNode": [
+    882,
+    882,
+    882
+  ],
+  "pheromonesActive": 289,
+  "restarts": 0,
+  "gossip": {
+    "sent": 6796,
+    "received": 6796,
+    "rejected": 0,
+    "duplicates": 0,
+    "rateLimited": 0
+  },
+  "p95BudgetMs": 1500,
+  "verdict": {
+    "lostOk": true,
+    "duplicatedOk": true,
+    "p95Ok": true,
+    "memoryStable": true
+  }
+}

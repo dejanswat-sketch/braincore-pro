@@ -178,9 +178,15 @@ const settleUntil = Date.now() + settleMs;
 while (Date.now() < settleUntil && executions.size < submitted.size) await wait(500);
 
 // ── statistika ──────────────────────────────────────────────────────────────
-const completed = executions.size;
-const lost = submitted.size - completed;
-const duplicated = [...executions.values()].filter((n) => n > 1).length;
+const completed = executions.size; // jedinstveni taskovi koji su izvršeni
+// RAČUNANJE (popravljeno poslije soak-a #6): `lost` se smije računati samo nad taskovima koje je klijent
+// VIDIO kao poslane — inače negativan „gubitak" (soak #6: -1), jer je jedan task koji je PAO PRI PREDAJI
+// (6 grešaka) ipak izvršen: klijent je vidio grešku, a posao je odrađen. To je nalaz, ne artefakt.
+const completedSubmitted = [...executions.keys()].filter((id) => submitted.has(id)).length;
+const executedNotSubmitted = [...executions.keys()].filter((id) => !submitted.has(id));
+const lost = Math.max(0, submitted.size - completedSubmitted);
+const duplicated = [...executions.values()].filter((n) => n > 1).length; // taskovi izvršeni više od jednom
+const extraExecutions = [...executions.values()].reduce((s, n) => s + Math.max(0, n - 1), 0);
 const durationSec = (Date.now() - t0) / 1000;
 const sorted = [...latencies].sort((a, b) => a - b);
 const pct = (p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))] : null);
@@ -204,6 +210,10 @@ const result = {
   completed,
   lost,
   duplicated,
+  extraExecutions,
+  completedSubmitted,
+  executedNotSubmitted: executedNotSubmitted.length,
+  executedNotSubmittedIds: executedNotSubmitted.slice(0, 10),
   throughputPerSec: Number((completed / durationSec).toFixed(2)),
   latencyMs: { p50: pct(50), p95: pct(95), p99: pct(99), max: sorted.at(-1) ?? null, samples: sorted.length },
   memoryMb: { start: heapStart, end: heapEnd, peak: heapPeak, samples: memory.length },
