@@ -327,6 +327,8 @@ export function createScheduler({ robot, store, logger, metrics, tickMs = 1000, 
         sessionId: spec.sessionId,
         retry: spec.retry ?? { max: 2, backoffMs: 5000 },
         enabled: spec.enabled !== false,
+        goalId: spec.goalId ?? null,
+        meta: spec.meta ?? {},
         status: 'pending',
         runs: 0,
       };

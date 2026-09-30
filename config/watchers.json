@@ -1,0 +1,74 @@
+{
+  "$comment": "Proaktivni watcheri: agent sam primijeti stanje i predloži (ili izvrši, ako autonomija dozvoljava) akciju. `then.kind: 'propose'` ide u inbox za odobrenje; `'run'` se izvršava samo na L2+ i niskom riziku. Za sve hookove koristi event: 'hook.*'.",
+  "rules": [
+    {
+      "id": "tickets_rastu",
+      "name": "Nagomilani ticketi",
+      "when": { "type": "metric", "metric": "support_tickets_open", "op": ">", "value": 40 },
+      "then": {
+        "kind": "propose",
+        "agentId": "support",
+        "riskLevel": "low",
+        "input": "Otvoreno je {{value}} ticketa. Predloži 3 konkretne akcije (KB članak, automatizacija, raspodjela) sa procijenjenim efektom.",
+        "expectedImpact": "manje otvorenih ticketa"
+      },
+      "cooldownMs": 3600000,
+      "maxPerDay": 3
+    },
+    {
+      "id": "cilj_skrenuo",
+      "name": "Cilj je van putanje",
+      "when": { "type": "goal_status", "statuses": ["off_track", "missed"] },
+      "then": {
+        "kind": "propose",
+        "agentId": "ops",
+        "riskLevel": "medium",
+        "input": "Ciljevi u zaostatku: {{reason}}. Napravi replan: šta mijenjamo u naredne 2 nedjelje da se vratimo na putanju?",
+        "expectedImpact": "povratak cilja na putanju"
+      },
+      "cooldownMs": 86400000,
+      "maxPerDay": 2
+    },
+    {
+      "id": "nagrada_pala",
+      "name": "Kvalitet opao",
+      "when": { "type": "reward", "groupBy": "agent", "below": 0.45, "minSamples": 5, "windowMs": 604800000 },
+      "then": {
+        "kind": "propose",
+        "agentId": "support",
+        "riskLevel": "medium",
+        "input": "Prosječna nagrada je ispod praga: {{reason}}. Analiziraj uzroke i predloži izmjenu prompta ili dopunu baze znanja.",
+        "expectedImpact": "veća nagrada korisnika"
+      },
+      "cooldownMs": 43200000,
+      "maxPerDay": 1
+    },
+    {
+      "id": "shopify_narudzbina",
+      "name": "Nova narudžbina (event)",
+      "when": { "type": "event", "event": "hook.shopify" },
+      "then": {
+        "kind": "run",
+        "agentId": "ecommerce",
+        "riskLevel": "low",
+        "input": "Nova narudžbina: {{reason}}. Provjeri status i pripremi potvrdu kupcu (bez slanja — predloži tekst)."
+      },
+      "cooldownMs": 1000,
+      "maxPerDay": 200
+    },
+    {
+      "id": "sedmicni_pregled",
+      "name": "Nedjeljni pregled portfolija",
+      "when": { "type": "schedule", "everyMs": 604800000 },
+      "then": {
+        "kind": "propose",
+        "agentId": "data",
+        "riskLevel": "low",
+        "input": "Napravi nedjeljni pregled: ciljevi, KPI-jevi, trošak, najveći rizici, 3 preporuke.",
+        "expectedImpact": "informisan operater"
+      },
+      "cooldownMs": 604800000,
+      "maxPerDay": 1
+    }
+  ]
+}

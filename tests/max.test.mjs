@@ -189,7 +189,7 @@ test('scheduler: greška alata vodi u retry, pa u failed poslije maxAttempts', a
       agentId: 'ops',
       input: 'x',
       schedule: { type: 'interval', everyMs: 60_000 },
-      retry: { max: 1, backoffMs: 10 },
+      retry: { max: 1, backoffMs: 2000 },
     });
     await robot.scheduler.runNow('nmq', job.id);
     const after1 = await robot.scheduler.get('nmq', job.id);

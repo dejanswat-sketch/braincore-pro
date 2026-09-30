@@ -1,0 +1,69 @@
+{
+  "$comment": "AI organizacija: uloge, mandati, KPI-jevi i budžeti. Uloge se vezuju na postojeće agente iz config/agents/. Ciklus planiranja pokreće se kroz POST /v1/admin/org/cycle.",
+  "period": "month",
+  "roles": [
+    {
+      "id": "ceo",
+      "title": "CEO",
+      "agentId": "decider",
+      "reportsTo": null,
+      "mandate": "Strategija, prioriteti, alokacija ciljeva i budžeta, presuda u pregovorima",
+      "kpis": ["rast prihoda", "marža", "broj ciljeva na putu"],
+      "budgetUsd": 60
+    },
+    {
+      "id": "cro",
+      "title": "CRO (revenue)",
+      "agentId": "sales",
+      "reportsTo": "ceo",
+      "mandate": "Prodaja, cijene, upsell, pipeline",
+      "kpis": ["kvalifikovanih leadova", "konverzija ponuda > 20%", "prosječna vrijednost posla"],
+      "budgetUsd": 50
+    },
+    {
+      "id": "coo",
+      "title": "COO (operacije)",
+      "agentId": "ops",
+      "reportsTo": "ceo",
+      "mandate": "Isporuka, rokovi, kvalitet procesa",
+      "kpis": ["poštovanje rokova > 90%", "vrijeme od brief-a do plana < 15 min"],
+      "budgetUsd": 30
+    },
+    {
+      "id": "cfo",
+      "title": "CFO (finansije)",
+      "agentId": "finance",
+      "reportsTo": "ceo",
+      "mandate": "Marža, cash flow, naplata, kontrola troška",
+      "kpis": ["marža > 70%", "dani naplate < 30", "trošak modela po zahtjevu < 0.02 USD"],
+      "budgetUsd": 25
+    },
+    {
+      "id": "cto",
+      "title": "CTO (tehnologija)",
+      "agentId": "dev",
+      "reportsTo": "ceo",
+      "mandate": "Pouzdanost, integracije, brzina isporuke promjena",
+      "kpis": ["greške runova < 1%", "p95 latencija < 8s", "vrijeme do popravke < 30 min"],
+      "budgetUsd": 25
+    },
+    {
+      "id": "chro",
+      "title": "CHRO (ljudi i znanje)",
+      "agentId": "hr",
+      "reportsTo": "ceo",
+      "mandate": "Znanje tima, onboarding, baza znanja",
+      "kpis": ["pokrivenost KB > 80%", "vrijeme do short liste < 1 dan"],
+      "budgetUsd": 15
+    },
+    {
+      "id": "cso",
+      "title": "CSO (podrška klijentima)",
+      "agentId": "support",
+      "reportsTo": "ceo",
+      "mandate": "Zadovoljstvo klijenata, rješavanje bez čovjeka",
+      "kpis": ["riješeno bez čovjeka > 60%", "vrijeme odgovora < 2 min"],
+      "budgetUsd": 40
+    }
+  ]
+}

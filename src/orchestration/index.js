@@ -128,6 +128,7 @@ export function createOrchestrator(services) {
       helpers,
       sandbox: services.sandbox ?? null,
       options,
+      specPatch: options.specPatch ?? null,
       jobId: options.jobId ?? options.patternConfig?.jobId ?? null,
       budgetPerRunUsd: options.maxRunUsd,
       onEvent: typeof onEvent === 'function' ? onEvent : undefined,

@@ -203,3 +203,23 @@ Odluke koje iz ovoga slijede (i važe za oba sloja):
 
 **Stanje dokaza (v0.2.1):** `node --test` → **126/126**, `node scripts/demo.mjs` → 16 sekcija bez greške,
 `node scripts/smoke.mjs` → 21/21, `node src/cli.js audit-verify` → lanac ispravan.
+
+---
+
+## 9. Autonomni nivo (v0.3.0) — odluke D37–D46
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D37 | Nivoi autonomije | **L0 assistant → L1 propose → L2 supervised → L3 goal → L4 autonomous** (`src/core/autonomy.js`, `config/autonomy.json`, per-tenant i per-agent); svaka odluka se auditira | „Koliko agent smije sam" mora biti eksplicitna, mjerljiva i promjenljiva bez izmjene koda — a ne stvar prompta |
+| D38 | Šta NIKAD nije autonomno | `high` rizik i kategorije `financial`, `legal`, `destructive`, `external_communication` traže čovjeka **na svim nivoima**, uključujući L4 | Nema agenta koji sam potpisuje ili plaća; to je pravna i reputaciona granica |
+| D39 | Cilj kao zapis | `Goal` = metric, baseline→target, deadline, owner, subgoals, plan, kpis, progress[], replans[] (`src/goals/manager.js`); mjeri `progressPct` vs `expectedPct` → on_track/at_risk/off_track/achieved/missed | Agent koji juri rezultat mora imati mjerljiv cilj; bez metrike nema ni učenja ni odgovornosti |
+| D40 | Replan ne dira cilj | Kad cilj skrene, LLM mijenja **put** (korake/taktiku), nikad `target` ni `deadline` | Cilj je obaveza prema klijentu; taktika je ono što agent smije mijenjati |
+| D41 | Proaktivnost kroz watchere | Pravila (`config/watchers.json`): uslov metric/goal_status/reward/event/schedule → `then.kind: propose` (inbox) ili `run` (samo ako autonomija dozvoljava); cooldown + `maxPerDay` | Agent inicira akcije, ali kroz kontrolisan, auditovan i ograničen kanal |
+| D42 | Self-improvement bez fine-tuninga | Reward model → prijedlozi (prompt/pattern/policy/kb/action/tool/code) → **odobrenje čovjeka** → primjena kroz control plane ili runtime politike → mjerenje efekta → rollback; A/B varijante se primjenjuju **po run-u** (`options.specPatch`) | Prvo mjerenje i dokaz, pa trening; fine-tuning dolazi tek kad imamo dataset i eval (`docs/21`) |
+| D43 | Politike se ne mijenjaju u config-u | Naučene izmjene politika žive u `data/tenants/<id>/learning/policy-overrides.json` i merge-uju se preko tvorničkog config-a | Razlika „tvorničko vs naučeno" mora biti vidljiva i reverzibilna jednim pozivom |
+| D44 | AI organizacija kao podatak | `config/company.json`: uloge (ceo/cro/coo/cfo/cto/chro/cso) sa `agentId`, mandatom, KPI-jevima i budžetom; ciklus = CEO alokacija → pregovor CFO vs CRO → zapis + audit | Firma je konfiguracija, ne kod; uloga postoji samo ako ima KPI i budžet |
+| D45 | A2A: card, tasks, pregovor, ledger | `/.well-known/agent.json` + `/a2a/tasks` (+SSE) + `/a2a/negotiations` sa tvrdim granicama (max iznos, min jedinična cijena, dozvoljeni partneri, prag za čovjeka) i internim settlement ledger-om | Pregovaranje mora imati granice prije novca; **blockchain i pravi novac NISU implementirani** (planirano, `docs/25`) |
+| D46 | RSI: analiza + prijedlog, ne samo-deploy | `src/learning/rsi.js`: nalazi iz nagrada, trace-a, grešaka alata i ciljeva → prijedlozi; primjena samo kroz odobrenje i mjerenje; nivoi prompt/politika/KB/pattern su u kodu, alati/kod/arhitektura/model traže čovjeka | Recursive self-improvement bez evaluacije i nadzora je rizik, ne funkcija |
+
+**Stanje dokaza (v0.3.0):** `node --test` → **150/150**, `node scripts/demo.mjs` → **21 sekcija** bez greške,
+`node scripts/smoke.mjs` → **31/31**, `node src/cli.js audit-verify` → lanac ispravan.

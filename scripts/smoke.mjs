@@ -10,6 +10,7 @@ import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createRobot } from '../src/index.js';
 import { createMockProvider } from '../src/llm/mock.js';
+import { createScriptedLlm } from './mock-script.mjs';
 import { loadEnvFile } from './env.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -50,7 +51,7 @@ async function ensureServer() {
     dataDir,
     connectMcp: true,
     env: { ...process.env, NMQ_LLM_PROVIDER: process.env.NMQ_LLM_API_KEY ? process.env.NMQ_LLM_PROVIDER ?? 'openai-compatible' : 'mock', NMQ_LOG_LEVEL: 'warn' },
-    overrides: process.env.NMQ_LLM_API_KEY ? {} : { llm: createMockProvider({ model: 'deepseek-chat' }), logLevel: 'warn' },
+    overrides: process.env.NMQ_LLM_API_KEY ? {} : { llm: createMockProvider({ script: createScriptedLlm(), model: 'deepseek-chat' }), logLevel: 'warn' },
   });
   const addr = await robot.listen({ port: 0, host: '127.0.0.1' });
   base = `http://127.0.0.1:${addr.port}`;
@@ -206,6 +207,75 @@ async function main() {
     const missing = wanted.filter((m) => !text.includes(m));
     if (missing.length) throw new Error(`nedostaju metrike: ${missing.join(', ')}`);
     return `${wanted.length} ključnih metrika prisutno`;
+  });
+
+  // ── v0.3: autonomni nivo ──
+  await check('GET /v1/admin/autonomy', async () => {
+    const j = await (await api('/v1/admin/autonomy')).json();
+    if (!j.forTenant?.level) throw new Error('nema nivoa autonomije');
+    return `tenant=${j.forTenant.level} (${j.forTenant.name}), default=${j.default}`;
+  });
+
+  await check('POST /v1/admin/goals + decompose + progress', async () => {
+    const created = await (await api('/v1/admin/goals', { method: 'POST', body: JSON.stringify({ title: 'SMOKE cilj', metric: 'rev', baseline: 100, target: 200, deadline: new Date(Date.now() + 30 * 86400000).toISOString(), owner: 'cro' }) })).json();
+    if (!created.id) throw new Error('cilj nije kreiran');
+    const dec = await (await api(`/v1/admin/goals/${created.id}/decompose`, { method: 'POST' })).json();
+    const prog = await (await api(`/v1/admin/goals/${created.id}/progress`, { method: 'POST', body: JSON.stringify({ value: 150 }) })).json();
+    return `podciljeva=${dec.goal?.subgoals?.length ?? 0}, napredak=${prog.progressPct}% (${prog.status})`;
+  });
+
+  await check('POST /v1/admin/watchers/metrics + tick', async () => {
+    await api('/v1/admin/watchers/metrics', { method: 'POST', body: JSON.stringify({ metric: 'support_tickets_open', value: 99 }) });
+    const tick = await (await api('/v1/admin/watchers/tick', { method: 'POST' })).json();
+    return `pokrenuto watchera: ${tick.fired?.length ?? 0}`;
+  });
+
+  await check('GET /v1/admin/proposals (inbox) + decide', async () => {
+    const created = await (await api('/v1/admin/proposals', { method: 'POST', body: JSON.stringify({ kind: 'action', target: 'support', proposed: { input: 'SMOKE akcija' }, rationale: 'smoke test', riskLevel: 'low' }) })).json();
+    const decided = await (await api(`/v1/admin/proposals/${created.id}/decide`, { method: 'POST', body: JSON.stringify({ approve: true, by: 'smoke' }) })).json();
+    if (decided.status !== 'approved') throw new Error(`odluka nije primijenjena: ${decided.status}`);
+    const applied = await (await api(`/v1/admin/proposals/${created.id}/apply`, { method: 'POST' })).json();
+    return `prijedlog ${created.kind} → ${applied.proposal.status}`;
+  });
+
+  await check('POST /v1/admin/selfplay (1 runda)', async () => {
+    const j = await (await api('/v1/admin/selfplay', { method: 'POST', body: JSON.stringify({ rounds: 1, solverAgent: 'support' }) })).json();
+    if (j.error) throw new Error(j.error.message);
+    return `prolaznost=${j.passRate}, težina=${j.finalDifficulty}`;
+  });
+
+  await check('POST /v1/admin/rsi/cycle', async () => {
+    const j = await (await api('/v1/admin/rsi/cycle', { method: 'POST', body: JSON.stringify({ sinceDays: 1 }) })).json();
+    return `nalaza=${j.findings?.length ?? 0}, prijedloga=${j.proposals?.length ?? 0}`;
+  });
+
+  await check('GET /v1/admin/org + cycle', async () => {
+    const chart = await (await api('/v1/admin/org')).json();
+    if (!chart.roles?.length) throw new Error('org chart je prazan');
+    const cycle = await (await api('/v1/admin/org/cycle', { method: 'POST', body: JSON.stringify({ period: 'month' }) })).json();
+    if (cycle.error) throw new Error(cycle.error.message);
+    return `uloga=${chart.roles.length}, prioriteta=${cycle.plan?.priorities?.length ?? 0}, pregovor=${cycle.negotiation?.status ?? '-'}`;
+  });
+
+  await check('GET /.well-known/agent.json (A2A card)', async () => {
+    const j = await (await api('/.well-known/agent.json')).json();
+    if (!j.skills?.length) throw new Error('karta nema skillova');
+    return `skillova=${j.skills.length}, streaming=${j.capabilities.streaming}`;
+  });
+
+  await check('POST /a2a/tasks + GET status', async () => {
+    const task = await (await api('/a2a/tasks', { method: 'POST', body: JSON.stringify({ message: 'SMOKE A2A zadatak', skillId: 'support', wait: true }) })).json();
+    const fetched = await (await api(`/a2a/tasks/${task.id}`)).json();
+    if (!['completed', 'input_required', 'failed'].includes(fetched.state)) throw new Error(`neočekivano stanje: ${fetched.state}`);
+    return `stanje=${fetched.state}, agent=${fetched.agentId}`;
+  });
+
+  await check('A2A pregovor + poravnanje', async () => {
+    const neg = await (await api('/a2a/negotiations', { method: 'POST', body: JSON.stringify({ counterparty: 'smoke-partner', topic: 'smoke nabavka', offer: { amountUsd: 120 } }) })).json();
+    const resp = await (await api(`/a2a/negotiations/${neg.id}/respond`, { method: 'POST', body: JSON.stringify({ offer: { amountUsd: 120 }, accept: true }) })).json();
+    if (resp.state !== 'agreed') return `stanje=${resp.state} (bez poravnanja)`;
+    const closed = await (await api(`/a2a/negotiations/${neg.id}/close`, { method: 'POST' })).json();
+    return `dogovoreno=${closed.settlement.amountUsd} USD, status=${closed.settlement.status} (interni ledger)`;
   });
 
   const failed = results.filter((r) => !r.ok);

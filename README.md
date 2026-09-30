@@ -63,6 +63,13 @@ node scripts/serve.mjs
 | **Observability** | Trace/span, Prometheus metrike, cost tracker, hash-chained audit, **OTLP izvoz** | `src/observability/` |
 | **Governance** | `allow / deny / require_approval`, budžet (run/tenant/agent), PII redakcija, human-in-the-loop | `src/core/policy.js`, `config/policies.json` |
 | **Sandbox** | Mrežni allowlist, FS korijeni, očišćen env za MCP podprocese, limiti | `src/core/sandbox.js` |
+| **Autonomija** | Nivoi **L0–L4** po tenantu i agentu; `high` rizik i novac/pravo/brisanje uvijek traže čovjeka | `src/core/autonomy.js`, `config/autonomy.json` |
+| **Ciljevi** | Cilj → podciljevi → plan → KPI → mjerenje → **replan**; plan se pretvara u persistentne poslove | `src/goals/manager.js` |
+| **Proaktivnost** | Watcheri: metrika, cilj, nagrada, događaj ili raspored → predlog u inbox ili samostalna akcija | `src/goals/watchers.js`, `config/watchers.json` |
+| **Self-improvement** | Reward model → prijedlozi (prompt/politika/KB/pattern) → odobrenje → primjena → mjerenje → rollback; **A/B po run-u** | `src/learning/` |
+| **Self-play i RSI** | Agent sam sebi pravi scenarije, rješava ih i ocjenjuje; analiza sopstvenih grešaka daje prijedloge | `src/learning/selfplay.js`, `rsi.js` |
+| **AI organizacija** | CEO/CRO/COO/CFO/CTO/CHRO/CSO sa KPI-jevima, budžetima i **pregovaranjem** (CFO vs CRO) | `src/org/company.js`, `config/company.json` |
+| **A2A ekonomija** | Agent card, zadaci između agenata (+SSE), pregovaranje sa tvrdim granicama, interni settlement ledger | `src/a2a/` |
 | **Tenancy** | Izolacija fizički + logički, API ključevi, AES-256-GCM tajne, kill switch | `src/tenancy/store.js` |
 
 ---
@@ -225,8 +232,8 @@ curl -X POST localhost:8787/v1/admin/agents/executor/keys -d '{"scopes":["crm:wr
 
 ## Status
 
-`v0.2.0` — MAX nivo: **106/106 testova**, 19 agenata, 11 patterna/ulaza, 20 ugrađenih alata,
-persistentni agenti (scheduler + cron + event triggeri + dugoročni procesi), kontrolna ravan
-(deploy/rollback, per-agent ključevi i budžeti), epizodična memorija, sandbox i OTLP izvoz —
-sve bez ijedne npm zavisnosti.
+`v0.3.0` — autonomni nivo: **150/150 testova**, 19 agenata, 11 ulaza/patterna, 20 ugrađenih alata,
+persistentni agenti, kontrolna ravan, autonomija **L0–L4**, **ciljevi sa KPI i replan-om**, proaktivni watcheri,
+**self-improvement sa odobrenjem i A/B**, self-play i RSI, **AI organizacija (7 uloga)** i **A2A pregovaranje**
+sa internim settlement ledger-om — sve bez ijedne npm zavisnosti.
 Vlasnik: **NMQ — Dejan Milošević PR** · Licenca: vlasnička (SaaS + self-hosted).

@@ -25,11 +25,24 @@ import { createRoutes } from './server/routes.js';
 import { createAdminRoutes } from './server/routes-admin.js';
 import { createHttpServer, listen as httpListen } from './server/http.js';
 import { createSandbox } from './core/sandbox.js';
+import { createAutonomy } from './core/autonomy.js';
+import { deepMerge } from './core/config-utils.js';
 import { createBus } from './core/events.js';
 import { createJobStore } from './scheduler/store.js';
 import { createScheduler } from './scheduler/index.js';
 import { createControlPlane } from './controlplane/registry.js';
 import { createOtelExporter } from './observability/otel.js';
+import { createPolicyOverrides } from './learning/policy-overrides.js';
+import { createRewardModel } from './learning/rewards.js';
+import { createImprovementEngine } from './learning/improvements.js';
+import { createSelfPlay } from './learning/selfplay.js';
+import { createRsi } from './learning/rsi.js';
+import { createGoalManager } from './goals/manager.js';
+import { createWatchers } from './goals/watchers.js';
+import { createCompany } from './org/company.js';
+import { createA2ATasks } from './a2a/tasks.js';
+import { createSettlement, createNegotiator } from './a2a/negotiation.js';
+import { createAutonomyRoutes } from './server/routes-autonomy.js';
 
 export const VERSION = '0.2.0';
 
@@ -72,7 +85,22 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     logger,
   });
 
-  const policyResolver = (tenantId, { agentId } = {}) => resolvePolicy(config.policies, tenantId ?? config.env.defaultTenant, { agentId });
+  const policyOverrides = overrides.policyOverrides ?? createPolicyOverrides({ dataDir: config.dataDir, logger });
+  const policyResolver = (tenantId, { agentId } = {}) => {
+    const t = tenantId ?? config.env.defaultTenant;
+    const base = resolvePolicy(config.policies, t, { agentId });
+    const extra = policyOverrides.activeSync(t);
+    return extra && Object.keys(extra).length ? deepMerge(base, extra) : base;
+  };
+
+  // Autonomija: koliko agent smije sam (L0-L4) — centralna brava za sve proaktivne akcije
+  const autonomy = overrides.autonomy ?? createAutonomy({ config: config.autonomy ?? {}, logger, metrics, audit });
+  for (const [tenantId, levels] of Object.entries(config.autonomy?.tenants ?? {})) {
+    for (const [agentId, level] of Object.entries(levels)) autonomy.setLevel(tenantId, agentId === '*' ? null : agentId, level);
+  }
+
+  // Reward model: jedna ocjena po run-u (feedback, odobrenja, ishod, trošak, greške)
+  const rewards = overrides.rewards ?? createRewardModel({ dataDir: config.dataDir, logger, metrics, weights: config.autonomy?.rewardWeights });
 
   // Trajno skladište poslova mora postojati prije alata (alat `process_update` ga koristi)
   const jobs = overrides.jobs ?? createJobStore({ dataDir: config.dataDir, logger });
@@ -127,6 +155,68 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     helpers: patternHelpers,
   });
 
+  // ── Autonomni nivo (v0.3): self-improvement, ciljevi, organizacija, A2A ──
+  const improvements = overrides.improvements ?? createImprovementEngine({
+    dataDir: config.dataDir,
+    logger,
+    metrics,
+    audit,
+    rewards,
+    controlPlane,
+    policyOverrides,
+    autonomy,
+    orchestrator,
+    memory,
+    catalog,
+    helpers: patternHelpers,
+  });
+
+  // Scheduler: persistentni poslovi i event triggeri (može se ugasiti sa NMQ_SCHEDULER=0 ili overrides.scheduler=false)
+  const schedulerEnabled = overrides.scheduler !== false && (config.env.scheduler ?? true);
+  const scheduler = overrides.schedulerInstance ?? (schedulerEnabled ? createScheduler({ robot, store: jobs, logger, metrics, tickMs: config.env.schedulerTickMs ?? 1000 }) : null);
+
+  const goals = overrides.goals ?? createGoalManager({
+    dataDir: config.dataDir,
+    llm,
+    catalog,
+    scheduler,
+    controlPlane,
+    cost,
+    logger,
+    metrics,
+    audit,
+    helpers: patternHelpers,
+  });
+
+  const selfplay = createSelfPlay({ dataDir: config.dataDir, logger, metrics, audit, catalog, runAgent, critic, helpers: patternHelpers, rewards, improvements });
+  const rsi = createRsi({ logger, metrics, audit, rewards, improvements, goals, tracer, catalog, cost, autonomy, memory });
+  const company = createCompany({ config: config.company ?? {}, dataDir: config.dataDir, logger, metrics, audit, catalog, goals, rewards, controlPlane, autonomy, improvements, helpers: patternHelpers, cost });
+  const watchers = createWatchers({
+    config: config.watchers ?? {},
+    dataDir: config.dataDir,
+    metrics,
+    logger,
+    audit,
+    goals,
+    rewards,
+    createProposal: (tenantId, spec) => improvements.createProposal(tenantId, spec),
+    orchestrator,
+    autonomy,
+  });
+
+  const settlement = createSettlement({ dataDir: config.dataDir, logger, metrics, audit });
+  const negotiator = createNegotiator({
+    dataDir: config.dataDir,
+    logger,
+    metrics,
+    audit,
+    settlement,
+    autonomy,
+    improvements,
+    defaultConstraints: { maxAmountUsd: 5000, requireHumanAboveUsd: 250, maxRounds: 5 },
+  });
+  const a2a = createA2ATasks({ dataDir: config.dataDir, logger, metrics, audit, orchestrator, bus, autonomy });
+
   Object.assign(robot, {
     config,
     logger,
@@ -142,6 +232,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     mcpReport,
     tenants,
     policyResolver,
+    policyOverrides,
     runAgent,
     critic,
     router,
@@ -150,16 +241,75 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     jobs,
     controlPlane,
     otel,
+    autonomy,
+    rewards,
+    improvements,
+    selfplay,
+    rsi,
+    goals,
+    company,
+    watchers,
+    settlement,
+    negotiator,
+    a2a,
     overrides,
+    scheduler,
   });
 
-  // Scheduler: persistentni poslovi i event triggeri (može se ugasiti sa NMQ_SCHEDULER=0 ili overrides.scheduler=false)
-  const schedulerEnabled = overrides.scheduler !== false && (config.env.scheduler ?? true);
-  robot.scheduler = overrides.schedulerInstance ?? (schedulerEnabled ? createScheduler({ robot, store: jobs, logger, metrics, tickMs: config.env.schedulerTickMs ?? 1000 }) : null);
+  /**
+   * Zapisuje ishod run-a u reward model (+ A/B mjerenje). Zovu ga rute poslije svakog izvršavanja.
+   */
+  robot.recordRunOutcome = async ({ tenantId, result, variant = null, experimentId = null, feedback = null, approval = null, jobId = null, goalId = null }) => {
+    try {
+      const steps = result?.result?.results?.[0]?.steps ?? result?.result?.steps ?? [];
+      const toolErrors = steps.filter((s) => s.type === 'tool' && s.ok === false).length;
+      const policyDenied = steps.filter((s) => s.code === 'POLICY_DENIED').length;
+      const escalation = result?.handoffs?.length ?? 0;
+      const record = await rewards.record(tenantId, {
+        runId: result?.runId,
+        agentId: result?.agentId,
+        pattern: result?.pattern,
+        variant,
+        jobId,
+        goalId,
+        signals: {
+          feedback,
+          approval,
+          outcome: result?.status === 'ok' ? 'ok' : result?.status === 'awaiting_approval' ? 'pending' : 'error',
+          costUsd: result?.costUsd ?? 0,
+          durationMs: result?.durationMs ?? 0,
+          toolErrors,
+          policyDenied,
+          escalations: escalation,
+        },
+      });
+      if (experimentId) await improvements.recordExperimentResult(tenantId, { experimentId, variant, reward: record.reward });
+      return record;
+    } catch (err) {
+      logger?.warn?.('reward.record_failed', { tenantId, error: err.message });
+      return null;
+    }
+  };
+
+  // Događaji sa bus-a → watcheri (proaktivnost) i scheduler (poslovi koji slušaju)
+  bus.on('hook.*', (env) => {
+    watchers.onEvent(env.event, env.payload).catch((err) => logger?.warn?.('watchers.event_failed', { error: err.message }));
+  });
+  robot.watchersTimer = null;
+  robot.startWatchers = (everyMs = config.env.watchersTickMs ?? 60_000) => {
+    if (robot.watchersTimer || !(config.watchers?.rules ?? []).length) return false;
+    robot.watchersTimer = setInterval(() => {
+      watchers.tick(config.tenants.map((t) => t.id)).catch((err) => logger?.warn?.('watchers.tick_failed', { error: err.message }));
+    }, everyMs);
+    robot.watchersTimer.unref?.();
+    logger.info('watchers.started', { everyMs, rules: config.watchers.rules.length });
+    return true;
+  };
 
   robot.routes = [
     ...createRoutes({ robot, config, logger, metrics, tenants, dataDir: config.dataDir }),
     ...createAdminRoutes({ robot, config, tenants, logger, metrics }),
+    ...createAutonomyRoutes({ robot, config, tenants, logger, metrics }),
   ];
   // Gauge mora postojati i kad je nula — inače alert/panel ne vidi metriku
   for (const t of config.tenants) metrics.set('approvals_pending', { tenant: t.id }, 0);
@@ -169,6 +319,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     const addr = await httpListen(robot.server, { port, host });
     robot.address = addr;
     if (robot.scheduler && !robot.scheduler.isRunning()) robot.scheduler.start();
+    robot.startWatchers();
     logger.info('robot.listening', {
       url: `http://${host}:${addr.port}`,
       tenants: config.tenants.length,
@@ -176,12 +327,15 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
       tools: tools.size(),
       scheduler: Boolean(robot.scheduler),
       sandbox: sandbox.level,
+      watchers: (config.watchers?.rules ?? []).length,
+      autonomy: config.autonomy?.default ?? 'L1',
     });
     return addr;
   };
 
   robot.close = async () => {
     robot.scheduler?.stop?.();
+    if (robot.watchersTimer) clearInterval(robot.watchersTimer);
     await mcp.closeAll().catch(() => {});
     await new Promise((resolve) => robot.server.close(() => resolve()));
     logger.info('robot.closed', {});
@@ -206,5 +360,17 @@ export { cronMatches, nextCronAt } from './scheduler/cron.js';
 export { createControlPlane } from './controlplane/registry.js';
 export { createSandbox, SANDBOX_LEVELS } from './core/sandbox.js';
 export { createOtelExporter } from './observability/otel.js';
+export { createAutonomy, AUTONOMY_LEVELS, HUMAN_ONLY } from './core/autonomy.js';
+export { createGoalManager } from './goals/manager.js';
+export { createWatchers } from './goals/watchers.js';
+export { createRewardModel } from './learning/rewards.js';
+export { createImprovementEngine } from './learning/improvements.js';
+export { createSelfPlay } from './learning/selfplay.js';
+export { createRsi } from './learning/rsi.js';
+export { createPolicyOverrides } from './learning/policy-overrides.js';
+export { createCompany } from './org/company.js';
+export { buildAgentCard } from './a2a/card.js';
+export { createA2ATasks } from './a2a/tasks.js';
+export { createSettlement, createNegotiator } from './a2a/negotiation.js';
 export { evaluate, resolvePolicy, redactPii, DECISIONS } from './core/policy.js';
 export * from './core/errors.js';

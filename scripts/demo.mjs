@@ -39,6 +39,38 @@ function scriptedLlm() {
         }),
       };
     }
+    if (system.includes('Ti si strateg')) {
+      return {
+        text: JSON.stringify({
+          subgoals: [
+            { title: 'Povećati konverziju ponuda', metric: 'conversion_pct', target: 25, owner: 'sales' },
+            { title: 'Smanjiti trošak podrške', metric: 'support_cost_eur', target: 400, owner: 'support' },
+          ],
+          plan: [
+            { step: 'Analiziraj zašto ponude propadaju', agent: 'data', when: 'nedjelja 1' },
+            { step: 'Novi šablon ponude + A/B test', agent: 'sales', when: 'nedjelja 2-3' },
+            { step: 'Dopuni KB za najčešća pitanja', agent: 'support', when: 'nedjelja 4' },
+          ],
+          kpis: ['konverzija ponuda', 'prosječno vrijeme odgovora'],
+        }),
+      };
+    }
+    if (system.includes('Cilj kasni')) {
+      return { text: JSON.stringify({ diagnosis: 'Ponude propadaju zbog slabe kvalifikacije', actions: [{ step: 'Uvedi lead_score prije ponude', agent: 'sales', when: 'nedjelja 1' }], drop: ['Masovni newsletter'], expectedEffect: '+8% konverzije' }) };
+    }
+    if (system.includes('proposer u self-play treningu')) {
+      return { text: JSON.stringify({ task: 'Kupac traži povraćaj za narudžbinu 1042', context: 'Narudžbina kasni 10 dana', expected: 'Tačan odgovor sa rokom i politikom', difficulty: 3, checks: ['navodi politiku', 'nudi konkretan rok'] }) };
+    }
+    if (system.includes('poboljšavaš system prompt')) {
+      return { text: 'Ti si support agent. UVIJEK prvo provjeri politiku povraćaja i navedi tačan rok.' };
+    }
+    if (system.includes('Ti si CEO AI firme')) {
+      return { text: JSON.stringify({ priorities: ['konverzija ponuda', 'trošak podrške'], allocation: [{ role: 'cro', goals: ['konverzija'], budgetUsd: 50 }, { role: 'cso', goals: ['KB'], budgetUsd: 40 }], risks: ['preopterećenje podrške'], decisions_needed: ['budžet za kampanju'] }) };
+    }
+    if (system.includes('u firmi. Mandat:')) {
+      const asked = Number((String(user).match(/"amountUsd":\s*(\d+)/) ?? [])[1] ?? 0);
+      return { text: JSON.stringify({ offer: { amountUsd: asked > 0 ? Math.round(asked * 0.95) : 80, terms: 'mjesečno, 30 dana plaćanja' }, reasoning: 'Držim se mandata i marže.', accept: asked > 0 }) };
+    }
     if (system.includes('analitičar')) return { text: 'SINTEZA: pravni rizik je nizak, komercijalni uslovi prihvatljivi, rokovi izvodljivi. Preporuka: potpisati uz izmjenu člana 7 (penali).' };
     if (system.includes('Ti si orchestrator')) return { text: 'PONUDA (sinteza): Prima d.o.o. — Pro paket, 149 EUR/mjesečno, uvođenje 2 nedjelje.' };
     if (system.includes('iterativno')) return { text: 'PLAN: 1) pregledaj log deploy-a 2) uporedi sa poslednjim dobrim buildom 3) predloži popravku' };
@@ -337,6 +369,127 @@ async function main() {
     const parsed = JSON.parse(firstLine);
     line(`  OTLP span: resurs=${parsed.resourceSpans?.[0]?.resource?.attributes?.[0]?.value?.stringValue} · spanova u runu=${parsed.resourceSpans?.[0]?.scopeSpans?.[0]?.spans?.length} · poslednji trace=${otelRun[0]?.runId ?? '-'}`);
   }
+
+  // ── 17. Autonomija + ciljevi ────────────────────────────────────────────────
+  head(17, 'AUTONOMIJA I CILJEVI — agent juri rezultat, ne samo zadatak');
+  for (const [agentId, level] of [['sales', 'nmq'], ['creative', 'nmq'], ['support', 'demo-shop']]) {
+    const d = robot.autonomy.describe(level, agentId);
+    line(`  ${level}/${agentId}: ${d.level} (${d.name}) — planira: ${d.canPlan}, nizak rizik sam: ${d.canActLow}, srednji sam: ${d.canActMedium}`);
+  }
+  line(
+    `  visok rizik (i novac/pravo/brisanje) traži čovjeka na SVIM nivoima: ${JSON.stringify(robot.autonomy.evaluate({ tenantId: 'nmq', agentId: 'sales', riskLevel: 'high', kind: 'act' }).action)}`,
+  );
+
+  const goal = await robot.goals.create('nmq', {
+    title: 'Povećaj mjesečni prihod 15% u Q4',
+    metric: 'monthly_revenue_eur',
+    baseline: 10000,
+    target: 11500,
+    unit: 'EUR',
+    startAt: new Date(Date.now() - 45 * 86_400_000).toISOString(),
+    deadline: new Date(Date.now() + 45 * 86_400_000).toISOString(),
+    owner: 'cro',
+  });
+  const decomposed = await robot.goals.decompose('nmq', goal.id);
+  line(`  cilj: ${goal.title}`);
+  line(`  podciljevi: ${decomposed.goal.subgoals.map((s) => s.title).join(' | ')}`);
+  line(`  plan: ${decomposed.goal.plan.map((p, i) => `${i + 1}) ${p.step} (${p.agent}, ${p.when})`).join(' → ')}`);
+  const prog = await robot.goals.recordProgress('nmq', goal.id, { value: 10150, source: 'demo' });
+  line(`  mjerenje: ${prog.current} EUR → ${prog.progressPct}% (očekivano ${prog.expectedPct}%) → status: ${prog.status}`);
+  const replan = await robot.goals.replan('nmq', goal.id);
+  line(`  replan: ${replan.proposal.diagnosis} → akcije: ${replan.proposal.actions.map((a) => a.step).join('; ')}`);
+  const scheduled = await robot.goals.schedule('nmq', goal.id, { startInMs: 60_000, stepDelayMs: 3_600_000 });
+  line(`  plan pretvoren u ${scheduled.jobs.length} persistentna posla (agent ih izvršava sam, kroz scheduler)`);
+
+  // ── 18. Proaktivnost ────────────────────────────────────────────────────────
+  head(18, 'PROAKTIVNOST — agent sam primijeti i predloži/izvrši');
+  robot.watchers.recordMetric('demo-shop', 'support_tickets_open', 57);
+  const wsFired = await robot.watchers.tick(['demo-shop']);
+  line(`  metrika preko praga → watcheri: ${wsFired.map((f) => `${f.ruleId}/${f.action}`).join(', ')}`);
+  const inbox = await robot.improvements.list('demo-shop', { status: 'proposed' });
+  line(`  inbox tenanta demo-shop: ${inbox.length} prijedlog(a) čeka odobrenje (source: ${inbox.map((p) => p.source).join(', ')})`);
+  const evFired = await robot.watchers.onEvent('hook.shopify', { tenantId: 'nmq', orderId: '1042' });
+  line(`  događaj hook.shopify → ${evFired.map((f) => `${f.ruleId}/${f.action}${f.runId ? ' (run ' + f.runId.slice(0, 12) + '…)' : ''}`).join(', ')}`);
+
+  // ── 19. Self-improvement (RLHF-lite) ────────────────────────────────────────
+  head(19, 'SELF-IMPROVEMENT — mjeri, predloži, čovjek odobri, izmjeri efekat, vrati ako ne valja');
+  for (let i = 0; i < 5; i += 1) {
+    await robot.rewards.record('nmq', { runId: `demo_r${i}`, agentId: 'creative', pattern: 'agent', signals: { feedback: 'down', outcome: 'error', toolErrors: 2 } });
+  }
+  await robot.rewards.record('nmq', { runId: 'demo_r9', agentId: 'sales', pattern: 'team', signals: { feedback: 'up', outcome: 'ok' } });
+  const ranking = await robot.rewards.ranking('nmq', { groupBy: 'agent', sinceMs: 86_400_000 });
+  line(`  reward rangiranje: najbolji=${ranking.top[0]?.key} (${ranking.top[0]?.avgReward}), najgori=${ranking.bottom[0]?.key} (${ranking.bottom[0]?.avgReward})`);
+  line(`  formula: base 0.5 + feedback ±0.3 + odobrenje/isod + kazne za greške, trošak i trajanje → 0..1`);
+
+  const rsi = await robot.rsi.cycle('nmq', { sinceDays: 1 });
+  line(`  RSI analiza: ${rsi.findings.length} nalaza → ${rsi.proposals.length} prijedloga (kind: ${rsi.proposals.map((p) => p.kind).join(', ')})`);
+  if (rsi.proposals.length) {
+    const pid = rsi.proposals[0].proposalId;
+    const prop = await robot.improvements.get('nmq', pid);
+    line(`  prijedlog #1: [${prop.kind}] ${prop.rationale.slice(0, 90)}…`);
+    line(`  dokazi: ${prop.evidence.length} · očekivani efekat: ${prop.expectedImpact} · rizik: ${prop.riskLevel} · status: ${prop.status}`);
+    await robot.improvements.decide('nmq', pid, { approve: true, by: 'dejan' });
+    const applied = await robot.improvements.apply('nmq', pid, { by: 'dejan' });
+    line(`  čovjek odobrio → primijenjeno: status=${applied.proposal.status}`);
+    const impact = await robot.rsi.impact('nmq', pid);
+    line(`  efekat: prije ${impact.before.avgReward} (n=${impact.before.n}) → poslije ${impact.after.avgReward} (n=${impact.after.n}) · verdikt: ${impact.verdict}`);
+    if (prop.kind === 'prompt') {
+      await robot.improvements.rollback('nmq', pid, { by: 'dejan' });
+      line(`  rollback (demo): status=${(await robot.improvements.get('nmq', pid)).status}`);
+    }
+  }
+
+  // ── 20. A/B + self-play ─────────────────────────────────────────────────────
+  head(20, 'A/B TESTIRANJE I SELF-PLAY');
+  const exp = await robot.improvements.createExperiment('nmq', {
+    agentId: 'creative',
+    variants: [
+      { name: 'hladno', specPatch: { temperature: 0.1 } },
+      { name: 'kreativno', specPatch: { temperature: 0.9 } },
+    ],
+    splitPct: 100,
+    minSamples: 3,
+  });
+  const variant = await robot.improvements.assignVariant('nmq', { agentId: 'creative', sessionId: 'demo-ses' });
+  line(`  eksperiment ${exp.id}: varijanta za sesiju "demo-ses" = ${variant.variant} (zakrpa: ${JSON.stringify(variant.specPatch)})`);
+  for (let i = 0; i < 3; i += 1) {
+    await robot.improvements.recordExperimentResult('nmq', { experimentId: exp.id, variant: 'hladno', reward: 0.45 });
+    await robot.improvements.recordExperimentResult('nmq', { experimentId: exp.id, variant: 'kreativno', reward: 0.8 });
+  }
+  const concluded = await robot.improvements.concludeExperiment('nmq', exp.id, { promote: true });
+  line(`  zaključak: pobjednik=${concluded.winner} (lift ${concluded.lift}) → ${concluded.decision}, deployano: ${concluded.deployed}`);
+  line(`  sada je temperatura za creative: ${robot.catalog.get('creative', 'nmq').temperature}`);
+
+  const sp = await robot.selfplay.run('nmq', { rounds: 3, solverAgent: 'support', domain: 'support', difficulty: 2 });
+  line(`  self-play: ${sp.rounds} scenarija, prolaznost ${(sp.passRate * 100).toFixed(0)}%, težina na kraju ${sp.finalDifficulty}, trošak ${sp.costUsd} USD`);
+  const ds = await robot.selfplay.dataset('nmq');
+  line(`  dataset: ${ds.returned}/${ds.total} primjera (${ds.note.slice(0, 60)}…)`);
+  const cur = await robot.selfplay.curriculum('nmq');
+  line(`  kurikulum: ${cur.recommended}`);
+
+  // ── 21. AI organizacija + A2A ───────────────────────────────────────────────
+  head(21, 'AI ORGANIZACIJA I A2A EKONOMIJA');
+  const chart = await robot.company.chart('nmq');
+  line(`  org chart: ${chart.roles.map((r) => `${r.id}(${r.agentId}${r.reportsTo ? '→' + r.reportsTo : ''})`).join(', ')}`);
+  const cycle = await robot.company.cycle('nmq', { period: 'month' });
+  line(`  ciklus planiranja: prioriteti=${cycle.plan.priorities.join(', ')} · alokacije=${cycle.plan.allocation.length} · pregovor=${cycle.negotiation?.status ?? '-'}`);
+  if (cycle.negotiation) line(`  CFO vs CRO: ${JSON.stringify(cycle.negotiation.outcome ?? {})}`);
+
+  const card = (await import('../src/a2a/card.js')).buildAgentCard({ robot, tenantId: 'nmq', baseUrl: 'http://127.0.0.1:8787' });
+  line(`  A2A card: ${card.name} · skillova: ${card.skills.length} · streaming: ${card.capabilities.streaming} · pregovaranje: ${card.capabilities.negotiation}`);
+  const task = await robot.a2a.send({ tenantId: 'nmq', message: 'Partner pita za status narudžbine 1042', skillId: 'ecommerce', fromAgent: 'partner-bot', wait: true });
+  line(`  A2A zadatak: ${task.state} · agent=${task.agentId} · runId=${String(task.runId).slice(0, 14)}…`);
+  const neg = await robot.negotiator.open({ tenantId: 'nmq', counterparty: 'dobavljac-x', topic: 'kupovina 10 licenci', ourOffer: { amountUsd: 200, items: 10 } });
+  const responded = await robot.negotiator.respond('nmq', neg.id, { offer: { amountUsd: 220, items: 10 }, accept: true, by: 'dobavljac-x' });
+  line(`  pregovor: ponuda 200 → protivponuda 220 → stanje ${responded.state}, runde ${responded.round}`);
+  if (responded.state === 'agreed') {
+    const closed = await robot.negotiator.close('nmq', neg.id);
+    line(`  poravnanje: ${closed.settlement.amountUsd} USD, status ${closed.settlement.status} (${closed.settlement.method}) — interni ledger, bez stvarnog novca`);
+  } else {
+    line(`  poravnanje: čeka odluku (stanje ${responded.state})`);
+  }
+  const totals = await robot.settlement.totals('nmq');
+  line(`  ledger: ${totals.count} zapisa · settled ${totals.settled} USD · pending ${totals.pending} USD`);
 
   line('');
   line('╔════════════════════════════════════════════════════════════════════════════╗');

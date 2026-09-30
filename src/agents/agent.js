@@ -19,6 +19,8 @@ export function createAgentRunner(services) {
     const tenantId = ctx.tenantId;
     if (!tenantId) throw new Error('runAgent: tenantId je obavezan');
     if (!spec) throw new Error('runAgent: agent spec je obavezan');
+    // A/B varijanta: zakrpa se primjenjuje samo na ovaj run (više varijanti može živjeti istovremeno)
+    if (ctx.specPatch && Object.keys(ctx.specPatch).length) spec = { ...spec, ...ctx.specPatch };
 
     const policy = ctx.policy ?? policyResolver(tenantId, { agentId: spec.id });
     const maxSteps = spec.maxSteps ?? config.env.maxSteps;

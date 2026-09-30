@@ -46,6 +46,18 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
     const { agentId, pattern, input, sessionId, userId, options, approvedTools } = body;
     if (input === undefined || input === null || input === '') throw new ValidationError('Polje "input" je obavezno');
 
+    // A/B eksperiment: varijanta se primjenjuje samo na ovaj run (options.specPatch)
+    let assignment = null;
+    if (agentId && robot.improvements?.assignVariant) {
+      assignment = await robot.improvements
+        .assignVariant(tenantId, { agentId, sessionId, runId: `${tenantId}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}` })
+        .catch(() => null);
+    }
+    const runOptions = {
+      ...(options ?? {}),
+      ...(assignment?.specPatch && Object.keys(assignment.specPatch).length ? { specPatch: assignment.specPatch } : {}),
+    };
+
     const result = await robot.orchestrator.run({
       tenantId,
       agentId: agentId ?? null,
@@ -53,7 +65,7 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
       input,
       sessionId,
       userId,
-      options: options ?? {},
+      options: runOptions,
       approvedTools,
       onEvent,
       signal,
@@ -67,13 +79,22 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
         input,
         sessionId,
         userId,
-        options: options ?? {},
+        options: runOptions,
         approvals: result.approvals,
         createdAt: Date.now(),
         output: result.output,
       });
       metrics?.set('approvals_pending', { tenant: tenantId }, countPending(tenantId));
     }
+
+    // Reward + A/B mjerenje
+    await robot.recordRunOutcome?.({
+      tenantId,
+      result,
+      variant: assignment?.variant ?? null,
+      experimentId: assignment?.experimentId ?? null,
+      jobId: runOptions.jobId ?? null,
+    });
 
     metrics?.inc('runs_total', { tenant: tenantId, agent: result.agentId ?? '-', pattern: result.pattern });
     return result;
@@ -283,6 +304,7 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
           pendingApprovals.delete(params.runId);
           metrics?.set('approvals_pending', { tenant: tenantId }, countPending(tenantId));
           await robot.memory.longterm.append(tenantId, { type: 'decision', content: `Odobrenje odbijeno za run ${params.runId}`, data: { note: body.note ?? null } });
+          await robot.recordRunOutcome?.({ tenantId, result: { runId: params.runId, agentId: pending.agentId, pattern: pending.pattern, status: 'error', costUsd: 0, durationMs: 0 }, approval: 'rejected' });
           return { runId: params.runId, approved: false, note: body.note ?? null };
         }
 
@@ -299,6 +321,7 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
           options: pending.options,
           approvedTools,
         });
+        await robot.recordRunOutcome?.({ tenantId, result, approval: 'approved' });
         return { approved: true, approvedTools, ...result };
       },
     },
@@ -396,6 +419,14 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
           importance: 0.8,
         });
         metrics?.inc('feedback_total', { tenant: tenantId, rating: String(body.rating) });
+
+        // Ocjena ulazi u reward model (ovo je „ljudski feedback" iz RLHF-a)
+        const run = body.runId ? robot.tracer.get(body.runId) : null;
+        await robot.recordRunOutcome?.({
+          tenantId,
+          result: { runId: body.runId ?? null, agentId: run?.agentId ?? null, pattern: run?.pattern ?? null, status: run?.status ?? 'ok', costUsd: 0, durationMs: 0 },
+          feedback: typeof body.rating === 'number' ? body.rating : body.rating === 'down' ? 'down' : 'up',
+        });
         return { saved: true, id: event.id };
       },
     },

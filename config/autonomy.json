@@ -1,0 +1,23 @@
+{
+  "$comment": "Nivoi autonomije. `default` važi za sve tenante; `tenants` može pooštriti ili popustiti po tenantu/agentu. L0-L4 vidi docs/20. `high` rizik i kategorije iz HUMAN_ONLY traže čovjeka na SVIM nivoima.",
+  "default": "L1",
+  "tenants": {
+    "nmq": {
+      "*": "L2",
+      "executor": "L2",
+      "creative": "L1",
+      "sales": "L3",
+      "ops": "L3"
+    },
+    "demo-shop": {
+      "*": "L1",
+      "support": "L2",
+      "ecommerce": "L2"
+    }
+  },
+  "notes": [
+    "L3 (goal) znači da agent smije sam da planira i zakazuje poslove iz cilja — uz nedjeljni ljudski pregled.",
+    "L4 (autonomous) dozvoljava i srednji rizik; uključivati samo za agente sa dokazanom stabilnošću.",
+    "Promjena nivoa je auditovana (autonomy_level_changes_total) i vidljiva u GET /v1/admin/autonomy."
+  ]
+}

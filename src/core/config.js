@@ -21,6 +21,7 @@ export function envConfig(env = process.env) {
     /** Persistentni agenti: scheduler i OTel izvoz */
     scheduler: parseBool(env.NMQ_SCHEDULER, true),
     schedulerTickMs: parseNumber(env.NMQ_SCHEDULER_TICK_MS, 1000),
+    watchersTickMs: parseNumber(env.NMQ_WATCHERS_TICK_MS, 60000),
     otelFile: parseBool(env.NMQ_OTEL_FILE, true),
     otelEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT || '',
     otelHeaders: safeJson(env.NMQ_OTEL_HEADERS, {}),
@@ -66,6 +67,9 @@ export async function loadConfig({ root = process.cwd(), env = process.env, data
   const tools = await readJson(path.join(configDir, 'tools.json'), { builtin: {}, mcpServers: [] });
   const policies = await readJson(path.join(configDir, 'policies.json'), { defaults: {}, tenants: {} });
   const tenantsFile = await readJson(path.join(configDir, 'tenants.json'), { tenants: [] });
+  const company = await readJson(path.join(configDir, 'company.json'), { roles: [] });
+  const watchers = await readJson(path.join(configDir, 'watchers.json'), { rules: [] });
+  const autonomy = await readJson(path.join(configDir, 'autonomy.json'), { default: 'L1', tenants: {} });
 
   const resolvedDataDir = path.resolve(root, dataDir ?? envCfg.dataDir);
 
@@ -77,6 +81,9 @@ export async function loadConfig({ root = process.cwd(), env = process.env, data
     agents,
     tools,
     policies,
+    company,
+    watchers,
+    autonomy,
     tenants: tenantsFile.tenants ?? [],
     requireAuth: parseBool(tenantsFile.requireAuth, false),
 
