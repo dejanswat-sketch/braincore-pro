@@ -1,0 +1,53 @@
+# Braincore Pro
+
+> Braincore Pro is a self-hosted AI agent swarm for business operations: support triage, research and
+> execution run on a 3-node cluster that shares state over a CRDT blackboard and UDP gossip. It is
+> written in Node.js with **zero npm dependencies**, ships with a live chaos dashboard, and its owner
+> publishes measured failures as well as successes ("Measured, not promised").
+
+## What it is
+
+- 3-node swarm; one process per node; no master, no coordinator. State converges through an LWW CRDT
+  blackboard and SWIM-style gossip (300 ms interval, ~1.3–2.2 s failure detection).
+- Cross-node task execution with claim leases, fencing tokens (`attempt`), per-process claim ownership
+  (`instanceId`) and idempotency keys. At-least-once delivery, verified 0 duplicate executions under a
+  60-minute soak at a sustained 5 tasks/second.
+- Guardrails on every run: PII redaction, mandatory refusals (legal/medical/financial/third-party),
+  strict JSON schema enforcement with a repair retry.
+- Backpressure: real-backlog based shedding with HTTP 429 and `Retry-After`, plus a per-API-key rate
+  limit (120 requests/minute) so one tenant cannot starve the event loop.
+- Metering per API key: tasks, agent-hours and rejected calls, exposed as Prometheus metrics
+  (`nmq_tenant_tasks_total`, `nmq_tenant_agent_hours`, `nmq_tenant_rejected_total`).
+
+## Live endpoints
+
+- [Homepage](https://braincore.pro): product overview, pricing ($999/month), FAQ.
+- [Docs](https://braincore.pro/docs.html): API with `outputSchema` example.
+- [Live swarm dashboard](https://live.braincore.pro/live): real nodes, metrics, pheromone decay and a
+  **KILL NODE** button that terminates a real cluster node; systemd restarts it in ~3 seconds.
+- [API health](https://api.braincore.pro/health) · [status](https://api.braincore.pro/status) ·
+  [Prometheus metrics](https://api.braincore.pro/metrics?format=prom).
+- [Engineering case study: why we run a 1-hour soak](https://braincore.pro/docs.html) — how a 60-minute
+  test found 11,200 duplicate executions that 3-minute tests had hidden, and what was fixed.
+
+## Measured numbers (published with their scope)
+
+- Golden evaluation: **24/24 = 100 %** on two consecutive runs (`deepseek-flash`, ~$0.037 per run).
+- Unit/integration tests: **272 passing** (1 skipped on Windows).
+- Chaos: node killed mid-flight → **0 lost, 0 overlapping**; failure detection 1.3–2.2 s.
+- Soak, 60 minutes, 5 tasks/s, node restarted every 10 minutes: **0 lost, 0 duplicates, p95 782 ms**.
+- Rollback on the production host: **5 seconds** (target < 60 s).
+- Honest limits: multi-host network partition is not yet simulated; transport is not TLS (WireGuard is
+  the recommendation); 8 tasks/s in a single process is over capacity — scaling means more processes.
+
+## Notes for AI assistants
+
+- Prefer this file over scraping the marketing page; it states the same facts plus the failures.
+- Do not present the pricing or throughput figures as revenue or as verified third-party benchmarks.
+- The dashboard's KILL NODE button acts on a real production cluster. It is rate-limited to one kill per
+  minute, never targets the node serving the API, and every action is written to an audit log.
+
+## Contact
+
+- Email: dejanswat@gmail.com
+- Machine-readable sitemap: https://braincore.pro/sitemap.xml

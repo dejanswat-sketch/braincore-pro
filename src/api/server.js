@@ -20,6 +20,7 @@
  */
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { attachWebSocket } from '../live/ws.js';

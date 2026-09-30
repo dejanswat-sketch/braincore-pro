@@ -273,3 +273,46 @@ stari claim istog `nodeId`-a sa tuđim `instanceId` **nije živ** (ne nasljeđuj
 
 **Soak #5** (isti kriteriji: `shed = 0`, `izgubljeno = 0`, `duplo = 0`, `p95 ≤ 1,5 s`, heap < 100 MB) →
 `docs/soak-1h-v190-fencing.log`.
+
+---
+
+## 12. SUD SOAK-a #5 (v1.9.0, instance fencing) — 43 → 11 duplih, 0 izgubljenih
+
+```
+trajanje:      3601 s (60 min) · 6 restarta cvorova
+poslano:       17 353
+izvršeno:      17 353      <- 0 izgubljenih
+odbijeno:      0 (backpressure) · druge greske pri predaji: 5
+propusnost:    4,82 t/s
+latencija:     p50 753 · p95 782 · p99 790 ms · max 28 459 ms
+duplo:         11          (soak #4: 43 · soak #2: 11 200)
+heap:          11,9 -> 63 MB, vrh 102,4 MB
+CRDT:          8 669 / 8 669 / 1 (treci cvor je bio restartovan 6x)
+gossip:        rate-limited 0 · odbijeno 0 · duplikata 0
+```
+
+| Kriterij | Cilj | Sud |
+|---|---|---|
+| Odbijeno (backpressure) | 0 | ✔ **0** |
+| Izgubljeno | 0 | ✔ **0** |
+| p95 | ≤ 1,5 s | ✔ **782 ms** |
+| Duplo | 0 | ✖ **11** (0,06 %) |
+| Heap | < 100 MB | ~ **63 MB kraj** (vrh 102,4 MB — granično) |
+| CRDT | ograničen | ✔ 8 669 (prozor GC-a) |
+| Gossip rate-limited | 0 | ✔ **0** |
+
+**Fencing je radio:** 43 → **11** (4× manje). Ostaje 0,06 % duplih.
+
+### Dijagnoza preostalih 11 (restart-trka)
+Sa fencing-om, claim starog procesa je „tuđ", pa ga **i** restartovani čvor **i** peer koji je detektovao
+smrt mogu preuzeti — a vremena se preklapaju:
+* detekcija smrti: **1,3–2,2 s**
+* `claimGraceMs`: **1,5 s** + `claimConfirmMs`: **0,6 s** = 2,1 s → prozor u kojem oba prođu
+
+Zato ~2 duplih po restartu × 6 restarta ≈ 11.
+
+**Popravka:** `claimGraceMs` 1,5 s → **3 s** (duže od najgore detekcije), i/ili `claimConfirmMs` da se
+računa iz izmjerene detekcije. Uz to: duplo izvršenje treba da bude **eksplicitno označeno** (`superseded`
+već postoji) da se u izvještaju vidi koliko ih je „izgubljena trka", a ne prava greška.
+
+### Odluka: video se **još ne snima** (duplo > 0), ali smo na 0,06 %

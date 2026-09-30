@@ -2,4 +2,18 @@ User-agent: *
 Allow: /
 Disallow: /thanks.html
 
+# AI asistenti — dozvoljeno citanje (sažetak: /llms.txt)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
 Sitemap: https://braincore.pro/sitemap.xml
+# Za AI alate: https://braincore.pro/llms.txt
