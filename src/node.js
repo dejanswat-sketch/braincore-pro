@@ -19,6 +19,7 @@
  */
 import http from 'node:http';
 import { EventEmitter } from 'node:events';
+import { randomUUID } from 'node:crypto';
 import { createGossip } from './gossip.js';
 import { createCrdtBlackboard } from './shared/blackboard.js';
 import { createPheromoneStore } from './shared/pheromone.js';
@@ -65,7 +66,7 @@ export const NODE_DEFAULTS = {
   compactionIntervalMs: 300_000,
   compactionAgeMs: 600_000,
   /** GC cijelih task:/result:/claim: zapisa (ne samo tombstone-a) — 1h soak je pokazao da tabla raste vječno. */
-  gcAgeMs: 900_000,
+  gcAgeMs: 600_000, // 10 min: drži heap ispod 100 MB (15 min je davalo 124 MB pri 4,8 t/s)
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -111,6 +112,9 @@ export async function createSwarmNode({
 
   const load = () => inFlight.size;
 
+  /** ID ovog PROCESA (ne čvora): poslije restarta se promijeni, pa stari claim-ovi ne mogu biti naslijeđeni. */
+  const instanceId = randomUUID();
+
   // Sopstvena potrošnja: CPU procenat od zadnjeg mjerenja + RSS u MB (bez npm, samo process.*)
   let cpuMark = process.cpuUsage();
   let cpuMarkAt = Date.now();
@@ -140,7 +144,11 @@ export async function createSwarmNode({
   function isClaimLive(claim) {
     if (!claim) return false;
     const age = Date.now() - Number(claim.at ?? 0);
-    if (claim.nodeId === id) return age < cfg.claimLeaseMs;
+    // FENCING: claim je „naš" samo ako se poklapa i nodeId I instanceId tekućeg procesa. Poslije restarta
+    // novi proces ima novi instanceId, pa su svi stari claim-ovi TUĐI — inače bi ih naslijedio i izvršio
+    // task drugi put (43 duplih u soak-u #4, ~8 po restartu).
+    if (claim.nodeId === id && (!claim.instanceId || claim.instanceId === instanceId)) return age < cfg.claimLeaseMs;
+    if (claim.nodeId === id) return age < cfg.claimGraceMs; // naš stari claim iz prethodnog procesa
     if (gossip.isAlive(claim.nodeId)) return age < cfg.claimLeaseMs;
     // Vlasnik nije živ (ili nije poznat): kratki grace da ne otmemo task kolegi koji upravo verifikuje claim
     return age < cfg.claimGraceMs;
@@ -356,7 +364,7 @@ export async function createSwarmNode({
     // izvršen DVA PUTA u istom pokušaju (prava greška) ili je riječ o ponovnom pokušaju (očekivano
     // kod „at-least-once" isporuke kad čvor umre poslije posla, a prije potvrde).
     const attempt = Number(existing?.attempt ?? 0) + 1;
-    crdt.set(claimKey, { nodeId: id, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
+    crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
     // Šaljemo SAMO novi claim zapis (ne cijeli snapshot) — ostatak širi periodični CRDT sync
     const fresh = crdt.delta({ [id]: lastBroadcast }).filter((e) => e.nodeId === id);
     if (fresh.length) {
@@ -394,12 +402,12 @@ export async function createSwarmNode({
     const renew = setInterval(() => {
       try {
         const cur = crdt.get(`claim:${task.id}`);
-        if (cur && cur.nodeId !== id) {
+        if (cur && (cur.nodeId !== id || (cur.instanceId && cur.instanceId !== instanceId))) {
           clearInterval(renew); // izgubili smo claim — ne obnavljamo tuđi zapis
           metrics?.inc('node_claim_renew_stopped_total', { node: id });
           return;
         }
-        crdt.set(`claim:${task.id}`, { nodeId: id, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt, renewed: true });
+        crdt.set(`claim:${task.id}`, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt, renewed: true });
         const fresh = crdt.delta({ [id]: lastBroadcast }).filter((e) => e.nodeId === id);
         if (fresh.length) {
           lastBroadcast = Math.max(...fresh.map((e) => e.counter));

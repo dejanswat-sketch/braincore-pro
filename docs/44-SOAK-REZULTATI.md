@@ -250,3 +250,26 @@ lease-a) ga preuzme — dok ga istovremeno preuzima i peer koji je detektovao sm
 kriterij ostaje <100 MB, `gcAgeMs` ide na 10 min ili se `result:` zapisi drže sažeto (samo status + broj).
 
 ### Odluka: **video se NE snima** dok je `duplo > 0`
+
+---
+
+## 11. INSTANCE FENCING (v1.9.0) — popravka za 43 duplih iz soak-a #4
+
+**Uzrok (potvrđen do linije koda):** claim je nosio **samo `nodeId`**. Poslije restarta novi proces istog
+`nodeId`-a vidio je stari claim kao **svoj**, pa ga poslije isteka lease-a preuzeo — dok ga je istovremeno
+preuzeo i peer koji je detektovao smrt → **dva izvršenja**.
+
+**Popravka:**
+* `src/node.js`: `const instanceId = randomUUID()` — **ID procesa** (mijenja se svakim restartom).
+* Claim zapis nosi `instanceId` (i pri preuzimanju i pri obnavljanju lease-a).
+* `isClaimLive()`: claim je „naš" **samo ako se poklapaju `nodeId` I `instanceId`**. Ako je `nodeId` naš, a
+  `instanceId` tuđi (stari proces), claim se tretira kao **tuđ** i preuzima se kroz normalnu proceduru
+  (`claimGraceMs` → lease → `claimConfirmMs` → LWW verifikacija).
+* Obnavljanje lease-a se zaustavlja ako claim nije naš (i po `nodeId` i po `instanceId`).
+* `gcAgeMs` 15 min → **10 min** (heap je pri 4,8 t/s bio 124 MB; 10 min ≈ 2 880 zadataka ≈ 80–90 MB).
+
+**Testovi** (`tests/instance-fencing.test.mjs`, 3): claim nosi `instanceId` i mijenja se između procesa;
+stari claim istog `nodeId`-a sa tuđim `instanceId` **nije živ** (ne nasljeđuje se); izvor čuva obrazac.
+
+**Soak #5** (isti kriteriji: `shed = 0`, `izgubljeno = 0`, `duplo = 0`, `p95 ≤ 1,5 s`, heap < 100 MB) →
+`docs/soak-1h-v190-fencing.log`.
