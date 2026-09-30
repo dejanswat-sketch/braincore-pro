@@ -44,8 +44,15 @@ import { createA2ATasks } from './a2a/tasks.js';
 import { createSettlement, createNegotiator } from './a2a/negotiation.js';
 import { createAutonomyRoutes } from './server/routes-autonomy.js';
 import { createEvalHarness } from './eval/harness.js';
+import { createSwarmRoutes } from './server/routes-swarm.js';
+import { createBlackboard } from './swarm/blackboard.js';
+import { createSwarmGovernance } from './swarm/governance.js';
+import { createSwarmSafety } from './swarm/safety.js';
+import { createSwarm } from './swarm/swarm.js';
+import { createEvolution } from './evolution/genome.js';
+import { createMetaRsi } from './rsi/meta.js';
 
-export const VERSION = '0.3.1';
+export const VERSION = '0.4.0';
 
 /**
  * Gradi kompletan robot. Testovi i skripte ga pozivaju sa `overrides` da zamijene LLM ili skladište.
@@ -223,6 +230,44 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
   const a2a = createA2ATasks({ dataDir: config.dataDir, logger, metrics, audit, orchestrator, bus, autonomy });
   const evalHarness = overrides.eval ?? createEvalHarness({ dataDir: config.dataDir, root, logger, metrics, audit, orchestrator, tracer });
 
+  // ── v0.4: swarm (decentralizovani roj) + governance + safety ──────────────
+  const blackboard = overrides.blackboard ?? createBlackboard({ dataDir: config.dataDir, logger, metrics });
+  const swarmGovernance = overrides.swarmGovernance ?? createSwarmGovernance({ config: config.swarm ?? {}, dataDir: config.dataDir, logger, metrics, audit, autonomy });
+  await swarmGovernance.load();
+  for (const [tenantId, tc] of Object.entries(config.swarm?.tenants ?? {})) {
+    if (tc?.isolation && !swarmGovernance.state?.isolation?.[tenantId]) await swarmGovernance.setIsolation(tenantId, tc.isolation, { by: 'config' });
+    if (tc?.quotas) await swarmGovernance.setQuotas(tenantId, tc.quotas, { by: 'config' });
+  }
+  blackboard.setGuard?.((tenantId, openCount) => swarmGovernance.assertTaskQuota(tenantId, openCount));
+  const swarmSafety =
+    overrides.swarmSafety ??
+    createSwarmSafety({
+      config: config.swarm ?? {},
+      dataDir: config.dataDir,
+      logger,
+      metrics,
+      audit,
+      bus,
+      governance: swarmGovernance,
+      blackboard,
+      // spoofing zaštita: pošiljalac peer poruke mora biti registrovan worker
+      isKnownWorker: (id) => Boolean(robot?.swarm?.workers?.has?.(id)),
+    });
+  await swarmSafety.load();
+  const swarm = overrides.swarm ?? createSwarm({ config: config.swarm ?? {}, blackboard, governance: swarmGovernance, safety: swarmSafety, orchestrator, catalog, autonomy, rewards, audit, metrics, logger });
+  // Interne rute swarm-a (tick/run) takođe prolaze kroz governance: zaključavamo mrežu u sandboxu kad je contained
+  const swarmWorkersSeed = config.swarm?.workers ?? null;
+
+  // ── v0.4: evolucija agenata + RSI meta-nivoi ──────────────────────────────
+  const evolutionEngine = overrides.evolution ?? createEvolution({ config: config.evolution ?? {}, dataDir: config.dataDir, logger, metrics, audit, evalHarness, improvements, controlPlane, catalog, safety: swarmSafety });
+  const metaRsi = overrides.metaRsi ?? createMetaRsi({ config: config.rsi ?? {}, dataDir: config.dataDir, logger, metrics, audit, autonomy, improvements, evalHarness, evolution: evolutionEngine, selfplay, rewards, goals, catalog });
+  for (const [tenantId, level] of Object.entries(config.rsi?.tenants ?? {})) {
+    const current = await metaRsi.level(tenantId);
+    if (current.level !== level && !current.changedBy) {
+      await metaRsi.setLevel(tenantId, level, { by: 'config', reason: 'inicijalni nivo iz config/rsi.json' }).catch((err) => logger?.warn?.('rsi.seed_failed', { tenantId, level, error: err.message }));
+    }
+  }
+
   Object.assign(robot, {
     config,
     logger,
@@ -259,6 +304,13 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     negotiator,
     a2a,
     eval: evalHarness,
+    swarm,
+    blackboard,
+    swarmGovernance,
+    swarmSafety,
+    evolution: evolutionEngine,
+    metaRsi,
+    swarmWorkersSeed,
     overrides,
     scheduler,
   });
@@ -317,6 +369,7 @@ export async function createRobot({ root = process.cwd(), env = process.env, dat
     ...createRoutes({ robot, config, logger, metrics, tenants, dataDir: config.dataDir }),
     ...createAdminRoutes({ robot, config, tenants, logger, metrics }),
     ...createAutonomyRoutes({ robot, config, tenants, logger, metrics }),
+    ...createSwarmRoutes({ robot, config, tenants, logger, metrics }),
   ];
   // Gauge mora postojati i kad je nula — inače alert/panel ne vidi metriku
   for (const t of config.tenants) metrics.set('approvals_pending', { tenant: t.id }, 0);
@@ -380,5 +433,11 @@ export { buildAgentCard } from './a2a/card.js';
 export { createA2ATasks } from './a2a/tasks.js';
 export { createSettlement, createNegotiator } from './a2a/negotiation.js';
 export { createEvalHarness } from './eval/harness.js';
+export { createBlackboard, PHEROMONE_TYPES } from './swarm/blackboard.js';
+export { createSwarmGovernance, ISOLATION_LEVELS, DEFAULT_QUOTAS } from './swarm/governance.js';
+export { createSwarmSafety, MESSAGE_TYPES } from './swarm/safety.js';
+export { createSwarm } from './swarm/swarm.js';
+export { createEvolution, MUTABLE_FIELDS, FORBIDDEN_FIELDS } from './evolution/genome.js';
+export { createMetaRsi, RSI_LEVELS } from './rsi/meta.js';
 export { evaluate, resolvePolicy, redactPii, DECISIONS } from './core/policy.js';
 export * from './core/errors.js';

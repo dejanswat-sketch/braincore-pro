@@ -278,6 +278,64 @@ async function main() {
     return `dogovoreno=${closed.settlement.amountUsd} USD, status=${closed.settlement.status} (interni ledger)`;
   });
 
+
+  // ── v0.4: swarm, governance, safety, evolucija, RSI ──
+  await check('GET /v1/admin/swarm (roj + safety)', async () => {
+    const j = await (await api('/v1/admin/swarm')).json();
+    return `workera=${j.workers}, izolacija=${j.isolation}, otvorenih=${j.board.open}`;
+  });
+
+  await check('POST /v1/admin/swarm/workers + tasks + run', async () => {
+    const workers = await (await api('/v1/admin/swarm/workers', { method: 'POST', body: JSON.stringify({ agents: [{ agentId: 'support', skills: ['support', 'general'] }, { agentId: 'sales', skills: ['sales', 'general'] }] }) })).json();
+    if (workers.error) throw new Error(workers.error.message);
+    const tasks = await (await api('/v1/admin/swarm/tasks', { method: 'POST', body: JSON.stringify({ tasks: [{ title: 'SMOKE ticket', payload: { input: 'Kako da resetujem lozinku?', tag: 'support' }, requiredSkills: ['support'], value: 3 }, { title: 'SMOKE lead', payload: { input: 'Kvalifikuj lead', tag: 'sales' }, requiredSkills: ['sales'], value: 2 }] }) })).json();
+    if (tasks.error) throw new Error(tasks.error.message);
+    const run = await (await api('/v1/admin/swarm/run', { method: 'POST', body: JSON.stringify({ rounds: 1 }) })).json();
+    if (run.error) throw new Error(run.error.message);
+    return `workera=${workers.total}, zadataka=${tasks.created.length}, runova=${run.ran}, gotovo=${run.stats.completed}`;
+  });
+
+  await check('GET /v1/admin/swarm/specialization + pheromones', async () => {
+    const spec = await (await api('/v1/admin/swarm/specialization')).json();
+    const ph = await (await api('/v1/admin/swarm/pheromones')).json();
+    return `specijalizacija=${Object.keys(spec.specialization).join(',') || '-'}, feromona=${ph.pheromones.length}`;
+  });
+
+  await check('Swarm governance: locked blokira, freeze pa unfreeze', async () => {
+    await api('/v1/admin/swarm/governance/isolation', { method: 'POST', body: JSON.stringify({ level: 'locked', reason: 'smoke' }) });
+    const tick = await (await api('/v1/admin/swarm/tick', { method: 'POST' })).json();
+    if (tick.ran !== 0) throw new Error('roj je izvršavao u "locked" izolaciji!');
+    const frozen = await (await api('/v1/admin/swarm/freeze', { method: 'POST', body: JSON.stringify({ reason: 'smoke kill switch' }) })).json();
+    const unfrozen = await (await api('/v1/admin/swarm/unfreeze', { method: 'POST', body: JSON.stringify({ level: 'contained' }) })).json();
+    return `locked→tick(${tick.skipped})→${frozen.level}→${unfrozen.level}`;
+  });
+
+  await check('Swarm safety: skriveni kanal se odbija + incident', async () => {
+    const res = await api('/v1/admin/swarm/message', { method: 'POST', body: JSON.stringify({ from: 'smoke-w1', to: 'smoke-w2', type: 'status', payload: { blob: 'aB3xK9mQ2zP7wL4nR8tY6uI1oJ5hG0fD2sA9qW3eZ7xC4vB6nM8kL1pO5iU2yT4rE6wQ9' } }) });
+    const body = await res.json();
+    if (res.status !== 403) throw new Error(`sumnjiva poruka je prošla (status ${res.status})`);
+    const incidents = await (await api('/v1/admin/swarm/incidents')).json();
+    const report = await (await api('/v1/admin/swarm/safety')).json();
+    return `status=${res.status} (${body.error?.code}), incidenata=${incidents.incidents.length}, nalaza=${report.findings}`;
+  });
+
+  await check('POST /v1/admin/evolution/evolve + promote', async () => {
+    const evo = await (await api('/v1/admin/evolution/evolve', { method: 'POST', body: JSON.stringify({ agentId: 'support', populationSize: 4, generations: 1, maxCases: 2 }) })).json();
+    if (evo.error) throw new Error(evo.error.message);
+    const promote = await (await api('/v1/admin/evolution/promote', { method: 'POST', body: JSON.stringify({ agentId: 'support' }) })).json();
+    if (promote.error) throw new Error(promote.error.message);
+    return `best=${evo.best.genome.hash} fitness=${evo.best.fitness}, prijedlog=${promote.proposal.id} (auto=${promote.autoPromote})`;
+  });
+
+  await check('GET /v1/admin/rsi + eksperiment kroz kapiju', async () => {
+    const status = await (await api('/v1/admin/rsi')).json();
+    await api('/v1/admin/autonomy', { method: 'POST', body: JSON.stringify({ agentId: null, level: 'L3' }) });
+    const lvl = await (await api('/v1/admin/rsi/level', { method: 'POST', body: JSON.stringify({ level: 'R2', reason: 'smoke' }) })).json();
+    const exp = await (await api('/v1/admin/rsi/experiment', { method: 'POST', body: JSON.stringify({ agentId: 'support', strategy: 'temperature', maxCases: 2, run: true }) })).json();
+    if (exp.error) throw new Error(exp.error.message);
+    const research = await (await api('/v1/admin/rsi/research')).json();
+    return `nivo=${status.level}→${lvl.level}, lift=${exp.experiment.lift} (${exp.experiment.verdict}), zapisa=${research.log.length}`;
+  });
   const failed = results.filter((r) => !r.ok);
   console.log('');
   console.log(`  ── SMOKE REZULTAT: ${results.length - failed.length}/${results.length} prošlo ──`);

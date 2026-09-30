@@ -1,0 +1,24 @@
+{
+  "$comment": "Evolucija agenata (docs/32). Genom smije mijenjati SAMO polja iz `mutableFields`; safety polja (autonomija, budžet, alati, politike) su zabranjena — vidi src/evolution/genome.js FORBIDDEN_FIELDS.",
+  "mutableFields": ["systemPromptSuffix", "temperature", "maxTokens", "defaultPattern"],
+  "populationSize": 6,
+  "generations": 3,
+  "mutationRate": 0.4,
+  "eliteCount": 2,
+  "minTemperature": 0.0,
+  "maxTemperature": 1.0,
+  "maxTokensRange": [200, 2000],
+  "patterns": ["agent", "reflection", "sequential", "magentic"],
+  "autoPromote": false,
+  "minFitnessGain": 0.05,
+  "costPenaltyPerUsd": 5,
+  "latencyPenaltyPerSecond": 0.002,
+  "promptMutations": [
+    "Prije odgovora provjeri bazu znanja i navedi izvor.",
+    "Odgovori u najviše 5 rečenica, bez uvoda.",
+    "Ako nemaš podatak, reci šta ti treba umjesto da pretpostaviš.",
+    "Na kraju navedi jedan konkretan sljedeći korak sa rokom.",
+    "Koristi tabele kada porediš više od dvije opcije.",
+    "Navedi pretpostavke eksplicitno prema kojima radiš."
+  ]
+}

@@ -164,12 +164,28 @@ export function createImprovementEngine({
       switch (p.kind) {
         case 'prompt': {
           if (!controlPlane) throw new PolicyError('Control plane nije dostupan — prompt se ne može primijeniti');
-          // ⚠️ Bez ove provjere bi `String(null)` postao systemPrompt "null" i tiho pokvario agenta
-          if (typeof p.proposed !== 'string' || !p.proposed.trim() || p.proposed === 'null') {
-            throw new ValidationError('Prijedlog nema predloženi prompt — dopuni ga prije primjene (PATCH /v1/admin/proposals/:id)');
+          // `proposed` može biti tekst (samo prompt) ILI objekat sa više polja (genom iz evolucije/RSI:
+          // systemPrompt, temperature, maxTokens, defaultPattern) — ranije se prenosio SAMO prompt.
+          let patch;
+          if (typeof p.proposed === 'string') {
+            if (!p.proposed.trim() || p.proposed === 'null') {
+              throw new ValidationError('Prijedlog nema predloženi prompt — dopuni ga prije primjene (PATCH /v1/admin/proposals/:id)');
+            }
+            patch = { systemPrompt: p.proposed };
+          } else if (p.proposed && typeof p.proposed === 'object') {
+            const allowed = ['systemPrompt', 'temperature', 'maxTokens', 'defaultPattern'];
+            patch = {};
+            for (const key of allowed) if (p.proposed[key] !== undefined && p.proposed[key] !== null) patch[key] = p.proposed[key];
+            if (!Object.keys(patch).length) throw new ValidationError(`Objektni prijedlog mora sadržati bar jedno od: ${allowed.join(', ')}`);
+            if (patch.temperature !== undefined && !(Number(patch.temperature) >= 0 && Number(patch.temperature) <= 2)) {
+              throw new ValidationError(`Temperatura ${patch.temperature} je izvan dozvoljenog opsega 0–2`);
+            }
+            // Napomena: validnost `defaultPattern` se provjerava prije kreiranja prijedloga
+            // (evolution.assertSafe / RSI designExperiment), ovdje se ne duplira lista patterna.
+          } else {
+            throw new ValidationError('Prijedlog nema predloženi sadržaj — dopuni ga prije primjene');
           }
           if (!catalog?.has?.(p.target)) throw new NotFoundError('Agent', p.target);
-          const patch = { systemPrompt: p.proposed };
           result = await controlPlane.deploy(tenantId, p.target, { patch, actor: `improvement:${id}`, note: p.rationale });
           p.rollbackInfo = { type: 'control-plane', agentId: p.target, version: result.version };
           break;

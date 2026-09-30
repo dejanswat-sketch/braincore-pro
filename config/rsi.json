@@ -1,0 +1,13 @@
+{
+  "$comment": "RSI meta-nivoi (docs/31). Nivo mijenja ISKLJUČIVO board (čovjek) i to je auditovano. `autoMetaPromote` je namjerno false: sistem predlaže, čovjek primjenjuje.",
+  "defaultLevel": "R1",
+  "autoApply": false,
+  "minLift": 0.03,
+  "maxCandidates": 6,
+  "strategySpace": ["prompt", "temperature", "maxTokens", "pattern", "self-play", "retrieval"],
+  "environmentTargets": ["domain", "language", "kb", "tools"],
+  "tenants": {
+    "nmq": "R2",
+    "demo-shop": "R1"
+  }
+}

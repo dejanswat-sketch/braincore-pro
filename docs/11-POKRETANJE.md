@@ -225,3 +225,30 @@ node src/cli.js audit-verify        # hash lanac mora biti ispravan
 4. Da li klijentske tajne idu u Postgres (produkcija) ili ostaju šifrovani fajlovi?
 5. Koliko često rotiramo API ključeve klijenata (predlog: 6 mjeseci + pri sumnji)?
 6. Da li dozvoljavamo klijentu pristup `GET /v1/audit` (transparentnost) ili samo nama?
+
+### Swarm i RSI (v0.4): roj, evolucija, meta-nivoi
+
+| Želim da… | Komanda |
+|---|---|
+| vidim stanje roja | `GET /v1/admin/swarm` · tabla: `GET /v1/admin/swarm/board` · feromoni: `GET /v1/admin/swarm/pheromones` |
+| registrujem workere | `POST /v1/admin/swarm/workers {"agents":[{"agentId":"support","skills":["support","general"]}]}` |
+| postavim zadatke na tablu | `POST /v1/admin/swarm/tasks {"tasks":[{"title":"Ticket","payload":{"input":"...","tag":"support"},"requiredSkills":["support"],"value":3}]}` |
+| pustim roj | `POST /v1/admin/swarm/run {"rounds":3}` (jedan otkucaj: `POST /v1/admin/swarm/tick`) |
+| vidim emergentnu specijalizaciju | `GET /v1/admin/swarm/specialization` |
+| promijenim izolaciju roja (board) | `POST /v1/admin/swarm/governance/isolation {"level":"contained"}` — nivoi: `open`, `contained`, `locked`, `frozen` |
+| promijenim kvote (per-tenant) | `POST /v1/admin/swarm/governance/quotas {"maxWorkers":8,"maxCostPerHourUsd":1}` |
+| zaustavim roj (kill switch) | `POST /v1/admin/swarm/freeze {"reason":"incident-42"}` · odmrzni: `POST /v1/admin/swarm/unfreeze {"level":"contained"}` |
+| vidim sigurnosne nalaze i incidente | `GET /v1/admin/swarm/safety` · `GET /v1/admin/swarm/incidents` · ručna detekcija: `POST /v1/admin/swarm/safety/detect` |
+| karantin nad workerom | `POST /v1/admin/swarm/quarantine {"workerId":"wrk_..."}` · puštanje: `POST /v1/admin/swarm/quarantine/:workerId/release` |
+| pošaljem (medijisanu) poruku | `POST /v1/admin/swarm/message {"from":"wrk_...","to":"wrk_...","type":"status","payload":{"text":"..."}}` |
+| pustim evoluciju agenata | `POST /v1/admin/evolution/evolve {"agentId":"support","populationSize":6,"generations":3}` |
+| predložim pobjednika (čovjek odobrava) | `POST /v1/admin/evolution/promote {"agentId":"support"}` — auto varijanta traži `owner` i **isključena** je |
+| vidim RSI nivo i istoriju | `GET /v1/admin/rsi` · `GET /v1/admin/rsi/research` |
+| promijenim RSI nivo (samo board) | `POST /v1/admin/rsi/level {"level":"R2","reason":"board odobrio"}` (traži odgovarajuću autonomiju) |
+| pustim RSI eksperiment | `POST /v1/admin/rsi/experiment {"agentId":"support","strategy":"temperature","promote":true}` |
+| pribavim iskustvo (R3) | `POST /v1/admin/rsi/experience {"rounds":5,"agentId":"support"}` |
+| prilagodim se novom okruženju (R4) | `POST /v1/admin/rsi/adapt {"target":"domain","value":"pravo","agentId":"support"}` |
+| pustim meta-analizu (R5) | `POST /v1/admin/rsi/meta` — vraća **predloge**, ne mijenja proces sam |
+
+**Redoslijed puštanja u rad (preporuka):** `contained` izolacija + R1 nivo + `autoPromote:false` (tvornički default).
+Izolaciju otvarajte (`open`) samo za tenanta kojem je mreža stvarno potrebna; RSI nivo podižite tek kad eval prolaznost pređe 80% na **pravom** modelu.

@@ -501,6 +501,107 @@ async function main() {
   const totals = await robot.settlement.totals('nmq');
   line(`  ledger: ${totals.count} zapisa · settled ${totals.settled} USD · pending ${totals.pending} USD`);
 
+  // ── 22. Swarm: decentralizovani roj ─────────────────────────────────────────
+  head(22, 'SWARM — roj bez orkestratora: tabla, feromoni, work stealing, emergentna specijalizacija');
+  const swarmIsolation = robot.swarmGovernance.describe('nmq');
+  line(`  izolacija: ${swarmIsolation.level} (mreža: ${swarmIsolation.canUseNetwork}, peer poruke: ${swarmIsolation.canPeerMessage}, satni budžet: ${swarmIsolation.quotas.maxCostPerHourUsd} USD)`);
+  const w1 = robot.swarm.registerWorker({ tenantId: 'nmq', agentId: 'support', skills: ['support', 'general'] });
+  const w2 = robot.swarm.registerWorker({ tenantId: 'nmq', agentId: 'sales', skills: ['sales', 'general'] });
+  const w3 = robot.swarm.registerWorker({ tenantId: 'nmq', agentId: 'support', skills: ['support', 'general'] });
+  line(`  workeri: ${[w1, w2, w3].map((w) => `${w.name}[${w.skills.join('/')}]`).join(', ')}`);
+
+  for (let i = 1; i <= 3; i += 1) {
+    await robot.blackboard.postTask({ tenantId: 'nmq', title: `Support ticket ${i}`, payload: { input: `Kako da resetujem lozinku? (ticket ${i})`, tag: 'support' }, requiredSkills: ['support'], value: 2 + i });
+  }
+  await robot.blackboard.postTask({ tenantId: 'nmq', title: 'Kvalifikuj lead Prima', payload: { input: 'Kvalifikuj lead: budžet 9, hitnost 8', tag: 'sales' }, requiredSkills: ['sales'], value: 4 });
+  await robot.blackboard.pheromone({ tenantId: 'nmq', type: 'hot', by: w2.id, strength: 2, payload: { reason: 'klijent čeka' } });
+  line(`  tabla: ${JSON.stringify(robot.blackboard.snapshot({ tenantId: 'nmq' }).open)} otvorenih zadataka + ${robot.swarm.stats('nmq').board.pheromones} feromona`);
+
+  const swarmRun = await robot.swarm.run('nmq', { rounds: 2 });
+  line(`  roj: ${swarmRun.rounds} runde, ${swarmRun.ran} runova — niko nije dodjeljivao posao, workeri su ga sami uzeli`);
+  const spec = robot.swarm.specialization('nmq');
+  line(`  emergentna specijalizacija (NIKO je nije konfigurisao):`);
+  for (const [tag, info] of Object.entries(spec)) line(`    ${tag.padEnd(9)} → expert ${info.expert.name} (${(info.share * 100).toFixed(0)}% završenih)`);
+  line(`  roj je ostavio ${robot.blackboard.activePheromones(Date.now(), { tenantId: 'nmq' }).length} tragova (done/help/problem) — to je jedina „komunikacija" kroz tablu`);
+
+  // ── 23. Swarm governance + safety ───────────────────────────────────────────
+  head(23, 'SWARM GOVERNANCE I SAFETY — granice roja i detekcija emergentnog varanja');
+  const covert = await robot.swarmSafety
+    .mediateMessage({ tenantId: 'nmq', from: w1.id, to: w2.id, type: 'status', payload: { text: 'Preuzimam ticket 4, javljam kad završim.' } })
+    .then(() => 'prošla')
+    .catch((err) => `ODBIJENA (${err.code})`);
+  line(`  normalna peer poruka: ${covert}`);
+  const hidden = await robot.swarmSafety
+    .mediateMessage({ tenantId: 'nmq', from: w2.id, to: w1.id, type: 'status', payload: { blob: 'aB3xK9mQ2zP7wL4nR8tY6uI1oJ5hG0fD2sA9qW3eZ7xC4vB6nM8kL1pO5iU2yT4rE6wQ9' } })
+    .then(() => 'prošla (LOŠE!)')
+    .catch((err) => `ODBIJENA I KARANTIN (${err.code}: ${err.message.slice(0, 60)}…)`);
+  line(`  sumnjivo kodirana poruka: ${hidden}`);
+  line(`  karantin: ${robot.swarmSafety.report({ tenantId: 'nmq' }).quarantined.map((q) => `${q.workerId} (${q.reason})`).join(', ') || 'nema'}`);
+
+  for (let i = 0; i < 6; i += 1) robot.swarmSafety.observeClaim({ tenantId: 'nmq', workerId: i % 2 === 0 ? w1.id : w3.id, taskId: `demo${i}` });
+  for (let i = 0; i < 4; i += 1) robot.swarmSafety.observeVote({ tenantId: 'nmq', workerId: `coal${i}`, proposalId: 'demo-p1', choice: 'da' });
+  const findings = await robot.swarmSafety.detect({ tenantId: 'nmq' });
+  line(`  detektori (sintetički scenario koluzije): ${findings.map((f) => `${f.type} [${f.severity}]`).join(', ') || 'ništa'}`);
+  const incidents = robot.swarmSafety.listIncidents({ tenantId: 'nmq' });
+  line(`  incidenti: ${incidents.length} otvorenih · auto-akcija: ${incidents[0]?.autoAction ? JSON.stringify(incidents[0].autoAction) : 'nema'}`);
+  line(`  izolacija: ${JSON.stringify(robot.swarmGovernance.describe('nmq').level)} → board mijenja u "locked"`);
+  await robot.swarmGovernance.setIsolation('nmq', 'locked', { by: 'dejan', reason: 'demo' });
+  const blockedTick = await robot.swarm.tick('nmq');
+  line(`  otkucaj u "locked": ${JSON.stringify({ ran: blockedTick.ran, skipped: blockedTick.skipped })} — roj ne može ništa da izvrši`);
+  const frozen = await robot.swarmGovernance.freeze('nmq', { reason: 'demo kill switch', by: 'dejan' });
+  line(`  KILL SWITCH: ${frozen.level} (razlog: ${frozen.frozenReason}) — perzistira se i preživljava restart`);
+  await robot.swarmGovernance.unfreeze('nmq', { by: 'dejan', level: 'contained' });
+  const released = robot.swarmSafety.release(w2.id);
+  line(`  odmrzavanje + puštanje workera: ${JSON.stringify(released)}`);
+
+  // ── 24. Evolucija agenata ───────────────────────────────────────────────────
+  head(24, 'EVOLUCIJA — genom, mutacija, križanje i selekcija MERENA eval-om');
+  line(`  polja koja genom SMIJE mijenjati: ${robot.evolution.MUTABLE_FIELDS.join(', ')}`);
+  line(`  polja koja su ZABRANJENA (safety invarijanta): ${robot.evolution.FORBIDDEN_FIELDS.slice(0, 6).join(', ')}… (${robot.evolution.FORBIDDEN_FIELDS.length} ukupno)`);
+  const baseGenome = robot.evolution.genomeOf('nmq', 'support');
+  line(`  seed genom: hash=${baseGenome.hash} temp=${baseGenome.temperature} maxTokens=${baseGenome.maxTokens} pattern=${baseGenome.defaultPattern}`);
+  const mutated = robot.evolution.mutate(baseGenome);
+  line(`  mutacija:    hash=${mutated.hash} temp=${mutated.temperature} maxTokens=${mutated.maxTokens} pattern=${mutated.defaultPattern} +„${(mutated.systemPromptSuffix ?? '').slice(0, 40)}…"`);
+  try {
+    robot.evolution.assertSafe({ ...baseGenome, autonomy: 'L4' });
+    line('  ⚠️ evolucija je smjela dirati autonomiju — TO NE SMIJE');
+  } catch (err) {
+    line(`  pokušaj mutacije autonomije: ODBIJENO (${err.code}) — selekcija ne može podići sopstvene granice`);
+  }
+  const evo = await robot.evolution.evolve('nmq', { agentId: 'support', populationSize: 4, generations: 2, maxCases: 2 });
+  line(`  evolucija: ${evo.generations} generacije × ${evo.populationSize} genoma (svaki ocijenjen zlatnim setom kroz specPatch)`);
+  for (const h of evo.history) line(`    gen ${h.generation}: best=${h.best.fitness} avg=${h.average} diversity=${h.diversity} (prolaznost ${(h.best.passRate * 100).toFixed(0)}%)`);
+  const promotion = await robot.evolution.proposePromotion('nmq', { agentId: 'support' });
+  line(`  pobjednik ${promotion.genome.hash} (fitness ${promotion.fitness}) → PRIJEDLOG ${promotion.proposal.id}, auto-promote: ${promotion.autoPromote}`);
+  const autoTry = await robot.evolution.maybeAutoPromote('nmq', { agentId: 'support' });
+  line(`  auto-promote pokušaj: ${autoTry.promoted ? 'DEPLOYOVANO' : `blokirano (${autoTry.reason})`}`);
+
+  // ── 25. RSI meta-nivoi ─────────────────────────────────────────────────────
+  head(25, 'RSI META-NIVOI — sistem koji poboljšava NAČIN na koji se poboljšava (uz kapije)');
+  for (const [lvl, info] of Object.entries(robot.metaRsi.RSI_LEVELS)) {
+    line(`  ${lvl} ${info.name.padEnd(30)} traži ${info.requiresAutonomy} · čovjek: ${info.human ? 'DA' : 'ne'} · smije: ${info.can.join(', ') || '-'}`);
+  }
+  const rsiBefore = await robot.metaRsi.level('nmq');
+  line(`  tenant nmq: ${rsiBefore.level} (${rsiBefore.name}), autonomija L${robot.autonomy.levelOf('nmq', null).slice(1)}`);
+  try {
+    await robot.metaRsi.designExperiment('nmq', { agentId: 'support' });
+    line('  ⚠️ R1 je smio dizajnirati eksperiment — kapija ne radi');
+  } catch (err) {
+    line(`  R1 pokušava dizajnirati eksperiment: ODBIJENO (${err.code}) — kapija radi`);
+  }
+  await robot.autonomy.setLevel('nmq', null, 'L3');
+  const rsiLevel = await robot.metaRsi.setLevel('nmq', 'R2', { by: 'dejan', reason: 'demo: board odobrio strategijsku autonomiju' });
+  line(`  board podigao nivo: ${rsiLevel.level} (${rsiLevel.name}) — tražena autonomija ${rsiLevel.requiresAutonomy}`);
+  const designed = await robot.metaRsi.designExperiment('nmq', { agentId: 'support', strategy: 'temperature' });
+  line(`  auto-dizajn eksperimenta: strategija=${designed.strategy}, kandidata=${designed.candidates.length} (${designed.candidates.map((c) => c.label).join(', ')})`);
+  const finished = await robot.metaRsi.runExperiment('nmq', designed, { maxCases: 2 });
+  line(`  mjerenje: baseline=${finished.baselineFitness} → pobjednik ${finished.winner.label}=${finished.winner.fitness} · lift=${finished.lift} · verdikt=${finished.verdict}`);
+  const promo = await robot.metaRsi.promote('nmq', finished);
+  line(`  promocija: ${promo.promoted ? `prijedlog ${promo.proposal.id} (auto-primjena: ${promo.autoApplied})` : `nije predložena — ${promo.reason}`}`);
+  const rsiStatus = await robot.metaRsi.status('nmq');
+  line(`  status: nivo=${rsiStatus.level}, eksperimenata=${rsiStatus.experiments}, prosječan lift=${rsiStatus.avgLift}, meta-ciklusa=${rsiStatus.metaCycles}`);
+  line(`  ${rsiStatus.nextStep}`);
+
   line('');
   line('╔════════════════════════════════════════════════════════════════════════════╗');
   line('║  DEMO ZAVRŠEN — sve radi bez interneta i bez troška (mock LLM)              ║');

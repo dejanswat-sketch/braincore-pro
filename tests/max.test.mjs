@@ -748,8 +748,14 @@ test('webhook emituje događaj na bus i pokreće posao koji ga sluša', async ()
     assert.equal(res.status, 200);
     assert.equal(seen.length, 1);
     assert.equal(seen[0].source, 'shopify');
-    await wait(250);
-    const runs = await robot.scheduler.runs('nmq');
+    // čekaj dok scheduler ne pokupi event-triggered posao (pod opterećenjem 250ms nije dovoljno)
+    const deadline = Date.now() + 8000;
+    let runs = [];
+    while (Date.now() < deadline) {
+      runs = await robot.scheduler.runs('nmq');
+      if (runs.some((r) => r.reason === 'event')) break;
+      await wait(100);
+    }
     assert.ok(runs.some((r) => r.reason === 'event'), 'posao koji sluša događaj mora se pokrenuti');
   } finally {
     await robot.close();

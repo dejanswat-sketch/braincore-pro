@@ -241,3 +241,28 @@ self-play je upisivao epizode nezavisno od ocjene sudije (`ctx.recordEpisode ===
 
 **Stanje dokaza (v0.3.1):** `node --test` → **162/162**, `node scripts/eval.mjs` → **6/6 (100%)**,
 `node scripts/demo.mjs` → 21 sekcija, `node scripts/smoke.mjs` → 31/31.
+
+---
+
+## 11. Swarm i RSI frontier (v0.4.0) — odluke D50–D58
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D50 | Decentralizovani roj | Blackboard (tabla) + **work stealing** + **stigmergija** (feromoni `hot/done/problem/opportunity/help/blocked` sa opadanjem) — nema orkestratora koji dodjeljuje posao | Skaliranje i otpornost: workeri se sami organizuju; mjeri se **emergentna specijalizacija** umjesto da se propisuje |
+| D51 | Governance na nivou ROJA | Izolacioni nivoi `open → contained → locked → frozen`, kvote **per-tenant** (workeri, runs/tick, trošak/sat, feromoni/min, peer/min, zadaci), kill switch koji **preživljava restart** | Per-agent zaštita nije dovoljna: kolektiv može biti nesiguran i kad je svaki agent „pošten" |
+| D52 | Nijedan direktan kanal | Peer komunikacija postoji **samo** kroz `mediateMessage` (provjera pošiljaoca, tipa, sadržaja, kvota) i sve se loguje; sumnjiva poruka se **ne dostavlja** (fail-closed) | Skriveni kanal između agenata je nemoguće nadzirati ako postoji bilo koji put oko medijacije |
+| D53 | Detekcija emergentnog ponašanja | Detektori: lockstep koordinacija, glasački blok, koncentracija resursa, flooding feromonima, drift od mandata, kodiran sadržaj (entropija + oblik, uključujući hex blobove); nalaz → **incident** (perzistiran) + auto-karantin | Emergentna koluzija je dokumentovana pojava; mjeri se obrascima, a ne pretpostavkom da je agent „dobronamjeran" |
+| D54 | Evolucija sa safety invarijantom | Genom mijenja **samo** prompt/temperaturu/maxTokens/pattern; `FORBIDDEN_FIELDS` (autonomija, budžeti, alati, politike, limiti) se provjeravaju **rekurzivno** i bacaju grešku | Ako genom može podići sopstvene granice, selekcija će to prije ili kasnije naći |
+| D55 | RSI nivoi R0–R5 sa kapijama | R1 execution → R2 strategy → R3 experience → R4 environment → R5 meta; nivo mijenja **isključivo board** (role `owner`), uz provjeru autonomije (R2 traži L3, R4/R5 traže L4) | „Meta-poboljšanje" bez evaluacije i nadzora je rizik; nivo mora biti eksplicitan i auditovan |
+| D56 | Ništa se ne deployuje automatski | `autoPromote` (evolucija) i auto-primjena meta-izmjena su **isključeni**; pobjednik genoma i RSI nalaz idu kao **prijedlog** u inbox | Zadnja linija odbrane: promjena granica i ponašanja traži čovjeka |
+| D57 | Eval je kapija za sve | Svaki kandidat (genom, RSI eksperiment, A/B varijanta) se mjeri **istim zlatnim setom** kroz `specPatch` po run-u; `lift` ispod praga se ne predlaže | Bez zajedničke mjere poređenje je nagađanje, a „poboljšanje" nedokazivo |
+| D58 | Roj radi samo nizak rizik | `assertCanRun` odbija `medium`/`high` rizik; `HUMAN_ONLY` kategorije (novac, pravo, brisanje, vanjska komunikacija) ostaju čovjeku na svim nivoima | Roj množi akcije — ako je jedna pogrešna, pogrešno je i stotinu |
+
+**Popravljeno iz nezavisne revizije v0.4 (svaka stavka ima regresioni test):** kvote su postale per-tenant i `maxWorkers`/`maxTasksOpen` se stvarno provjeravaju;
+mrežni alati se izbacuju iz run-a kad izolacija ne dozvoljava mrežu; `humanReadable:false` bypass je uklonjen; pošiljalac peer poruke mora biti registrovan worker;
+incidenti i karantin se perzistiraju; `blackboard.reset()` više ne briše tuđe artefakte; sesija je po zadatku (ne po tagu); evolucija je ponovljiva (`rngSeed`), kešira ocjene,
+kapija se mjeri prema **baseline-u**, prijedlog nosi **cijeli genom**; `metaImprove` sada stvarno dobija `failures` iz research log-a; uklonjena mrtva zastavica `autoMetaPromote`;
+satni budžet roja se provjerava prije runa (procjena troška), a ne samo poslije.
+
+**Stanje dokaza (v0.4.0):** `node --test` → **191/191**, `node scripts/eval.mjs` → **6/6 (100%)**, `node scripts/demo.mjs` → **25 sekcija**,
+`node scripts/smoke.mjs` → **38/38**, `node src/cli.js audit-verify` → lanac ispravan.

@@ -164,3 +164,41 @@ groups:
         annotations:
           summary: 'Manje od 15% prostora na /data'
           description: 'JSONL fajlovi (trace, audit, events) rastu. Arhiviraj stare mjesece i provjeri backup prije brisanja.'
+
+  # ── Swarm safety (v0.4): nadzor roja ──────────────────────────────────────────
+  - alert: SwarmCovertChannelSuspected
+    expr: increase(nmq_swarm_findings_total{type="covert_channel_suspected"}[15m]) > 0
+    for: 0m
+    labels: { severity: critical, layer: swarm }
+    annotations:
+      summary: "Sumnja na skriveni kanal između workera ({{ $labels.tenant }})"
+      runbook: "docs/33 §8: freeze → izvoz incidenta → karantin pošiljaoca → analiza poruka"
+
+  - alert: SwarmCollusionDetected
+    expr: increase(nmq_swarm_findings_total{type=~"collusion_lockstep|collusion_voting_bloc"}[30m]) > 0
+    for: 0m
+    labels: { severity: critical, layer: swarm }
+    annotations:
+      summary: "Detektovana koordinacija workera ({{ $labels.type }}, {{ $labels.tenant }})"
+      runbook: "docs/33 §8: ne mijenjaj kvote prije analize; provjeri ko je šta završio"
+
+  - alert: SwarmOpenIncidents
+    expr: increase(nmq_swarm_incidents_total[1h]) > 0
+    for: 5m
+    labels: { severity: warning, layer: swarm }
+    annotations:
+      summary: "Otvoreni swarm incidenti ({{ $labels.tenant }}): {{ $labels.type }}"
+
+  - alert: SwarmFrozen
+    expr: increase(nmq_swarm_freeze_total[10m]) > 0
+    for: 0m
+    labels: { severity: critical, layer: swarm }
+    annotations:
+      summary: "Swarm je zamrznut ({{ $labels.reason }}) — provjeri da li je freeze namjeran"
+
+  - alert: SwarmQuotaBlocked
+    expr: increase(nmq_swarm_quota_blocks_total[10m]) > 5
+    for: 5m
+    labels: { severity: warning, layer: swarm }
+    annotations:
+      summary: "Swarm kvote često blokiraju ({{ $labels.kind }}) — moguć flooding ili pogrešna kvota"

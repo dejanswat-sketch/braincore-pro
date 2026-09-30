@@ -77,9 +77,10 @@ export function createEvalHarness({ dataDir, root, logger, metrics, audit, orche
 
     /**
      * Pokreće zlatni set i vraća izvještaj.
-     * @param {object} opts { name, caseIds, maxCases, tenantId }
+     * @param {object} opts { name, caseIds, maxCases, specPatch } — `specPatch` se primjenjuje na SVAKI run
+     *        (koristi ga evolucija i RSI da ocijene genom bez mijenjanja kataloga)
      */
-    async run(tenantId, { name = 'golden', caseIds = null, maxCases = 50 } = {}) {
+    async run(tenantId, { name = 'golden', caseIds = null, maxCases = 50, specPatch = null } = {}) {
       const set = await loadSet(tenantId, name);
       const cases = set.cases.filter((c) => !caseIds || caseIds.includes(c.id)).slice(0, maxCases);
       const results = [];
@@ -98,7 +99,7 @@ export function createEvalHarness({ dataDir, root, logger, metrics, audit, orche
             input: testCase.input,
             sessionId: `eval:${set.name}:${testCase.id}`,
             userId: 'eval-harness',
-            options: { ...(testCase.options ?? {}), maxRunUsd: testCase.checks?.maxCostUsd ?? undefined },
+            options: { ...(testCase.options ?? {}), maxRunUsd: testCase.checks?.maxCostUsd ?? undefined, ...(specPatch ? { specPatch } : {}) },
           });
         } catch (err) {
           error = { message: err.message, code: err.code ?? 'UNKNOWN' };

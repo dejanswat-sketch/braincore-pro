@@ -70,6 +70,11 @@ node scripts/serve.mjs
 | **Self-play i RSI** | Agent sam sebi pravi scenarije, rješava ih i ocjenjuje; analiza sopstvenih grešaka daje prijedloge | `src/learning/selfplay.js`, `rsi.js` |
 | **AI organizacija** | CEO/CRO/COO/CFO/CTO/CHRO/CSO sa KPI-jevima, budžetima i **pregovaranjem** (CFO vs CRO) | `src/org/company.js`, `config/company.json` |
 | **A2A ekonomija** | Agent card, zadaci između agenata (+SSE), pregovaranje sa tvrdim granicama, interni settlement ledger | `src/a2a/` |
+| **Swarm** | Decentralizovani roj: blackboard, work stealing, stigmergija (feromoni), emergentna specijalizacija | `src/swarm/` |
+| **Swarm governance** | Izolacija `open/contained/locked/frozen`, kvote per-tenant, kill switch koji preživljava restart | `src/swarm/governance.js` |
+| **Swarm safety** | Medijacija poruka (bez skrivenih kanala), detektori koluzije/koncentracije/floodinga, incidenti | `src/swarm/safety.js` |
+| **Evolucija** | Genom (prompt/temperatura/tokeni/pattern), mutacija, križanje, selekcija **mjerenjem na zlatnom setu** | `src/evolution/genome.js` |
+| **RSI meta** | Nivoi R0–R5 sa kapijama; nivo mijenja samo board; meta-izmjene su uvijek predlozi | `src/rsi/meta.js` |
 | **Eval** | Zlatni set po tenantu: sadržaj, citati, alati, trošak, status — kapija za svaku promjenu | `eval/`, `src/eval/harness.js` |
 | **Tenancy** | Izolacija fizički + logički, API ključevi, AES-256-GCM tajne, kill switch | `src/tenancy/store.js` |
 
@@ -233,7 +238,7 @@ curl -X POST localhost:8787/v1/admin/agents/executor/keys -d '{"scopes":["crm:wr
 
 ## Status
 
-`v0.3.1` — autonomni nivo + eval kapija: **162/162 testova**, 19 agenata, 11 ulaza/patterna, 20 ugrađenih alata,
+`v0.4.0` — swarm + evolucija + RSI meta-nivoi: **191/191 testova**, 19 agenata, 11 ulaza/patterna, 20 ugrađenih alata,
 persistentni agenti, kontrolna ravan, autonomija **L0–L4**, **ciljevi sa KPI i replan-om**, proaktivni watcheri,
 **self-improvement sa odobrenjem i A/B**, self-play i RSI, **AI organizacija (7 uloga)** i **A2A pregovaranje**
 sa internim settlement ledger-om — sve bez ijedne npm zavisnosti.

@@ -1,0 +1,29 @@
+{
+  "$comment": "Swarm governance (docs/29, docs/33). Izolacija je fail-closed: default je `contained` (bez mreže), `frozen` je kill switch.",
+  "defaultIsolation": "contained",
+  "quotas": {
+    "maxWorkers": 12,
+    "maxRunsPerTick": 8,
+    "maxCostPerHourUsd": 2,
+    "maxPheromonesPerMin": 120,
+    "maxPeerMessagesPerMin": 60,
+    "maxTasksOpen": 200,
+    "maxClaimsPerWorkerPerMin": 20
+  },
+  "safety": {
+    "maxEntropyPerChar": 4.5,
+    "maxTokenLength": 64,
+    "windowMs": 600000,
+    "lockstepThreshold": 0.7,
+    "lockstepMinCooccurrence": 4,
+    "voteCollusionMinWorkers": 3,
+    "voteCollusionRounds": 3,
+    "concentrationThreshold": 0.6,
+    "floodingPerMin": 40,
+    "autoContain": true
+  },
+  "tenants": {
+    "nmq": { "isolation": "contained", "quotas": { "maxWorkers": 8, "maxRunsPerTick": 6 } },
+    "demo-shop": { "isolation": "locked" }
+  }
+}

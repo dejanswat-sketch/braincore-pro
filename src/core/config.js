@@ -71,6 +71,9 @@ export async function loadConfig({ root = process.cwd(), env = process.env, data
   const company = await readJson(path.join(configDir, 'company.json'), { roles: [] });
   const watchers = await readJson(path.join(configDir, 'watchers.json'), { rules: [] });
   const autonomy = await readJson(path.join(configDir, 'autonomy.json'), { default: 'L1', tenants: {} });
+  const swarm = await readJson(path.join(configDir, 'swarm.json'), { defaultIsolation: 'contained', quotas: {}, safety: {}, tenants: {} });
+  const rsiConfig = await readJson(path.join(configDir, 'rsi.json'), { defaultLevel: 'R1', autoMetaPromote: false, tenants: {} });
+  const evolutionConfig = await readJson(path.join(configDir, 'evolution.json'), { populationSize: 6, generations: 3, autoPromote: false });
 
   const resolvedDataDir = path.resolve(root, dataDir ?? envCfg.dataDir);
 
@@ -85,6 +88,9 @@ export async function loadConfig({ root = process.cwd(), env = process.env, data
     company,
     watchers,
     autonomy,
+    swarm,
+    rsi: rsiConfig,
+    evolution: evolutionConfig,
     tenants: tenantsFile.tenants ?? [],
     requireAuth: parseBool(tenantsFile.requireAuth, false),
 
