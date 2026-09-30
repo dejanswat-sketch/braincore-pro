@@ -252,7 +252,12 @@ export async function createSwarmNode({
   async function submitTask(task, { durable = cfg.durableSubmit } = {}) {
     // BACKPRESSURE: ako je red pun, odbij odmah (klijent treba da uspori) — vidi QueueFullError
     if (cfg.shedWhenBusy) {
-      const depth = queue.stats?.().queued ?? 0;
+      // STVARNI backlog: taskovi u CRDT-u koji nisu završeni (red se na node putu ne prazni preko pop())
+      const depth = crdt
+        .entries()
+        .filter((e) => e.key.startsWith('task:'))
+        .map((e) => e.value)
+        .filter((t) => t && t.state !== 'done' && !crdt.get(`result:${t.id}`)).length;
       if (depth >= cfg.maxQueueDepth) {
         metrics?.inc('node_submit_shed_total', { node: id });
         logger?.warn?.('node.submit_shed', { nodeId: id, queueDepth: depth, maxQueueDepth: cfg.maxQueueDepth });
@@ -442,6 +447,7 @@ export async function createSwarmNode({
     } finally {
       clearInterval(renew);
       inFlight.delete(task.id);
+      await queue.discard?.(task.id).catch?.(() => {}); // red ostaje tačan (queued = stvarno čeka)
     }
   }
 

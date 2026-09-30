@@ -194,6 +194,43 @@ export function createTaskQueue({ backend = 'memory', redis = null, nats = null,
       return task;
     },
 
+    /**
+     * Ukloni task iz reda BEZ izvršenja.
+     *
+     * Zašto postoji: na node putu task se ne uzima preko `pop()` (claim ide kroz CRDT), pa je red
+     * rastao zauvijek — `queued` je dostizao `maxQueueDepth` i backpressure je **lažno** počeo da odbija
+     * posao (vidi soak #3, 30.09.). Sada čvor poziva `discard()` kad task završi, pa `queued` znači
+     * „koliko ih stvarno čeka".
+     */
+    async discard(taskId) {
+      inFlight.delete(taskId);
+      if (backend === 'resp') {
+        // LREM iz Redis liste (bez npm-a: ručni RESP)
+        await redis.cmd('LREM', key, '0', JSON.stringify({ id: taskId })).catch(() => {});
+        try {
+          const all = await redis.lrange(key, 0, -1);
+          for (const raw of all) {
+            try {
+              if (JSON.parse(raw).id === taskId) await redis.cmd('LREM', key, '1', raw);
+            } catch {
+              /* preskoči ne-JSON */
+            }
+          }
+        } catch {
+          /* ignorisano */
+        }
+        try {
+          await redis.cmd('LREM', inflightKey, '1', JSON.stringify({ id: taskId }));
+        } catch {
+          /* ignorisano */
+        }
+      } else {
+        const idx = memory.findIndex((t) => t.id === taskId);
+        if (idx >= 0) memory.splice(idx, 1);
+      }
+      return true;
+    },
+
     /** Potvrda uspjeha/neuspjeha — skida task iz in-flight liste. */
     async ack(taskId, { success = true } = {}) {
       const entry = inFlight.get(taskId);
