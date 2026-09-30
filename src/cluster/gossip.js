@@ -1,4 +1,8 @@
 /**
+ * ZASTARJELO (v0.6.0): ovo je stariji **TCP** gossip sa `net` modulom (v0.5).
+ * Smernice traže **UDP (dgram)** SWIM — kanonska implementacija je `src/gossip.js`.
+ * Ovaj fajl ostaje zbog kompatibilnosti `src/cluster/node.js`; nove stvari idu u `src/gossip.js`.
+ *
  * Gossip protokol — membership i epidemijsko širenje poruka preko TCP-a, bez npm zavisnosti.
  *
  * Model (klasičan SWIM-ov duh, pojednostavljen):

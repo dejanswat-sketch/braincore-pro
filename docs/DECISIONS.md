@@ -308,3 +308,18 @@ task ubačen u A izvršava **B** kad je B slobodniji; pheromone ispari poslije *
 sve bez ijedne npm zavisnosti (`dependencies: {}`).
 
 **Stanje dokaza (v0.6.0):** `node --test` → **222/222** (17 novih u `tests/3-nodes.test.mjs`), eval 6/6, demo 27 sekcija, smoke 41/41.
+
+---
+
+## 14. Ispravke iz revizije smernica (v0.6.1) — odluke D73–D77
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D73 | **Payload taska se šifruje na žici** | AES-256-GCM, ključ izveden HKDF-om iz `NMQ_CLUSTER_SECRET` (`src/shared/crypto.js`); preko UDP-a idu samo metapodaci + `payloadEnc` (+ `sha256` čistog teksta radi provjere) | HMAC daje **integritet**, ne **tajnost** — bez ovoga bi svako ko snima mrežu čitao sadržaj ticketa |
+| D74 | **Payload NE ulazi u CRDT** | CRDT (`task:<id>`) nosi samo metapodatke; pun task (sa payload-om) živi lokalno u `tasks` mapi i u queue-u | CRDT se širi mrežom (i „tračevima" uz PING) — sve što je u njemu je javno unutar klastera |
+| D75 | **Rate limit na UDP ulazu** | `maxInboundPerMin` (1200) sa sliding window; prekoračenje se odbija i mjeri (`gossip_rate_limited_total`) | UDP nema vezu, pa je flooding realan; stariji TCP sloj je imao limit, novi nije |
+| D76 | **Jedan RESP klijent** | `src/cluster/redis.js` je sada re-eksport `src/resp-client.js` (189 linija); stari TCP gossip (`src/cluster/gossip.js`) je označen kao **zastarjeo** u korist `src/gossip.js` | Dvije paralelne implementacije istog su zamka za održavanje (i `redis.js` je prelazio granicu od 200 linija iz smernica) |
+| D77 | `sync()` postoji kao ime iz smernica | `crdt.sync(remoteClock)` = alias za `delta()`; node šalje **deltu** lokalnih zapisa (na 300ms), a ne cijeli snapshot | Smernice traže `sync`; slanje cijelog stanja na svaki claim nije skalabilno |
+
+**Dokazi (v0.6.1):** `node --test` → **225/225** (20 u `tests/3-nodes.test.mjs`, uključujući test koji snima mrežu i dokazuje da čist tekst ne izlazi,
+te da čvor sa pogrešnom tajnom **ne** prima task); demo 27 sekcija; smoke 42/42; `dependencies: {}`.

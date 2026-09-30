@@ -32,6 +32,7 @@ export const GOSSIP_DEFAULTS = {
   broadcast: false,
   broadcastPort: 0, // 0 = isti port kao gossip (za LAN discovery)
   maxSeenIds: 2000,
+  maxInboundPerMin: 1200, // zaštita UDP ulaza od floodinga (spec nije propisao broj)
 };
 
 export const MESSAGE_TYPES = ['PING', 'ACK', 'PING_REQ', 'LEAVE', 'DISSEMINATE'];
@@ -66,7 +67,8 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
   let incarnation = 1;
   let timer = null;
   let stopped = false;
-  const stats = { sent: 0, received: 0, rejected: 0, duplicates: 0, timeouts: 0 };
+  const stats = { sent: 0, received: 0, rejected: 0, duplicates: 0, timeouts: 0, rateLimited: 0 };
+  const inbound = []; // vremenski žigovi ulaznih poruka (sliding window za rate limit)
 
   members.set(nodeId, { nodeId, host: advertiseHost, port, incarnation, status: 'alive', lastSeen: Date.now(), misses: 0, self: true });
 
@@ -211,6 +213,15 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
 
   function handle(buf, rinfo) {
     stats.received += 1;
+    // Rate limit na ULAZU: UDP nema vezu, pa je flooding realan rizik
+    const nowMs = Date.now();
+    while (inbound.length && nowMs - inbound[0] > 60_000) inbound.shift();
+    if (inbound.length >= cfg.maxInboundPerMin) {
+      stats.rateLimited = (stats.rateLimited ?? 0) + 1;
+      metrics?.inc('gossip_rate_limited_total', {});
+      return;
+    }
+    inbound.push(nowMs);
     const verdict = verify(buf);
     if (!verdict.ok) {
       stats.rejected += 1;

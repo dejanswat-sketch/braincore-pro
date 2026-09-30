@@ -151,6 +151,11 @@ export function createCrdtBlackboard({ nodeId = 'node', logger, metrics, maxKeys
       return vc;
     },
 
+    /** Alias iz smernica: `sync(remoteClock)` = delta koju treba poslati udaljenom čvoru. */
+    sync(remoteClock = {}) {
+      return api.delta(remoteClock);
+    },
+
     /** Za testove: deterministički otisak stanja (isti kod svih čvorova = konvergirano). */
     fingerprint() {
       return api

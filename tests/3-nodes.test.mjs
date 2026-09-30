@@ -560,6 +560,85 @@ test('CRDT preko mreže: sva tri node-a konvergiraju na identično stanje', asyn
   }
 });
 
+// ─────────────────────────── privatnost na žici + rate limit ───────────────────────────
+
+test('privatnost: payload taska preko UDP-a je šifrovan (bez tajne se ne čita)', async () => {
+  const SECRET_A = 'cluster-secret-A-1234567890';
+  const frames = [];
+  const a = await createSwarmNode({ nodeId: 'sec-A', port: 0, host: '127.0.0.1', secret: SECRET_A, config: { httpAdmin: false, autoLoop: false } });
+  const watcher = await createGossip({ nodeId: 'sec-watch', port: 0, host: '127.0.0.1', secret: SECRET_A, config: { intervalMs: 60_000 } });
+  try {
+    await a.start();
+    await watcher.start();
+    await a.gossip.join([`127.0.0.1:${watcher.port}`]);
+    // Snimi SVE što prođe mrežom (kao da neko prisluškuje)
+    watcher.on('message', (msg) => frames.push(msg));
+
+    const SECRET_TEXT = 'Kupac Ana, IBAN RS35123456789012345678, traži povraćaj';
+    await a.submitTask({ type: 'support.ticket', payload: { text: SECRET_TEXT }, ttl: 30_000 });
+    await wait(400);
+
+    const raw = JSON.stringify(frames);
+    assert.ok(frames.length > 0, 'mora biti uhvaćen barem jedan okvir');
+    assert.equal(raw.includes(SECRET_TEXT), false, 'čist tekst NE smije ići preko mreže');
+    assert.equal(raw.includes('IBAN RS35'), false, 'ni dijelovi sadržaja');
+    const taskFrame = frames.find((f) => f.payload?.kind === 'task');
+    assert.ok(taskFrame, 'task frame mora postojati');
+    assert.ok(taskFrame.payload.payloadEnc, 'payload mora biti šifrovan');
+    assert.equal(typeof taskFrame.payload.task.payload, 'undefined', 'task meta ne nosi payload');
+    assert.equal(taskFrame.payload.task.payloadEncrypted, true);
+
+    // Node sa POGREŠNOM tajnom ne može dešifrovati i NE izvršava task (fail-closed)
+    const wrong = await createSwarmNode({ nodeId: 'sec-wrong', port: 0, host: '127.0.0.1', secret: 'pogresna-tajna-0000000000', config: { httpAdmin: false, autoLoop: false } });
+    await wrong.start();
+    wrong.gossip.handleRaw(watcher.frame('DISSEMINATE', taskFrame.payload), { address: '127.0.0.1', port: 1 });
+    await wait(100);
+    assert.equal(wrong.crdt.get(`task:${taskFrame.payload.task.id}`), undefined, 'bez ključa task se ne prima');
+    await wrong.close();
+
+    // Isti task kod čvora SA ispravnom tajnom se dešifruje i vidi
+    const right = await createSwarmNode({ nodeId: 'sec-right', port: 0, host: '127.0.0.1', secret: SECRET_A, config: { httpAdmin: false, autoLoop: false } });
+    await right.start();
+    right.gossip.handleRaw(watcher.frame('DISSEMINATE', taskFrame.payload), { address: '127.0.0.1', port: 1 });
+    await wait(100);
+    const received = right.crdt.get(`task:${taskFrame.payload.task.id}`);
+    assert.ok(received, 'sa ispravnom tajnom task se prima');
+    assert.equal(received.payload.text, SECRET_TEXT, 'sadržaj je ispravno dešifrovan');
+    await right.close();
+  } finally {
+    await a.close();
+    await watcher.stop();
+  }
+});
+
+test('gossip: rate limit na UDP ulazu (flooding se odbija)', async () => {
+  const node = await createGossip({ nodeId: 'rl-node', port: 0, host: '127.0.0.1', secret: SECRET, config: { intervalMs: 60_000, maxInboundPerMin: 5 } });
+  const peer = await createGossip({ nodeId: 'rl-peer', port: 0, host: '127.0.0.1', secret: SECRET, config: { intervalMs: 60_000 } });
+  try {
+    await node.start();
+    await peer.start();
+    const frame = peer.frame('PING', { host: '127.0.0.1', port: peer.port });
+    for (let i = 0; i < 5; i += 1) node.handleRaw(frame, { address: '127.0.0.1', port: peer.port });
+    const before = node.stats.rateLimited ?? 0;
+    for (let i = 0; i < 10; i += 1) node.handleRaw(frame, { address: '127.0.0.1', port: peer.port });
+    assert.ok((node.stats.rateLimited ?? 0) > before, 'prekoračenje mora biti odbijeno');
+    assert.ok(node.stats.duplicates > 0, 'dupli paketi se prepoznaju');
+  } finally {
+    await node.stop();
+    await peer.stop();
+  }
+});
+
+test('CRDT: sync(remoteClock) je alias za delta (ime iz smernica)', () => {
+  const A = createCrdtBlackboard({ nodeId: 'A' });
+  const B = createCrdtBlackboard({ nodeId: 'B' });
+  A.set('k', 1);
+  const viaSync = A.sync(B.vectorClock());
+  const viaDelta = A.delta(B.vectorClock());
+  assert.deepEqual(viaSync.map((e) => e.key), viaDelta.map((e) => e.key));
+  assert.deepEqual(viaSync.map((e) => e.key), ['k']);
+});
+
 // ─────────────────────────── zabrana npm-a ───────────────────────────
 
 test('nema npm zavisnosti: samo Node built-in moduli u kodu', async () => {

@@ -170,6 +170,8 @@ export function createRespClient({ url = 'redis://127.0.0.1:6379', host = null, 
     rpush: (k, ...vals) => send(['RPUSH', k, ...vals]),
     lrange: (k, a, b) => send(['LRANGE', k, String(a), String(b)]),
     llen: (k) => send(['LLEN', k]),
+    /** BRPOPLPUSH: atomsko prebacivanje u "in-flight" listu (koristi ga cluster store). */
+    brpoplpush: (src, dst, seconds = 1) => send(['BRPOPLPUSH', src, dst, String(seconds)], { timeout: (Number(seconds) + 3) * 1000 }),
     /** Blokirajući BRPOP: koristi se za task queue (spec: LPUSH/BRPOP). */
     brpop: (k, seconds = 1) => send(['BRPOP', k, String(seconds)], { timeout: (Number(seconds) + 3) * 1000 }),
     zadd: (k, score, member) => send(['ZADD', k, String(score), member]),

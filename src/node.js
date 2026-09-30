@@ -28,6 +28,7 @@ import { createToolRunner } from './execution/tool-runner.js';
 import { createExtractor } from './research/extractor.js';
 import { createGenomeRegistry } from './research/genome-registry.js';
 import { createFederationClient } from './research/federation.js';
+import { encryptPayload, decryptPayload } from './shared/crypto.js';
 import { iso } from './core/clock.js';
 import { uid } from './core/ids.js';
 import { ValidationError } from './core/errors.js';
@@ -39,6 +40,7 @@ export const NODE_DEFAULTS = {
   taskTtlMs: 30_000,
   maxInFlight: 3,
   autoLoop: true, // claim petlja se vrti sama; u testovima se isključuje (deterministički tick)
+  encryptTaskPayload: true, // payload taska ide šifrovan preko UDP-a (AES-256-GCM iz tajne klastera)
   httpAdmin: true,
   gossip: {},
 };
@@ -95,6 +97,12 @@ export async function createSwarmNode({
     },
   });
 
+  /** Task bez payload-a — to je ono što smije u CRDT (dijeli se preko mreže). */
+  function metaOf(task) {
+    const { payload, ...meta } = task;
+    return { ...meta, payloadEncrypted: true };
+  }
+
   function onDisseminate(item) {
     if (!item) return;
     if (item.kind === 'crdt') {
@@ -103,10 +111,21 @@ export async function createSwarmNode({
       return;
     }
     if (item.kind === 'task' && item.task) {
-      // Task objavljen sa drugog čvora: upiši u CRDT (ako već nije) i pusti queue da ga vidi
-      if (!crdt.get(`task:${item.task.id}`)) crdt.set(`task:${item.task.id}`, item.task);
-      if (!tasks.has(item.task.id)) tasks.set(item.task.id, item.task);
-      emitter.emit('task', item.task);
+      // Task sa drugog čvora: payload je ŠIFROVAN (UDP je čist tekst), pa ga dešifrujemo ovdje
+      let task = item.task;
+      if (item.payloadEnc) {
+        try {
+          task = { ...item.task, payload: decryptPayload(secret, item.payloadEnc, { aad: item.task.id }) };
+        } catch (err) {
+          metrics?.inc('node_payload_decrypt_failed_total', {});
+          logger?.warn?.('node.payload_decrypt_failed', { taskId: item.task.id, error: err.message });
+          return; // bez ključa se task NE izvršava (fail-closed)
+        }
+      }
+      if (!task.payload) task = { ...task, payload: {} };
+      if (!crdt.get(`task:${task.id}`)) crdt.set(`task:${task.id}`, task);
+      if (!tasks.has(task.id)) tasks.set(task.id, task);
+      emitter.emit('task', task);
     }
   }
 
@@ -124,9 +143,15 @@ export async function createSwarmNode({
       origin: id,
     };
     tasks.set(normalized.id, normalized);
-    crdt.set(`task:${normalized.id}`, normalized);
+    crdt.set(`task:${normalized.id}`, metaOf(normalized)); // u CRDT idu SAMO metapodaci (payload ostaje lokalno)
     await queue.push(normalized);
-    gossip.broadcast({ kind: 'task', task: normalized });
+    // Preko žice ide METAPODACI + ŠIFROVAN payload (UDP je čist tekst; HMAC daje integritet, ne tajnost)
+    if (cfg.encryptTaskPayload) {
+      const { payload, ...meta } = normalized;
+      gossip.broadcast({ kind: 'task', task: { ...meta, payloadEncrypted: true }, payloadEnc: encryptPayload(secret, payload, { aad: normalized.id }) });
+    } else {
+      gossip.broadcast({ kind: 'task', task: normalized });
+    }
     metrics?.inc('node_tasks_submitted_total', { node: id });
     logger?.info?.('node.task_submitted', { nodeId: id, taskId: normalized.id, type: normalized.type });
     return normalized;
@@ -138,8 +163,12 @@ export async function createSwarmNode({
     const existing = crdt.get(claimKey);
     if (existing) return { claimed: false, reason: 'već preuzet', by: existing.nodeId };
     crdt.set(claimKey, { nodeId: id, at: Date.now(), load: load() });
-    // Verifikacija: pošalji stanje i provjeri da li smo i dalje vlasnik
-    gossip.broadcast({ kind: 'crdt', entries: crdt.snapshot() });
+    // Šaljemo SAMO novi claim zapis (ne cijeli snapshot) — ostatak širi periodični CRDT sync
+    const fresh = crdt.delta({ [id]: lastBroadcast }).filter((e) => e.nodeId === id);
+    if (fresh.length) {
+      lastBroadcast = Math.max(...fresh.map((e) => e.counter));
+      gossip.broadcast({ kind: 'crdt', entries: fresh });
+    }
     await new Promise((r) => setTimeout(r, cfg.claimConfirmMs));
     const winner = crdt.get(claimKey);
     if (!winner || winner.nodeId !== id) {
@@ -205,7 +234,8 @@ export async function createSwarmNode({
 
     const task = candidates[0];
     if (!task) return { idle: true, reason: 'nema_posla' };
-    const claim = await tryClaim(task);
+    const full = tasks.get(task.id) ?? task; // payload je lokalno
+    const claim = await tryClaim(full);
     if (!claim.claimed) return { idle: true, reason: claim.reason, by: claim.by ?? null, taskId: task.id };
     const record = await runTask(task);
     return { ran: true, ...record };
