@@ -395,3 +395,47 @@ pregazio eksplicitne vrijednosti. To **nije** problem dizajna — Dio 1 (`4e2ce1
 1. Derivaciju aktivirati **sa pravilom prioriteta** (kao u §13), ne grubim `Math.max`.
 2. `Live feed` prvo dijagnostikovati (da li confirm blokira unutar tick-a), pa onda mijenjati test.
 3. `webhook` odvojiti od grace rada — to je trigger-race (schedule vs event), nezavisan nalaz.
+
+---
+
+## 15. SUD SOAK-a #6 (v1.9.1, grace 3 s) — 11 → 4 duplih, hipoteza POTVRĐENA DJELIMIČNO
+
+```
+trajanje:      3601 s (60 min) · 6 restarta
+poslano:       17 342
+izvrseno:      17 343      <- "izgubljeno: -1" je ARTEFAKT racunanja (vidi nize)
+shed:          0  ✔        · druge greske pri predaji: 6
+p95:           782 ms (p50 753, p99 789)  ✔   · max 11 997 ms (prije 28 459)
+heap:          13,4 -> 105,7 MB (vrh 105,7)  ~ granicno
+CRDT:          8 659 / 8 659 / 9 (ogranicen)  ✔
+gossip:        rate-limited 0  ✔ · odbijeno 0
+duplo:         4   ✖   (soak #5: 11 · #4: 43 · #2: 11 200)
+```
+
+| Kriterij | Cilj | Sud |
+|---|---|---|
+| Odbijeno (backpressure) | 0 | ✔ 0 |
+| Izgubljeno | 0 | ~ **artefakt -1** (vidi nize) |
+| Duplo | 0 | ✖ **4** |
+| p95 | ≤ 1,5 s | ✔ 782 ms |
+| Heap | < 100 MB | ~ 105,7 MB (granicno) |
+| CRDT | ogranicen | ✔ 8 659 |
+| Rate-limited | 0 | ✔ 0 |
+
+### Sta je hipoteza pogodila
+`grace` 3 s (> detekcija 2,2 s) smanjio je duplikate **11 -> 4** i uklonio ekstremni straggler
+(**max 28,5 s -> 12,0 s**). Znaci: restart-trka je bila **stvarni** dio uzroka, ali **nije jedini**.
+
+### ARTEFAKT U MJERENJU (popraviti u harness-u)
+`izgubljeno = poslano - izvrseno` daje **-1** jer se **duplo izvrsenje broji u `completed`**, pa
+`completed > submitted`. To nije gubitak nego pogresna formula. Popravka: `lost = max(0, submitted -
+completed)` + odvojeno brojanje duplih (po `executions` mapi), i u izvjestaju jasno "0 izgubljenih,
+4 duplih".
+
+### Preostala 4 — hipoteza (domen `confirm` prozora i LWW)
+Nije restart-trka (grace je to pokrio), nego **dvostruko preuzimanje tokom verifikacije**: dva cvora
+potvrde claim u istom prozoru prije nego sto jedan vidi tudji zapis. To se **ne rjesava poganjanjem**:
+sljedeci korak je **log ko je potvrdio i kada** za duplirane taskove
+(`nodeId`, `instanceId`, `attempt`, `at`, redoslijed CRDT zapisa), pa tek onda odluka.
+
+### Odluka: video se **jos ne snima** (duplo > 0)
