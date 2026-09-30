@@ -148,6 +148,8 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
       // Ne dozvoli da poruka BEZ statusa (npr. ACK bez opterećenja) pregazi poznato opterećenje
       load: info.load ?? existing?.load ?? null,
       tasksDone: info.tasksDone ?? existing?.tasksDone ?? null,
+      cpuPct: info.cpuPct ?? existing?.cpuPct ?? null,
+      rssMb: info.rssMb ?? existing?.rssMb ?? null,
       lastSeen: Date.now(),
       misses: 0,
       self: info.nodeId === nodeId,
@@ -191,7 +193,7 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
   }
 
   function membershipList() {
-    return [...members.values()].map(({ nodeId: id, host: h, port: p, incarnation: i, status, lastSeen, load, tasksDone }) => ({
+    return [...members.values()].map(({ nodeId: id, host: h, port: p, incarnation: i, status, lastSeen, load, tasksDone, cpuPct, rssMb }) => ({
       nodeId: id,
       host: h,
       port: p,
@@ -302,7 +304,7 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
     if (known && known.status !== 'alive' && Number(body.incarnation) >= Number(known.incarnation)) {
       incarnation = Math.max(incarnation, Number(body.incarnation) + 1);
     }
-    const info = { nodeId: body.nodeId, host: body.payload?.host ?? rinfo.address, port: body.payload?.port ?? rinfo.port, incarnation: body.incarnation, load: body.payload?.load ?? null, tasksDone: body.payload?.tasksDone ?? null };
+    const info = { nodeId: body.nodeId, host: body.payload?.host ?? rinfo.address, port: body.payload?.port ?? rinfo.port, incarnation: body.incarnation, load: body.payload?.load ?? null, tasksDone: body.payload?.tasksDone ?? null, cpuPct: body.payload?.cpuPct ?? null, rssMb: body.payload?.rssMb ?? null };
     upsertMember(info);
 
     if (body.type === 'PING') {

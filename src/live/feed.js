@@ -31,7 +31,7 @@ export function createLiveFeed({ node, config = {}, logger, metrics } = {}) {
       type: 'snapshot',
       ts: Date.now(),
       node: { id: stats.nodeId, port: stats.port, uptimeMs: stats.uptimeMs, load: stats.load, syncMs: node.syncMs ?? null },
-      nodes: node.gossip.membershipList().map((m) => ({ nodeId: m.nodeId, status: m.status, load: m.load, tasksDone: m.tasksDone, lastSeen: m.lastSeen })),
+      nodes: node.gossip.membershipList().map((m) => ({ nodeId: m.nodeId, status: m.status, load: m.load, tasksDone: m.tasksDone, cpuPct: m.cpuPct, rssMb: m.rssMb, lastSeen: m.lastSeen })),
       pheromones,
       tasks,
       results: node.done.slice(-cfg.maxTasks).map((d) => ({ taskId: d.taskId, nodeId: d.nodeId, ok: d.ok, ms: d.ms, at: d.at })),

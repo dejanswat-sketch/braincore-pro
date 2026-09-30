@@ -108,6 +108,19 @@ export async function createSwarmNode({
   const queue = createTaskQueue({ backend: 'memory', tenantId, logger, metrics, config: { ttlMs: cfg.taskTtlMs, visibilityTimeoutMs: cfg.taskTtlMs * 2 } });
 
   const load = () => inFlight.size;
+
+  // Sopstvena potrošnja: CPU procenat od zadnjeg mjerenja + RSS u MB (bez npm, samo process.*)
+  let cpuMark = process.cpuUsage();
+  let cpuMarkAt = Date.now();
+  function selfUsage() {
+    const now = Date.now();
+    const usage = process.cpuUsage(cpuMark);
+    const elapsedMs = Math.max(1, now - cpuMarkAt);
+    cpuMark = process.cpuUsage();
+    cpuMarkAt = now;
+    const cpuPct = Number((((usage.user + usage.system) / 1000 / elapsedMs) * 100).toFixed(1));
+    return { cpuPct, rssMb: Number((process.memoryUsage().rss / 1024 / 1024).toFixed(0)) };
+  }
   const minPeerLoad = () => {
     const peersAlive = gossip.membershipList().filter((m) => m.nodeId !== id && m.status === 'alive' && m.load !== null);
     if (!peersAlive.length) return null;
@@ -142,7 +155,8 @@ export async function createSwarmNode({
     config: cfg.gossip,
     logger,
     metrics,
-    status: () => ({ load: load(), tasksDone: done.length, uptimeMs: Date.now() - startedAt }),
+    // CPU% i RSS se oglašavaju kroz gossip — dashboard tako prikazuje STVARNO opterećenje svakog čvora
+    status: () => ({ load: load(), tasksDone: done.length, uptimeMs: Date.now() - startedAt, ...selfUsage() }),
     onMessage: (msg) => {
       if (msg.type === 'DISSEMINATE_ITEM') onDisseminate(msg.payload);
     },

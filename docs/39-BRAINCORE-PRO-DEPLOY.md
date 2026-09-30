@@ -359,3 +359,21 @@ bash /opt/braincore/current/deploy/rollback.sh        # povratak (<60 s)
 ### Poznato ograničenje (iskreno)
 Brojači (`swarmTasksDone`, `tasksDone`) su **per-process** i resetuju se kad se čvor restartuje — zato poslije
 ubijanja dashboard kratko pokazuje manje „done". Trajni brojači (u `data/` ili Redis-u) su sljedeći zadatak.
+
+---
+
+## 15. Dopuna dashboarda poslije referentnog mockupa (30.09.2026)
+
+Iz referentnog vizuala dodato:
+* **`scripts/chaosctl.mjs`** — CLI za isto dugme: `chaosctl status`, `chaosctl kill --random --confirm`
+  (koristi isti API, iste zaštite). Izmjereno kroz CLI: detekcija **2162 ms**, povratak **3022 ms**.
+* **Eksplicitna sekvenca u logu**: `! NODE-0X termination initiated…` → `DETECTION` → `REJOIN` →
+  `integrity: 0 lost · N tasks completed · 0 overlaps — verified`.
+* **CPU% i RSS po čvoru** — instrumentacija je u kodu (`selfUsage()` u `src/node.js`, polja `cpuPct`/`rssMb`
+  putuju kroz gossip u `src/gossip.js`, prikaz na mapi u `live.js`).
+
+### ⚠️ Otvoreno (iskreno)
+Vrijednosti `cpuPct`/`rssMb` **još se ne vide na živom dashboardu** (`/status` ih vraća prazne) iako je kod
+deployovan (provjereno `grep`-om na serveru i procesi rade iz `current/`). Sljedeći korak je da se nađe gdje se
+polje gubi u lancu `status() → statusPayload() → PING payload → handle() → membership → feed`, pa da se doda
+test koji to čuva. Do tada dashboard prikazuje `CPU —` i `RAM —` za peer-ove, a `load`/`tasks` su tačni.

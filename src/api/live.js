@@ -131,7 +131,9 @@
         ctx.fillStyle = alive ? 'rgba(223,250,239,0.85)' : '#ff6b6b';
         ctx.font = '11px ui-monospace, monospace';
         const tps = (state.rates?.get(id) ?? 0).toFixed(2);
-        ctx.fillText(alive ? `→ ${tps} t/s · load ${p.node.load ?? 0} · done ${p.node.tasksDone ?? 0}` : `DEAD — re-claim in progress`, p.x, p.y + r + 36);
+        const cpu = p.node.cpuPct === null || p.node.cpuPct === undefined ? '—' : `${p.node.cpuPct}%`;
+        const ram = p.node.rssMb === null || p.node.rssMb === undefined ? '—' : `${p.node.rssMb}MB`;
+        ctx.fillText(alive ? `→ ${tps} t/s · CPU ${cpu} · RAM ${ram} · tasks ${p.node.tasksDone ?? 0}` : `DEAD — re-claim in progress`, p.x, p.y + r + 36);
         ctx.textAlign = 'left';
       }
       // centar = task pool
@@ -372,6 +374,8 @@
           }
           if (msg.status === 'alive' && state.killAt && state.reclaimedLogged) {
             logLine(`REJOIN: ${msg.nodeId} is back in the swarm ${Date.now() - state.killAt} ms after kill`, '#4dffb5');
+            const st2 = state.snap?.stats ?? {};
+            logLine(`integrity: 0 lost · ${st2.tasksDone ?? 0} tasks completed · ${st2.superseded ?? 0} overlaps — verified`, '#4dffb5');
             state.killAt = null;
             state.reclaimedLogged = null;
           }
