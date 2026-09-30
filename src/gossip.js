@@ -26,13 +26,13 @@ export const GOSSIP_DEFAULTS = {
   intervalMs: 300, // spec: 300ms
   fanout: 2, // spec: fanout 2
   failureTimeoutMs: 1200, // spec: failure timeout 1200ms
-  deadAfterMisses: 2,
+  deadAfterMisses: 3,
   incarnationBumpMs: 2000,
   maxDatagramBytes: 8192, // UDP sigurnost (izbjegavamo fragmentaciju)
   broadcast: false,
   broadcastPort: 0, // 0 = isti port kao gossip (za LAN discovery)
   maxSeenIds: 2000,
-  maxInboundPerMin: 1200, // zaštita UDP ulaza od floodinga (spec nije propisao broj)
+  maxInboundPerMin: 3000, // zaštita UDP ulaza od floodinga — samo za „teretne" poruke (PING/ACK su izuzeti)
 };
 
 export const MESSAGE_TYPES = ['PING', 'ACK', 'PING_REQ', 'LEAVE', 'DISSEMINATE'];
@@ -151,13 +151,27 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
     const m = members.get(memberId);
     if (!m || m.self || m.quarantinedAt) return;
     m.misses = (m.misses ?? 0) + 1;
-    const next = m.misses >= cfg.deadAfterMisses ? 'dead' : 'suspect';
+    /**
+     * LOAD-AWARE FAILURE DETECTION: ako je OVAJ čvor pod opterećenjem, popuštamo prag prije nego što
+     * tuđi čvor proglasimo mrtvim. Zašto: soak test je pokazao da pri ~10 taskova/s event loop kasni,
+     * PING/ACK se obrađuju sa zakašnjenjem, pa su čvorovi jedan drugom izgledali mrtvi — a to je vodilo
+     * u lažno preuzimanje tuđih taskova (duplo izvršavanje). Bolje priznati „ja sam spor" nego pogrešno
+     * proglasiti kolegu mrtvim.
+     */
+    let deadAfter = cfg.deadAfterMisses;
+    try {
+      const selfLoad = Number(statusPayload()?.load ?? 0);
+      if (selfLoad >= 2) deadAfter += Math.min(3, Math.floor(selfLoad / 2));
+    } catch {
+      /* status nije kritičan */
+    }
+    const next = m.misses >= deadAfter ? 'dead' : 'suspect';
     if (m.status !== next) {
       m.status = next;
       metrics?.inc('gossip_membership_changes_total', { status: next });
       onMembership?.(m, next);
       emitter.emit('membership', m);
-      logger?.warn?.('gossip.member_status', { nodeId: memberId, status: next, misses: m.misses });
+      logger?.warn?.('gossip.member_status', { nodeId: memberId, status: next, misses: m.misses, deadAfter });
     }
   }
 
@@ -226,15 +240,32 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
 
   function handle(buf, rinfo) {
     stats.received += 1;
-    // Rate limit na ULAZU: UDP nema vezu, pa je flooding realan rizik
-    const nowMs = Date.now();
-    while (inbound.length && nowMs - inbound[0] > 60_000) inbound.shift();
-    if (inbound.length >= cfg.maxInboundPerMin) {
-      stats.rateLimited = (stats.rateLimited ?? 0) + 1;
-      metrics?.inc('gossip_rate_limited_total', {});
-      return;
+    const peekType = (() => {
+      try {
+        return JSON.parse(buf.toString('utf8'))?.type ?? null;
+      } catch {
+        return null;
+      }
+    })();
+    /**
+     * Rate limit na ULAZU — ali NIKAD za poruke koje održavaju membership (PING/ACK/PING_REQ/LEAVE).
+     *
+     * Zašto: soak test je pokazao da je limit (1200/min) pod opterećenjem gušio upravo PING/ACK, pa su
+     * čvorovi jedan drugom izgledali mrtvi (`member_status dead`), što je vodilo u lažno preuzimanje
+     * tuđih taskova i **duplo izvršavanje**. Membership poruke su male i egzistencijalne: njih ne
+     * ograničavamo; ograničavamo samo „teretne" tipove (DISSEMINATE i sl.).
+     */
+    const MEMBERSHIP_TYPES = new Set(['PING', 'ACK', 'PING_REQ', 'LEAVE']);
+    if (!MEMBERSHIP_TYPES.has(peekType)) {
+      const nowMs = Date.now();
+      while (inbound.length && nowMs - inbound[0] > 60_000) inbound.shift();
+      if (inbound.length >= cfg.maxInboundPerMin) {
+        stats.rateLimited = (stats.rateLimited ?? 0) + 1;
+        metrics?.inc('gossip_rate_limited_total', {});
+        return;
+      }
+      inbound.push(nowMs);
     }
-    inbound.push(nowMs);
     const verdict = verify(buf);
     if (!verdict.ok) {
       stats.rejected += 1;
