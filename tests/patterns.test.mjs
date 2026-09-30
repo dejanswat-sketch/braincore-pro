@@ -5,8 +5,8 @@ import { PATTERNS } from '../src/orchestration/index.js';
 import { PolicyError, BudgetExceededError, ApprovalRequiredError } from '../src/core/errors.js';
 import { createMockProvider } from '../src/llm/mock.js';
 
-test('postoji 7 ulaza (6 patterna + direktan agent)', () => {
-  assert.deepEqual(PATTERNS, ['agent', 'router', 'sequential', 'orchestrator-worker', 'fanout', 'handoff', 'magentic']);
+test('postoji 11 ulaza (agent/react + ruter + 8 patterna)', () => {
+  assert.deepEqual(PATTERNS, ['agent', 'react', 'router', 'sequential', 'orchestrator-worker', 'fanout', 'handoff', 'magentic', 'reflection', 'debate', 'team']);
 });
 
 test('pattern: agent (direktan poziv) + trošak i trace', async () => {

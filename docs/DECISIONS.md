@@ -171,3 +171,25 @@ Odluke koje iz ovoga slijede (i važe za oba sloja):
 | **Prave integracije (Gmail, Slack, Shopify…)** | ❌ planirano (faza 2) | katalog i prioriteti u `03` |
 | **Eval harness (zlatni set)** | ❌ planirano (faza 4) | — |
 | **Ugniježđeni patterni sa `maxDepth`** | ❌ planirano (v0.2) | `01` §8 |
+
+---
+
+## 8. MAX nivo (v0.2.0) — dodatne odluke
+
+| # | Odluka | Vrijednost | Zašto |
+|---|---|---|---|
+| D21 | Persistentni agenti | **Scheduler u procesu** (`src/scheduler/`): `once` / `interval` / `cron`, event triggeri, dugoročni procesi sa checkpoint-om u `data/tenants/<id>/jobs/jobs.json` | Radi bez Redisa i bez dodatne infrastrukture; posao preživljava restart |
+| D22 | Leasing | Fajl-lease (`lease.owner`, `lease.until`) — **nije distributed lock** | Dovoljno za 1 repliku; za više replika ide Postgres advisory lock ili Redis (planirano, `docs/14` §7) |
+| D23 | Event triggeri | `hooks` ruta emituje `hook.<source>` na bus → `scheduler.triggerEvent` pokreće poslove sa `triggers[{type:'event'}]` | Jedan webhook može i direktno da odgovori i da pokrene dugoročne procese |
+| D24 | Kontrolna ravan | **U procesu** (`src/controlplane/`): verzije agenata, `deploy`/`rollback`, `pause`/`retire`, per-agent ključevi (`nmqa_`), per-agent budžet | Bez novog servisa; stanje u `data/_control/agents.json`; override se primjenjuje bez restarta |
+| D25 | Agent identitet | Per-agent API ključ (hash + scopes + opoziv) pored tenant ključa | Service account za MCP servere i pozadinske procese |
+| D26 | Budžet po patternu | `PATTERN_STEP_BUDGET` množi `maxSteps` (team ×6, debate ×5, reflection ×3…) | Bez toga multi-agent patterni padaju na budžetu predviđenom za jedan razgovor |
+| D27 | Sandbox | Aplikativni sloj (`src/core/sandbox.js`): mrežni allowlist, FS korijeni, očišćen env za MCP podprocese, limiti. Nivoi `none/restricted/strict` | OS izolacija (namespaces, seccomp, gVisor) je na kontejneru/K8s — oba sloja trebaju |
+| D28 | Epizodična memorija | `src/memory/episodic.js`: epizoda (problem → koraci → ishod → pouke) + few-shot u prompt (k≤3, ≤1500 znakova) | Robot uči iz svojih slučajeva; indeksirano u istoj vektorskoj bazi sa `metadata.kind='episode'` |
+| D29 | Novi patterni | `reflection`, `debate`, `team` (+ `react` kao alias za `agent`) | Pokriva plan-act-reflect, odluke sa trade-off-ima i specijalistički tim |
+| D30 | Telemetrija | **OTLP/JSON izvoz** (`src/observability/otel.js`): fajl `data/_global/otel-traces.jsonl` i/ili HTTP na `${OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`; greška izvoza ne ruši run | Radi bez kolektora, a spaja se na Tempo/Jaeger čim postoji |
+| D31 | Tenancy u K8s | SaaS (dijeljen proces + `tenantId`) **ili** namespace po klijentu (`infra/k8s/tenant-template/`) | Dva režima za dva tipa klijenta; isti image |
+| D32 | Prva zavisnost | I dalje `dependencies: {}` — uključujući scheduler, control plane, OTLP, sandbox i K8s manifeste | Nema `npm install`, nema build-a, nema supply-chain rizika |
+
+**Stanje dokaza (v0.2.0):** `node --test` → **106/106**, `node scripts/demo.mjs` → 16 sekcija bez greške,
+`node scripts/smoke.mjs` → 13/13, `node src/cli.js audit-verify` → lanac ispravan.

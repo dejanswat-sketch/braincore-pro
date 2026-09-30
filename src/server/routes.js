@@ -34,6 +34,8 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
   }, 3600_000);
   cleanup.unref?.();
 
+  const countPending = (tenantId) => [...pendingApprovals.values()].filter((p) => p.tenantId === tenantId).length;
+
   const runOptions = (body) => ({
     pattern: body.pattern,
     options: body.options ?? {},
@@ -70,6 +72,7 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
         createdAt: Date.now(),
         output: result.output,
       });
+      metrics?.set('approvals_pending', { tenant: tenantId }, countPending(tenantId));
     }
 
     metrics?.inc('runs_total', { tenant: tenantId, agent: result.agentId ?? '-', pattern: result.pattern });
@@ -271,12 +274,14 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
 
         if (!approve) {
           pendingApprovals.delete(params.runId);
+          metrics?.set('approvals_pending', { tenant: tenantId }, countPending(tenantId));
           await robot.memory.longterm.append(tenantId, { type: 'decision', content: `Odobrenje odbijeno za run ${params.runId}`, data: { note: body.note ?? null } });
           return { runId: params.runId, approved: false, note: body.note ?? null };
         }
 
         const approvedTools = [...new Set([...(body.approvedTools ?? []), ...pending.approvals.map((a) => a.tool)])];
         pendingApprovals.delete(params.runId);
+        metrics?.set('approvals_pending', { tenant: tenantId }, countPending(tenantId));
         const result = await robot.orchestrator.run({
           tenantId,
           agentId: pending.agentId,
@@ -346,6 +351,19 @@ export function createRoutes({ robot, config, logger, metrics, tenants, dataDir 
         const mapping = config.tenant(tenantId)?.hooks?.[source] ?? { agentId: HOOK_AGENTS[source] ?? 'support' };
         const input = normalizeHookInput(source, body);
         const result = await executeRun({ body: { ...mapping, input, userId: body.userId ?? null }, tenantId, role });
+
+        // Događaj ide i na event bus i u scheduler (persistentni agenti slušaju webhook-ove)
+        const event = { tenantId, source, input, receivedAt: iso(), runId: result.runId, body };
+        robot.bus?.emit(`hook.${source}`, event);
+        robot.bus?.emit('hook.*', event);
+        if (robot.scheduler) {
+          robot.scheduler
+            .triggerEvent(`hook.${source}`, event)
+            .then((n) => {
+              if (n) logger?.info?.('hook.triggered_jobs', { tenantId, source, jobs: n });
+            })
+            .catch((err) => logger?.warn?.('hook.trigger_failed', { source, error: err.message }));
+        }
         return { accepted: true, source, ...result };
       },
     },

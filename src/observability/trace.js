@@ -7,7 +7,7 @@ import { appendJsonl, readJsonl } from '../core/fsx.js';
 import { iso } from '../core/clock.js';
 import { uid, truncate } from '../core/ids.js';
 
-export function createTracer({ dataDir, logger, metrics } = {}) {
+export function createTracer({ dataDir, logger, metrics, otel } = {}) {
   const runs = new Map();
   const MAX_RUNS_IN_MEMORY = 500;
   let activeRuns = 0;
@@ -101,6 +101,7 @@ export function createTracer({ dataDir, logger, metrics } = {}) {
         logger?.warn?.('trace.persist_failed', { runId: run.runId, error: err.message });
       }
     }
+    if (otel?.exportRun) await otel.exportRun(run);
     return run;
   }
 

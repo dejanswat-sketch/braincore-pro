@@ -20,10 +20,15 @@ import { ToolError } from '../core/errors.js';
 import { redact } from '../core/logger.js';
 import path from 'node:path';
 
-export function createMcpManager({ registry, logger, metrics, root = process.cwd() } = {}) {
+export function createMcpManager({ registry, logger, metrics, root = process.cwd(), sandbox } = {}) {
   const clients = new Map();
 
   async function connect(cfg) {
+    // Sandbox: podproces dobija očišćen env (samo allowlist + NMQ_*) — nikad tajne hosta
+    sandbox?.assertCanSpawn?.(cfg.command);
+    const safeEnv = sandbox?.scrubEnv ? sandbox.scrubEnv(cfg.env ?? {}) : { ...process.env, ...(cfg.env ?? {}) };
+    const limits = sandbox?.limits?.() ?? { maxTimeoutMs: cfg.timeoutMs ?? 30_000 };
+
     const client =
       cfg.transport === 'http' || cfg.url
         ? createHttpMcpClient({ id: cfg.id, url: cfg.url, headers: cfg.headers, logger, requestTimeoutMs: cfg.timeoutMs })
@@ -33,8 +38,9 @@ export function createMcpManager({ registry, logger, metrics, root = process.cwd
             args: cfg.args ?? [],
             cwd: cfg.cwd ? path.resolve(root, cfg.cwd) : root,
             env: cfg.env ?? {},
+            processEnv: safeEnv,
             logger,
-            requestTimeoutMs: cfg.timeoutMs,
+            requestTimeoutMs: Math.min(cfg.timeoutMs ?? 30_000, limits.maxTimeoutMs ?? 30_000),
           });
 
     await client.initialize();

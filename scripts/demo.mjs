@@ -214,6 +214,130 @@ async function main() {
   line(`  widget: ${base}/widget.js · demo stranica: ${base}/`);
   line(`  primjer ugradnje: <script src="${base}/widget.js" data-tenant="nmq" data-agent="support" data-auto="1" defer></script>`);
 
+  // ── 12. Persistentni agenti ─────────────────────────────────────────────────
+  head(12, 'PERSISTENTNI AGENTI — posao koji radi sam, bez korisnika');
+  const reportJob = await robot.scheduler.createJob('nmq', {
+    name: 'dnevni izvještaj',
+    agentId: 'data',
+    pattern: 'agent',
+    input: 'Napravi dnevni izvještaj o prodaji',
+    schedule: { type: 'cron', cron: '0 8 * * 1-5' },
+    runNow: true,
+  });
+  line(`  posao: ${reportJob.id} · raspored: ${robot.scheduler.describeSchedule(reportJob.schedule)} · prvi termin: ${new Date(reportJob.nextRunAt).toISOString()}`);
+  const jobRun = await robot.scheduler.runNow('nmq', reportJob.id);
+  const jobAfter = await robot.scheduler.get('nmq', reportJob.id);
+  line(`  izvršeno: status=${jobRun.status} · ukupno pokretanja=${jobAfter.runs} · trošak=${jobAfter.totalCostUsd} USD · sljedeći=${new Date(jobAfter.nextRunAt).toISOString()}`);
+
+  const hookJob = await robot.scheduler.createJob('nmq', {
+    name: 'reakcija na Shopify',
+    agentId: 'ecommerce',
+    input: 'Obradi novu narudžbinu',
+    schedule: { type: 'once' },
+    triggers: [{ type: 'event', event: 'hook.shopify' }],
+  });
+  const fired = await robot.scheduler.triggerEvent('hook.shopify', { orderId: '1042' });
+  line(`  event trigger (hook.shopify): pokrenuto poslova=${fired}`);
+  await new Promise((r) => setTimeout(r, 120));
+  const hookRuns = (await robot.scheduler.runs('nmq')).filter((r) => r.jobId === hookJob.id);
+  line(`  posao "${hookJob.name}" → izvršavanja: ${hookRuns.length} (reason=${hookRuns[0]?.reason})`);
+
+  // ── 13. Dugoročni proces ────────────────────────────────────────────────────
+  head(13, 'DUGOROČNI PROCES — onboarding kroz dane (pamti stanje, preživljava restart)');
+  const procJob = await robot.scheduler.createJob('nmq', {
+    name: 'onboarding Prima d.o.o.',
+    type: 'process',
+    agentId: 'ops',
+    schedule: { type: 'interval', everyMs: 86_400_000 },
+    process: {
+      steps: [
+        { id: 'd1', name: 'Kickoff', agentId: 'ops', input: 'Uradi kickoff sastanak' },
+        { id: 'd3', name: 'Pristupi', agentId: 'ops', input: 'Dodijeli pristupe' },
+        { id: 'd7', name: 'Obuka', agentId: 'ops', input: 'Zakazi obuku' },
+      ],
+      done: [],
+      state: 'pending',
+    },
+  });
+  await robot.scheduler.runNow('nmq', procJob.id);
+  let proc = await robot.scheduler.get('nmq', procJob.id);
+  line(`  poslije 1. pokretanja: završeni koraci=[${proc.process.done.join(',')}] · stanje=${proc.process.state}`);
+  await robot.scheduler.runNow('nmq', procJob.id);
+  await robot.scheduler.runNow('nmq', procJob.id);
+  proc = await robot.scheduler.get('nmq', procJob.id);
+  line(`  poslije 3. pokretanja: završeni koraci=[${proc.process.done.join(',')}] · status=${proc.status}`);
+  line(`  stanje je u fajlu: data/_demo/tenants/nmq/jobs/jobs.json (preživljava restart)`);
+
+  // ── 14. Kontrolna ravan ─────────────────────────────────────────────────────
+  head(14, 'KONTROLNA RAVAN — deploy/rollback, per-agent identitet i budžet');
+  const before = robot.catalog.get('support').temperature;
+  const dep = await robot.controlPlane.deploy('nmq', 'support', { patch: { temperature: 0.45, maxSteps: 6 }, note: 'demo: topliji ton' });
+  line(`  deploy v${dep.version}: temperature ${before} → ${robot.catalog.get('support').temperature}, maxSteps → ${robot.catalog.get('support').maxSteps}`);
+  await robot.controlPlane.rollback('nmq', 'support', 0);
+  line(`  rollback na baseline: temperature = ${robot.catalog.get('support').temperature} (bez restarta)`);
+  const agentKey = await robot.controlPlane.issueAgentKey('nmq', 'executor', { scopes: ['crm:write'] });
+  const who = robot.controlPlane.authenticateAgentKey(agentKey.key);
+  line(`  per-agent ključ: ${agentKey.key.slice(0, 14)}… → tenant=${who.tenantId}, agent=${who.agentId}, scopes=${JSON.stringify(who.scopes)}`);
+  const cpList = await robot.controlPlane.list('nmq');
+  const execRow = cpList.find((a) => a.id === 'executor');
+  line(`  budžet po agentu: executor = ${execRow.budgetUsdMonth} USD/mjesec · potrošeno ${execRow.spendUsd.toFixed(4)} USD`);
+  await robot.controlPlane.setStatus('nmq', 'creative', 'paused', { reason: 'demo' });
+  try {
+    await robot.orchestrator.run({ tenantId: 'nmq', agentId: 'creative', pattern: 'agent', input: 'x' });
+    line('  pauziran agent je prošao — GREŠKA!');
+  } catch (err) {
+    line(`  pauziran agent → blokiran: ${err.code} (${err.message})`);
+  }
+  await robot.controlPlane.setStatus('nmq', 'creative', 'active');
+
+  // ── 15. Specijalistički tim i debata ────────────────────────────────────────
+  head(15, 'SPECIJALISTIČKI TIM + DEBATA — planing → research → validation → decision → execution');
+  const teamRes = await robot.orchestrator.run({ tenantId: 'nmq', pattern: 'team', input: 'Pripremi ponudu za Prima d.o.o.' });
+  line(`  tim: ${teamRes.result.stages.map((s) => `${s.role}(${s.agent})`).join(' → ')}`);
+  line(`  svi koraci uspjeli: ${teamRes.result.stages.every((s) => s.ok)} · trošak: ${teamRes.costUsd} USD`);
+  line(`  zaključak tima: ${String(teamRes.output).replace(/\n/g, ' ').slice(0, 180)}`);
+
+  const debateRes = await robot.orchestrator.run({
+    tenantId: 'nmq',
+    pattern: 'debate',
+    input: 'Da li uvesti novu funkciju odmah ili čekati?',
+    options: { patternConfig: { rounds: 1, debaters: [{ agent: 'finance', stance: 'za' }, { agent: 'legal', stance: 'protiv' }] } },
+  });
+  line(`  debata: ${debateRes.result.debaters.map((d) => `${d.agent}(${d.stance})`).join(' vs ')} · rundi: ${debateRes.result.rounds} · sudija: ${debateRes.result.judge}`);
+  line(`  presuda: ${String(debateRes.output).replace(/\n/g, ' ').slice(0, 180)}`);
+
+  // ── 16. Epizodična memorija, sandbox, OTel ──────────────────────────────────
+  head(16, 'EPIZODIČNA MEMORIJA · SANDBOX · OTEL — učenje, granice, telemetrija');
+  await robot.memory.episodic.record('nmq', {
+    agentId: 'support',
+    problem: 'Kupac traži povraćaj jer narudžbina kasni 10 dana',
+    solution: 'Provjerio politiku (14 dana), odobrio povraćaj, poslao potvrdu na mejl',
+    success: true,
+    lessons: ['Uvijek provjeri rok od 14 dana prije odobrenja'],
+    tools: ['memory_search', 'email_send'],
+  });
+  const epStats = await robot.memory.episodic.stats('nmq');
+  const epSimilar = await robot.memory.episodic.similar('nmq', 'kupac hoće povraćaj novca jer je kasnilo', { k: 2 });
+  line(`  epizode: ukupno=${epStats.total} uspješnih=${epStats.success} · pronađeno sličnih=${epSimilar.length} (score ${epSimilar[0]?.score})`);
+  line(`  epizode idu u prompt kao "kako smo slične slučajeve rješavali ranije" (few-shot)`);
+
+  line(`  sandbox nivo: ${robot.sandbox.level} · mreža: ${robot.sandbox.describe().network} · max timeout: ${robot.sandbox.describe().maxTimeoutMs}ms`);
+  try {
+    robot.sandbox.assertNetwork('https://zli.example.com/steal');
+    line('  sandbox propustio zabranjeni domen — GREŠKA!');
+  } catch (err) {
+    line(`  sandbox blokirao zabranjeni domen: ${err.code}`);
+  }
+
+  const otelRun = await robot.tracer.readFromDisk({ tenantId: 'nmq', limit: 1 });
+  line(`  OTel: izvezeno runova=${robot.otel.exported} · fajl=${robot.otel.traceFile ? 'data/_demo/_global/otel-traces.jsonl' : '-'}`);
+  const otelFile = await fs.readFile(robot.otel.traceFile, 'utf8').catch(() => '');
+  const firstLine = otelFile.split('\n').filter(Boolean)[0];
+  if (firstLine) {
+    const parsed = JSON.parse(firstLine);
+    line(`  OTLP span: resurs=${parsed.resourceSpans?.[0]?.resource?.attributes?.[0]?.value?.stringValue} · spanova u runu=${parsed.resourceSpans?.[0]?.scopeSpans?.[0]?.spans?.length} · poslednji trace=${otelRun[0]?.runId ?? '-'}`);
+  }
+
   line('');
   line('╔════════════════════════════════════════════════════════════════════════════╗');
   line('║  DEMO ZAVRŠEN — sve radi bez interneta i bez troška (mock LLM)              ║');

@@ -176,7 +176,7 @@ test('config: javna konfiguracija ne sadrži tajne', async () => {
     const pub = robot.config.publicConfig();
     const json = JSON.stringify(pub);
     assert.ok(!json.includes('sk-tajna'));
-    assert.equal(pub.agents.length, 13);
+    assert.equal(pub.agents.length, 19);
     assert.equal(pub.mcpServers.length >= 1, true);
   } finally {
     await cleanup(robot.__dir);

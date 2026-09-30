@@ -7,11 +7,36 @@ import { createOrchestratorWorkerPattern } from './orchestrator-worker.js';
 import { createFanoutPattern } from './fanout.js';
 import { createHandoffPattern } from './handoff.js';
 import { createMagenticPattern } from './magentic.js';
+import { createReflectionPattern } from './reflection.js';
+import { createDebatePattern } from './debate.js';
+import { createTeamPattern } from './team.js';
 import { createPatternHelpers } from './helpers.js';
 import { createBudget } from '../core/budget.js';
 import { NotFoundError, ValidationError, PolicyError } from '../core/errors.js';
 
-export const PATTERNS = ['agent', 'router', 'sequential', 'orchestrator-worker', 'fanout', 'handoff', 'magentic'];
+/**
+ * 10 ulaza: `agent` (ReAct petlja) i `react` (alias), `router`, `sequential`, `orchestrator-worker`,
+ * `fanout`, `handoff`, `magentic`, `reflection`, `debate`, `team`.
+ */
+export const PATTERNS = ['agent', 'react', 'router', 'sequential', 'orchestrator-worker', 'fanout', 'handoff', 'magentic', 'reflection', 'debate', 'team'];
+
+/**
+ * Koliko koraka (LLM poziva + poziva alata) pattern tipično traži, u odnosu na jednog agenta.
+ * Bez ovoga bi `team` (7 specijalista) pao na budžetu predviđenom za jedan razgovor.
+ */
+export const PATTERN_STEP_BUDGET = {
+  agent: 1,
+  react: 1,
+  router: 2,
+  sequential: 2,
+  'orchestrator-worker': 3,
+  fanout: 3,
+  handoff: 3,
+  magentic: 3,
+  reflection: 3,
+  debate: 5,
+  team: 6,
+};
 
 export function createOrchestrator(services) {
   const { catalog, runAgent, tools, tracer, cost, metrics, logger, policyResolver, config } = services;
@@ -31,7 +56,11 @@ export function createOrchestrator(services) {
     fanout: createFanoutPattern({ ...services, helpers }),
     handoff: createHandoffPattern({ ...services, helpers }),
     magentic: createMagenticPattern({ ...services, helpers }),
+    reflection: createReflectionPattern({ ...services, helpers }),
+    debate: createDebatePattern({ ...services, helpers }),
+    team: createTeamPattern({ ...services, helpers }),
   };
+  patterns.react = patterns.agent; // ReAct = ista petlja (reason → act → observe), ime je samo eksplicitnije
 
   /**
    * @param {object} req
@@ -50,6 +79,8 @@ export function createOrchestrator(services) {
     if (!tenant) throw new NotFoundError('Tenant', tenantId);
     if (agentId && !catalog.get(agentId)) throw new NotFoundError('Agent', agentId);
     assertAgentAllowed(tenant, agentId);
+    // Per-agent identitet i budžet (control plane) — agent ne smije potrošiti više od svog mjesečnog limita
+    if (services.controlPlane?.assertAgentBudget) await services.controlPlane.assertAgentBudget(tenantId, agentId ?? 'router');
 
     const requestedPattern = req.pattern && PATTERNS.includes(req.pattern) ? req.pattern : null;
     const agentSpec = agentId ? catalog.get(agentId) : null;
@@ -66,11 +97,12 @@ export function createOrchestrator(services) {
     });
 
     const spentThisMonth = await cost.monthlySpent(tenantId);
+    const baseMaxSteps = options.maxSteps ?? policy.maxSteps ?? tenant.maxSteps ?? config.env.maxSteps;
     const budget = createBudget({
       runUsd: options.maxRunUsd ?? tenant.budget?.runUsd ?? config.env.budget.runUsd,
       monthlyUsd: tenant.budget?.monthlyUsd ?? config.env.budget.monthlyUsd,
       spentThisMonthUsd: spentThisMonth,
-      maxSteps: options.maxSteps ?? tenant.maxSteps ?? config.env.maxSteps,
+      maxSteps: baseMaxSteps * (PATTERN_STEP_BUDGET[initialPattern] ?? 1),
       maxWallMs: options.maxWallMs ?? 180_000,
     });
 
@@ -91,6 +123,9 @@ export function createOrchestrator(services) {
       tools,
       llm: services.llm ?? null,
       helpers,
+      sandbox: services.sandbox ?? null,
+      options,
+      budgetPerRunUsd: options.maxRunUsd,
       onEvent: typeof onEvent === 'function' ? onEvent : undefined,
       monthlySpentUsd: spentThisMonth,
     };
@@ -105,7 +140,9 @@ export function createOrchestrator(services) {
         routing = await services.router.classify(input, { tenantId, useLlm: options.useLlmRouter !== false, signal, model: options.routerModel });
         const chosen = catalog.get(routing.agentId) ?? catalog.get('support');
         assertAgentAllowed(tenant, chosen.id);
+        if (services.controlPlane?.assertAgentBudget) await services.controlPlane.assertAgentBudget(tenantId, chosen.id);
         usedPattern = chosen.defaultPattern && chosen.defaultPattern !== 'router' ? chosen.defaultPattern : 'agent';
+        budget.setMaxSteps(baseMaxSteps * (PATTERN_STEP_BUDGET[usedPattern] ?? 1));
         ctx.agentId = chosen.id;
         ctx.pattern = usedPattern;
         run0.agentId = chosen.id;
@@ -117,6 +154,7 @@ export function createOrchestrator(services) {
       } else {
         const spec = agentSpec ?? catalog.get('support');
         ctx.agentId = spec.id;
+        budget.setMaxSteps(baseMaxSteps * (PATTERN_STEP_BUDGET[initialPattern] ?? 1));
         result = await patterns[initialPattern].run({ input, ctx, config: { ...patternConfigFor(spec, initialPattern, options), ...(options.patternConfig ?? {}) } });
       }
     } catch (err) {
@@ -134,7 +172,7 @@ export function createOrchestrator(services) {
       costUsd: budget.state.usd,
     });
 
-    metrics?.inc('run_cost_usd', { tenant: tenantId, agent: ctx.agentId ?? '-' }, budget.state.usd);
+    metrics?.inc('cost_usd_total', { tenant: tenantId, agent: ctx.agentId ?? '-' }, budget.state.usd);
 
     return {
       runId: run0.runId,

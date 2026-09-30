@@ -61,6 +61,17 @@ export function createBudget({
       return state.steps;
     },
 
+    /**
+     * Podigne limit koraka (nikad ne snižava).
+     * Koristi se kad multi-agent pattern (team, debate) traži više koraka od jednog agenta —
+     * budžet se računa po patternu, ne po jednom pozivu.
+     */
+    setMaxSteps(n) {
+      const value = Number(n);
+      if (Number.isFinite(value) && value > state.maxSteps) state.maxSteps = value;
+      return state.maxSteps;
+    },
+
     /** Zabilježi stvarnu potrošnju. */
     spend({ usd = 0, tokensIn = 0, tokensOut = 0 } = {}) {
       state.usd += usd;

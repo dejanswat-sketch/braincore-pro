@@ -1,0 +1,119 @@
+# Mrežna izolacija: podrazumijevano zabranjeno sve, pa se otvara samo nužno.
+# Ovo je sloj koji aplikativni sandbox (src/core/sandbox.js) NE može dati.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nmq-robot-default-deny
+  namespace: nmq-system
+spec:
+  podSelector: {}
+  policyTypes: ['Ingress', 'Egress']
+---
+# Ulaz: samo ingress kontroler smije na port 8787.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nmq-robot-allow-ingress
+  namespace: nmq-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: nmq-robot
+  policyTypes: ['Ingress']
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8787
+---
+# Izlaz: DNS + LLM provajderi + Postgres/Redis u klasteru. Sve ostalo je blokirano.
+# NAPOMENA: MCP serveri koji zovu spoljne API-je (Gmail, Slack, Shopify) traže svoj egress —
+# dodaj ih ovdje eksplicitno, po tenantu, kad se integracija uključi.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nmq-robot-allow-egress
+  namespace: nmq-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: nmq-robot
+  policyTypes: ['Egress']
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.169.254/32 # metadata servis — nikad
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nmq-robot-postgres
+      ports:
+        - protocol: TCP
+          port: 5432
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nmq-robot-redis
+      ports:
+        - protocol: TCP
+          port: 6379
+---
+# MCP serveri se pokreću kao podprocesi unutar istog pod-a (stdio transport) — za njih važi isti egress.
+# Ako se MCP serveri budu pokretali kao zasebni podovi (HTTP transport), dobijaju svoju NetworkPolicy:
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nmq-mcp-servers-egress
+  namespace: nmq-system
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/component: mcp-server
+  policyTypes: ['Ingress', 'Egress']
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nmq-robot
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+              - 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 443

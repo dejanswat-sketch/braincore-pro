@@ -16,6 +16,12 @@ export function envConfig(env = process.env) {
     httpAllowlist: parseList(env.NMQ_HTTP_ALLOWLIST, { separator: ',' }),
     maxSteps: parseNumber(env.NMQ_MAX_STEPS, 12),
     rateLimitPerMin: parseNumber(env.NMQ_RATE_LIMIT_PER_MIN, 60),
+    /** Persistentni agenti: scheduler i OTel izvoz */
+    scheduler: parseBool(env.NMQ_SCHEDULER, true),
+    schedulerTickMs: parseNumber(env.NMQ_SCHEDULER_TICK_MS, 1000),
+    otelFile: parseBool(env.NMQ_OTEL_FILE, true),
+    otelEndpoint: env.OTEL_EXPORTER_OTLP_ENDPOINT || '',
+    otelHeaders: safeJson(env.NMQ_OTEL_HEADERS, {}),
     budget: {
       monthlyUsd: parseNumber(env.NMQ_BUDGET_MONTHLY_USD, 50),
       runUsd: parseNumber(env.NMQ_BUDGET_RUN_USD, 0.5),

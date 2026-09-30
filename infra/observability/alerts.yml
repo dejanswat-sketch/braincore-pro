@@ -1,0 +1,166 @@
+# Prometheus pravila za NMQ Robot (v0.2).
+# Primjena: kubectl apply -f alerts.yml   (ili kopirati u Prometheus rules direktorij)
+#
+# Imena metrika odgovaraju src/observability/metrics.js i src/observability/trace.js.
+groups:
+  - name: nmq-robot-availability
+    interval: 30s
+    rules:
+      - alert: NmqRobotDown
+        expr: up{job="nmq-robot"} == 0
+        for: 2m
+        labels: { severity: critical, team: nmq }
+        annotations:
+          summary: 'NMQ Robot ne odgovara'
+          description: 'Instanca {{ $labels.instance }} ne odgovara 2 minute. Provjeri `kubectl -n nmq-system logs deploy/nmq-robot` i /healthz.'
+          runbook: 'docs/11-POKRETANJE.md §6'
+
+      - alert: NmqReadinessFailing
+        expr: increase(nmq_runs_started_total[10m]) == 0 and up{job="nmq-robot"} == 1
+        for: 15m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Robot radi ali nema aktivnosti 15 min'
+          description: 'Nema novih runova — moguće da je LLM nedostupan ili scheduler stao. Provjeri /readyz (llmIsMock, problemi) i /v1/admin/health.'
+
+  - name: nmq-robot-quality
+    interval: 30s
+    rules:
+      - alert: NmqHighErrorRate
+        expr: |
+          sum(rate(nmq_runs_finished_total{status="error"}[5m]))
+          /
+          clamp_min(sum(rate(nmq_runs_finished_total[5m])), 0.001) > 0.05
+        for: 5m
+        labels: { severity: critical, team: nmq }
+        annotations:
+          summary: 'Više od 5% runova pada (5 min)'
+          description: 'Pogledaj `nmq_span_errors_total` po imenu spana i trace zadnjih 20 runova preko GET /v1/runs.'
+
+      - alert: NmqSlowRuns
+        expr: histogram_quantile(0.95, sum(rate(nmq_run_duration_seconds_bucket[10m])) by (le, tenant)) > 8
+        for: 10m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'p95 latencija run-a > 8s za tenanta {{ $labels.tenant }}'
+          description: 'Provjeri koji pattern/agent je spor (nmq_run_duration_seconds po agentu), da li je RAG vraća previše konteksta i da li MCP server kasni.'
+
+      - alert: NmqToolFailures
+        expr: sum(rate(nmq_tool_errors_total[10m])) by (tool) > 0.2
+        for: 10m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Alat {{ $labels.tool }} pada često'
+          description: 'Provjeri audit zapise (GET /v1/audit) i logove MCP servera. Ako je spoljni API — provjeri kvote i tokene.'
+
+      - alert: NmqLlmProviderDown
+        expr: |
+          sum(rate(nmq_llm_calls_total{status="ok"}[5m])) == 0
+          and
+          sum(rate(nmq_llm_calls_total{status="error"}[5m])) > 0
+        for: 5m
+        labels: { severity: critical, team: nmq }
+        annotations:
+          summary: 'LLM provajder ne vraća uspješne odgovore'
+          description: 'Provjeri ključ, kvotu i status provajdera. Fallback lanac (NMQ_LLM_FALLBACKS) bi trebao preuzeti — provjeri da je konfigurisan.'
+
+  - name: nmq-robot-cost
+    interval: 60s
+    rules:
+      - alert: NmqTenantBudget80
+        expr: sum(increase(nmq_cost_usd_total[24h])) by (tenant) > 0
+        for: 5m
+        labels: { severity: info, team: nmq, kind: cost-report }
+        annotations:
+          summary: 'Dnevna potrošnja tenanta {{ $labels.tenant }}: {{ $value | printf "%.2f" }} USD'
+          description: 'Informativno — poredi sa mjesečnim budžetom iz config/tenants.json i javi klijentu ako trend vodi ka prekoračenju.'
+
+      - alert: NmqAgentBudgetBlocked
+        expr: increase(nmq_controlplane_blocked_total{reason="budget"}[1h]) > 0
+        for: 1m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Agent {{ $labels.agent }} je blokiran zbog budžeta ({{ $labels.tenant }})'
+          description: 'Klijent ne može da radi. Odluči: podigni budžet (POST /v1/admin/agents/:id/budget) ili obavijesti klijenta.'
+
+      - alert: NmqRunCostSpike
+        expr: histogram_quantile(0.95, sum(rate(nmq_run_cost_usd_bucket[30m])) by (le, tenant)) > 0.10
+        for: 15m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'p95 cijena run-a > 0.10 USD ({{ $labels.tenant }})'
+          description: 'Provjeri da li neki agent ušao u petlju (nmq_tool_calls_total po alatu) ili pattern troši previše (debate/team).'
+
+  - name: nmq-robot-jobs
+    interval: 30s
+    rules:
+      - alert: NmqJobFailures
+        expr: sum(increase(nmq_jobs_failed_total[15m])) by (job) > 0
+        for: 1m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Posao {{ $labels.job }} je pao'
+          description: 'Pogledaj GET /v1/admin/jobs/:id/runs — polje error i code. Policy greška znači da alat nije dozvoljen; budget znači potrošen limit.'
+
+      - alert: NmqJobsStalled
+        expr: sum(nmq_jobs_active) == 0 and sum(increase(nmq_jobs_runs_total[2h])) == 0 and (sum(nmq_jobs_created_total) > 0)
+        for: 30m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Nijedan zakazani posao se ne izvršava 2h'
+          description: 'Scheduler možda nije pokrenut (NMQ_SCHEDULER=0) ili je lease zaglavio. Provjeri /v1/admin/health → scheduler.running.'
+
+      - alert: NmqApprovalsPending
+        expr: nmq_approvals_pending > 0
+        for: 24h
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Odobrenje čeka više od 24h ({{ $labels.tenant }})'
+          description: 'Klijent je blokiran. Pošalji podsjetnik i/ili odobri kroz POST /v1/approvals/:runId.'
+
+  - name: nmq-robot-security
+    interval: 30s
+    rules:
+      - alert: NmqPolicyDenials
+        expr: sum(increase(nmq_policy_denied_total[15m])) by (tenant) > 20
+        for: 10m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Puno odbijenih akcija za {{ $labels.tenant }}'
+          description: 'Ili agent traži alate koji nisu dozvoljeni (pogrešna politika), ili je neko pokušava nešto što ne smije. Provjeri audit.'
+
+      - alert: NmqCrossTenantAttempt
+        expr: increase(nmq_tenant_mismatch_total[10m]) > 0
+        for: 1m
+        labels: { severity: critical, team: nmq }
+        annotations:
+          summary: 'Pokušaj pristupa tuđim podacima'
+          description: 'Odmah provjeri audit zapise i IP izvora. Ovo je sigurnosni incident — vidi docs/17 §10.'
+
+      - alert: NmqAgentKeySpike
+        expr: sum(increase(nmq_agent_key_auth_total[10m])) > 500
+        for: 5m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'Neuobičajen broj autentikacija agent ključem'
+          description: 'Provjeri da ključ nije procureo; ako jeste — opozovi ga (DELETE /v1/admin/agents/:id/keys/:keyId).'
+
+  - name: nmq-robot-infra
+    interval: 60s
+    rules:
+      - alert: NmqMcpServerDown
+        expr: increase(nmq_mcp_errors_total[10m]) > 5
+        for: 5m
+        labels: { severity: warning, team: nmq }
+        annotations:
+          summary: 'MCP server {{ $labels.server }} vraća greške'
+          description: 'Provjeri GET /v1/mcp i logove (`mcp.connect_failed`, `mcp.exited`). Ako je server pao, restartuj ga; robot nastavlja bez njegovih alata.'
+
+      - alert: NmqDiskAlmostFull
+        expr: |
+          (node_filesystem_avail_bytes{mountpoint="/data"} / node_filesystem_size_bytes{mountpoint="/data"}) < 0.15
+        for: 15m
+        labels: { severity: critical, team: nmq }
+        annotations:
+          summary: 'Manje od 15% prostora na /data'
+          description: 'JSONL fajlovi (trace, audit, events) rastu. Arhiviraj stare mjesece i provjeri backup prije brisanja.'

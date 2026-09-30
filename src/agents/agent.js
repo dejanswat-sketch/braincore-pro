@@ -29,9 +29,14 @@ export function createAgentRunner(services) {
       ctx.session ?? memory.sessions.getOrCreate(tenantId, ctx.sessionId, { agentId: spec.id, userId: ctx.userId, meta: { pattern: ctx.pattern } });
 
     // 1) RAG + činjenice (samo ako agent to traži)
-    let context = { kb: '', citations: [], factsText: '', recentEvents: [] };
+    let context = { kb: '', citations: [], factsText: '', recentEvents: [], episodesText: '' };
     if (spec.useKnowledge !== false) {
-      context = await memory.recall(tenantId, userText, { k: spec.ragK ?? 5, maxChars: spec.ragMaxChars ?? 3500 });
+      context = await memory.recall(tenantId, userText, {
+        k: spec.ragK ?? 5,
+        maxChars: spec.ragMaxChars ?? 3500,
+        includeEpisodes: spec.episodic !== false,
+        episodesK: spec.episodesK ?? 3,
+      });
     }
 
     // 2) Alati koje agent smije (politika + spec.tools)
@@ -207,6 +212,27 @@ export function createAgentRunner(services) {
       });
     }
 
+    // 5) Epizodična memorija: pamti kako je zadatak riješen (samo kad je bilo stvarnih akcija)
+    const toolSteps = steps.filter((s) => s.type === 'tool' && s.ok);
+    if (spec.episodic !== false && (toolSteps.length || ctx.recordEpisode === true)) {
+      try {
+        await memory.episodic.record(tenantId, {
+          agentId: spec.id,
+          runId: ctx.runId,
+          problem: userText,
+          actions: steps.map((s) => (s.type === 'tool' ? `alat:${s.name}` : `llm#${s.step ?? ''}`)).slice(0, 12),
+          solution: output,
+          outcome: status === 'ok' ? 'success' : status,
+          success: status === 'ok',
+          tools: [...new Set(toolSteps.map((s) => s.name))],
+          costUsd,
+          tags: spec.domain ? [spec.domain] : [],
+        });
+      } catch (err) {
+        logger?.warn?.('episodic.record_failed', { agentId: spec.id, error: err.message });
+      }
+    }
+
     metrics?.inc('agent_runs_total', { tenant: tenantId, agent: spec.id, status });
     logger?.debug?.('agent.done', { agentId: spec.id, tenantId, status, steps: steps.length, costUsd: Number(costUsd.toFixed(6)) });
 
@@ -251,6 +277,11 @@ export function buildSystemPrompt(spec, { context = {}, tenant = null, tools = [
   }
 
   if (context.factsText) parts.push(`\n## Trajne činjenice\n${context.factsText}`);
+  if (context.episodesText) {
+    parts.push(
+      `\n## Kako smo slične slučajeve rješavali ranije (koristi kao primjer, ne kopiraj slijepo)\n${context.episodesText}`,
+    );
+  }
   if (context.recentEvents?.length) {
     parts.push(`\n## Skorašnji događaji\n${context.recentEvents.map((e) => `- [${e.type}] ${e.content}`).join('\n')}`);
   }

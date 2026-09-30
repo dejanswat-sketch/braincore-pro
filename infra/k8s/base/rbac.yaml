@@ -1,0 +1,96 @@
+# RBAC za NMQ Robot.
+#  - `nmq-robot` ServiceAccount: SAMO čitanje sopstvenog ConfigMap-a (ne treba mu K8s API za rad)
+#  - `nmq-operator` ServiceAccount: kontrolna ravan (deploy/rollback/scale) — koristi ga CI ili admin
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nmq-robot
+  namespace: nmq-system
+  labels:
+    app.kubernetes.io/name: nmq-robot
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nmq-operator
+  namespace: nmq-system
+  labels:
+    app.kubernetes.io/name: nmq-robot
+    app.kubernetes.io/component: operator
+---
+# Robot čita samo svoju konfiguraciju; ne može da mijenja ništa u klasteru.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nmq-robot-config-reader
+  namespace: nmq-system
+rules:
+  - apiGroups: ['']
+    resources: ['configmaps']
+    resourceNames: ['nmq-robot-config', 'nmq-robot-agents']
+    verbs: ['get', 'list', 'watch']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nmq-robot-config-reader
+  namespace: nmq-system
+subjects:
+  - kind: ServiceAccount
+    name: nmq-robot
+    namespace: nmq-system
+roleRef:
+  kind: Role
+  name: nmq-robot-config-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# Operater upravlja deployment-om i restartuje podove (deploy/rollback agenata ne traži K8s,
+# ali izdavanje nove verzije image-a traži).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nmq-operator
+  namespace: nmq-system
+rules:
+  - apiGroups: ['apps']
+    resources: ['deployments', 'statefulsets']
+    verbs: ['get', 'list', 'watch', 'patch', 'update']
+  - apiGroups: ['']
+    resources: ['pods', 'pods/log', 'services', 'configmaps', 'secrets']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['']
+    resources: ['pods/exec']
+    verbs: ['create']
+  - apiGroups: ['batch']
+    resources: ['cronjobs', 'jobs']
+    verbs: ['get', 'list', 'watch']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nmq-operator
+  namespace: nmq-system
+subjects:
+  - kind: ServiceAccount
+    name: nmq-operator
+    namespace: nmq-system
+roleRef:
+  kind: Role
+  name: nmq-operator
+  apiGroup: rbac.authorization.k8s.io
+---
+# Mrežna politika po default-u zabranjuje sve — potvrdi da je CNI koji to podržava (Calico/Cilium).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nmq-robot-rbac-notes
+  namespace: nmq-system
+data:
+  README: |
+    Per-tenant izolacija u K8s:
+      1. Namespace po klijentu: infra/k8s/tenant-template/namespace.yaml
+      2. ResourceQuota + LimitRange po klijentu (isti template)
+      3. NetworkPolicy: default deny + egress samo na nmq-system/robot
+      4. Ako klijent traži fizički odvojen proces: poseban Deployment u svom namespace-u
+         (isti image, NMQ_DEFAULT_TENANT=<klijent>, NMQ_REQUIRE_AUTH=1)
+      5. OIDC/SSO (planirano, docs/17): ServiceAccount token → robot auth

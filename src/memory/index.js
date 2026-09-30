@@ -6,6 +6,7 @@ import { createSessionStore } from './session.js';
 import { createLongTermMemory } from './longterm.js';
 import { createVectorStore } from './vector.js';
 import { createEmbeddings } from './embeddings.js';
+import { createEpisodicMemory } from './episodic.js';
 import { redactPii } from '../core/policy.js';
 
 export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) {
@@ -13,11 +14,13 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
   const sessions = createSessionStore({ dataDir, logger, piiKinds });
   const longterm = createLongTermMemory({ dataDir, logger, piiKinds });
   const vectors = createVectorStore({ dataDir, embeddings: embedder, logger });
+  const episodic = createEpisodicMemory({ dataDir, vectors, embeddings: embedder, logger });
 
   return {
     sessions,
     longterm,
     vectors,
+    episodic,
     embedder,
     isSemantic: embedder.useReal,
 
@@ -26,12 +29,13 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
       return longterm.append(tenantId, event);
     },
 
-    /** Kontekst za prompt: relevantni fragmenti + trajne činjenice. */
-    async recall(tenantId, query, { k = 6, maxChars = 4000, includeFacts = true } = {}) {
-      const [ctx, facts, events] = await Promise.all([
+    /** Kontekst za prompt: relevantni fragmenti + trajne činjenice + slične prošle epizode. */
+    async recall(tenantId, query, { k = 6, maxChars = 4000, includeFacts = true, includeEpisodes = true, episodesK = 3 } = {}) {
+      const [ctx, facts, events, episodesText] = await Promise.all([
         vectors.contextFor(tenantId, query, { k, maxChars }),
         includeFacts ? longterm.readFacts(tenantId) : Promise.resolve({}),
         longterm.search(tenantId, { query, k: 3 }),
+        includeEpisodes ? episodic.fewShotText(tenantId, query, { k: episodesK }) : Promise.resolve(''),
       ]);
       return {
         kb: ctx.text,
@@ -40,6 +44,7 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
         factsText: Object.values(facts)
           .map((f) => `- ${f.key}: ${typeof f.value === 'string' ? f.value : JSON.stringify(f.value)} (pouzdanost ${f.confidence})`)
           .join('\n'),
+        episodesText,
         recentEvents: events.map((e) => ({ ts: e.ts, type: e.type, content: redactPii(String(e.content ?? '').slice(0, 300)) })),
       };
     },

@@ -1,0 +1,16 @@
+{
+  "id": "validator",
+  "name": "Validator",
+  "domain": "core",
+  "description": "Provjerava tačnost i konzistentnost podataka i odgovora; označava šta nije potvrđeno.",
+  "systemPrompt": "Ti si validator.\n- Podijeli nalaz u tri dijela: POTVRĐENO (sa izvorom), NIJE POTVRĐENO, PROTIVRJEČNO (sa objašnjenjem protivrječnosti).\n- Provjeri računicu kalkulatorom kad god postoje brojevi (međusuma, PDV, procenti, rokovi).\n- Ako je nešto pretpostavka, a ne činjenica, eksplicitno napiši: \"PRETPOSTAVKA\".\n- Ne popravljaj podatke — samo ih provjeravaj i prijavi šta ne valja.",
+  "defaultPattern": "agent",
+  "tools": ["calculator", "memory_search", "json_query", "current_time", "report_generate"],
+  "toolScopes": ["core", "memory", "reporting"],
+  "maxRisk": "low",
+  "maxSteps": 5,
+  "temperature": 0,
+  "episodic": false,
+  "routingHints": ["provjeri tačnost", "da li je tačno", "validacija", "kontrola", "protivrječnost", "provjeri računicu"],
+  "kpi": ["svaka tvrdnja ima status potvrde"]
+}

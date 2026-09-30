@@ -23,7 +23,7 @@ test('GET /healthz, /readyz, /metrics', async () => {
     assert.equal(health.body.ok, true);
 
     const ready = await json(await fetch(`${base}/readyz`));
-    assert.equal(ready.body.agents, 13);
+    assert.equal(ready.body.agents, 19);
     assert.ok(ready.body.tools >= 18);
 
     const metrics = await fetch(`${base}/metrics`);
@@ -34,7 +34,7 @@ test('GET /healthz, /readyz, /metrics', async () => {
 
 test('GET /v1/agents, /v1/tools, /v1/patterns, /v1/config', async () => {
   await withServer(async ({ base }) => {    const agents = await json(await fetch(`${base}/v1/agents`));
-    assert.equal(agents.body.count, 13);
+    assert.equal(agents.body.count, 19);
     assert.ok(agents.body.agents.some((a) => a.id === 'support'));
 
     const agent = await json(await fetch(`${base}/v1/agents/legal`));
@@ -46,7 +46,7 @@ test('GET /v1/agents, /v1/tools, /v1/patterns, /v1/config', async () => {
     assert.ok(tools.body.tools.some((t) => t.source === 'mcp:nmq-crm'));
 
     const patterns = await json(await fetch(`${base}/v1/patterns`));
-    assert.equal(patterns.body.patterns.length, 7);
+    assert.equal(patterns.body.patterns.length, 11);
 
     const cfg = await json(await fetch(`${base}/v1/config`));
     assert.equal(cfg.body.llm.provider, 'openai-compatible');

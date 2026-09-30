@@ -1,0 +1,68 @@
+# Nesekretna konfiguracija. Tajne idu u Secret (infra/k8s/base/secret.example.yaml).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nmq-robot-config
+  namespace: nmq-system
+data:
+  NMQ_LOG_LEVEL: info
+  NMQ_DEFAULT_TENANT: nmq
+  NMQ_LLM_PROVIDER: openai-compatible
+  NMQ_LLM_BASE_URL: https://api.deepseek.com/v1
+  NMQ_LLM_MODEL: deepseek-chat
+  NMQ_LLM_FAST_MODEL: deepseek-chat
+  NMQ_LLM_TIMEOUT_MS: '60000'
+  NMQ_LLM_MAX_RETRIES: '2'
+  NMQ_BUDGET_MONTHLY_USD: '200'
+  NMQ_BUDGET_RUN_USD: '1.5'
+  NMQ_MAX_STEPS: '12'
+  NMQ_RATE_LIMIT_PER_MIN: '120'
+  NMQ_HTTP_ALLOWLIST: api.deepseek.com,api.openai.com,generativelanguage.googleapis.com
+  NMQ_SCHEDULER: '1'
+  NMQ_SCHEDULER_TICK_MS: '1000'
+  NMQ_OTEL_FILE: '1'
+  NMQ_ALLOW_ANONYMOUS: '0'
+  # OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.observability.svc.cluster.local:4318
+---
+# Agenti, politike, tenanti i MCP serveri — isti fajlovi kao u repou (bez tajni).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nmq-robot-agents
+  namespace: nmq-system
+data:
+  agents.support.json: |
+    { "id": "support", "name": "Support agent", "domain": "support",
+      "description": "Rješava korisničke upite iz baze znanja.",
+      "systemPrompt": "Ti si support agent. Prvo provjeri bazu znanja.",
+      "defaultPattern": "handoff", "tools": ["memory_search","order_lookup","ticket_create","notify","handoff"], "maxSteps": 10 }
+  policies.json: |
+    { "defaults": { "tools": { "allow": ["*"], "deny": ["shell_exec"], "requireApproval": ["email_send","invoice_create"] },
+      "risk": { "high": "require_approval" }, "budget": { "runUsd": 0.5, "monthlyUsd": 50 } },
+      "tenants": { "nmq": { "budget": { "runUsd": 1.5, "monthlyUsd": 200 } } } }
+  # ⚠️ U produkciji mount-uj cijeli config/ iz git-a (git-sync) ili peci u image —
+  # ovaj ConfigMap je samo primjer da manifesti budu primjenljivi odmah.
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: nmq-robot-secrets
+  namespace: nmq-system
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: nmq-store
+    kind: ClusterSecretStore
+  target:
+    name: nmq-robot-secrets
+    creationPolicy: Owner
+  data:
+    - secretKey: NMQ_LLM_API_KEY
+      remoteRef:
+        key: nmq/robot/llm
+    - secretKey: NMQ_MASTER_KEY
+      remoteRef:
+        key: nmq/robot/master-key
+    - secretKey: NMQ_API_KEY_PEPPER
+      remoteRef:
+        key: nmq/robot/pepper

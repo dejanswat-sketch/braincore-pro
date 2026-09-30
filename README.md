@@ -53,13 +53,16 @@ node scripts/serve.mjs
 | Sloj | Šta radi | Gdje |
 |---|---|---|
 | **Gateway** | REST + SSE streaming, webhook ulazi, CORS, auth, rate limit, `/metrics`, widget | `src/server/` |
-| **Orchestrator** | `router`, `sequential`, `orchestrator-worker`, `fanout`, `handoff`, `magentic` | `src/orchestration/` |
-| **Agenti** | 13 agenata definisanih **podacima** (JSON) — novi agent = novi fajl, bez koda | `config/agents/` |
-| **Alati** | 21 ugrađen alat (CRM, fakture, mejl, KB, izvještaji, narudžbine, ticketi, kalkulator…) | `src/tools/builtin.js` |
+| **Control plane** | Agent lifecycle (deploy/rollback/pause), verzije, per-agent ključevi i budžeti, audit | `src/controlplane/` |
+| **Scheduler** | Persistentni agenti: `interval`/`cron`/`once`, event triggeri, dugoročni procesi sa checkpoint-om | `src/scheduler/` |
+| **Orchestrator** | `agent`/`react`, `router`, `sequential`, `orchestrator-worker`, `fanout`, `handoff`, `magentic`, `reflection`, `debate`, `team` | `src/orchestration/` |
+| **Agenti** | 19 agenata definisanih **podacima** (JSON) — uključujući specijalistički tim: planner, researcher, extractor, validator, decider, executor, reflector | `config/agents/` |
+| **Alati** | 20 ugrađenih alata (CRM, fakture, mejl, KB, izvještaji, narudžbine, ticketi, proces, epizode…) | `src/tools/builtin.js` |
 | **MCP** | Vlastiti JSON-RPC 2.0 klijent: `stdio` + Streamable HTTP; šablon internog servera | `src/tools/mcp-*.js`, `mcp/` |
-| **Memorija** | Sesija (klizni prozor + sažetak), istorija/facts, vektorska baza sa citatima | `src/memory/` |
-| **Observability** | Trace/span, Prometheus metrike, cost tracker po tenantu/agentu/modelu, hash-chained audit | `src/observability/` |
-| **Governance** | `allow / deny / require_approval`, budžet, PII redakcija, human-in-the-loop | `src/core/policy.js`, `config/policies.json` |
+| **Memorija** | Sesija, istorija/facts, **epizodična memorija** (učenje iz prošlih slučajeva), vektorska baza sa citatima | `src/memory/` |
+| **Observability** | Trace/span, Prometheus metrike, cost tracker, hash-chained audit, **OTLP izvoz** | `src/observability/` |
+| **Governance** | `allow / deny / require_approval`, budžet (run/tenant/agent), PII redakcija, human-in-the-loop | `src/core/policy.js`, `config/policies.json` |
+| **Sandbox** | Mrežni allowlist, FS korijeni, očišćen env za MCP podprocese, limiti | `src/core/sandbox.js` |
 | **Tenancy** | Izolacija fizički + logički, API ključevi, AES-256-GCM tajne, kill switch | `src/tenancy/store.js` |
 
 ---
@@ -119,6 +122,36 @@ const res = await robot.orchestrator.run({
 console.log(res.output, res.costUsd, res.approvals);
 ```
 
+**7. Persistentni agent (radi sam, bez korisnika):**
+
+```bash
+# dnevni izvještaj svaki dan u 08:00
+curl -X POST localhost:8787/v1/admin/jobs -H "content-type: application/json" -d '{
+  "name":"dnevni izvještaj","agentId":"data","pattern":"agent",
+  "input":"Napravi dnevni izvještaj o prodaji","schedule":{"type":"cron","cron":"0 8 * * 1-5"}}'
+
+# dugoročni proces: onboarding klijenta kroz 14 dana (pamti stanje i preživljava restart)
+curl -X POST localhost:8787/v1/admin/processes -H "content-type: application/json" -d '{
+  "name":"onboarding Prima","agentId":"ops","stepDelayMs":86400000,
+  "steps":[{"id":"d1","name":"Kickoff","input":"Uradi kickoff"},
+           {"id":"d3","name":"Pristupi","input":"Dodijeli pristupe"},
+           {"id":"d7","name":"Obuka","input":"Zakazi obuku"},
+           {"id":"d14","name":"Provjera","input":"Provjeri zadovoljstvo"}]}'
+```
+
+**8. Agent lifecycle (kontrolna ravan) — bez restarta:**
+
+```bash
+# deploy toplijeg tona za support agenta
+curl -X POST localhost:8787/v1/admin/agents/support/deploy -d '{"patch":{"temperature":0.4},"note":"topliji ton"}'
+# rollback na baseline iz config-a
+curl -X POST localhost:8787/v1/admin/agents/support/rollback -d '{"version":0}'
+# pauza agenta koji troši previše
+curl -X POST localhost:8787/v1/admin/agents/sales/status -d '{"status":"paused","reason":"budžet"}'
+# per-agent ključ (service account) sa opsezima
+curl -X POST localhost:8787/v1/admin/agents/executor/keys -d '{"scopes":["crm:write"]}'
+```
+
 ---
 
 ## Endpointi
@@ -139,6 +172,12 @@ console.log(res.output, res.costUsd, res.approvals);
 | GET | `/v1/usage` `/v1/audit` | naplata i hash-chained audit |
 | GET/POST | `/v1/tenants/:id/secrets` | tajne integracija (AES-256-GCM) |
 | GET | `/widget.js` `/` | embed widget i demo stranica |
+| GET | `/v1/admin/health` `/v1/whoami` | stanje kontrolne ravni, scheduler-a, sandbox-a, OTel-a |
+| GET/POST | `/v1/admin/agents` `/v1/admin/agents/:id/deploy` `/rollback` `/status` `/budget` | agent lifecycle (role: admin/owner) |
+| POST/DELETE | `/v1/admin/agents/:id/keys/:keyId?` | per-agent ključevi (service account) |
+| GET/POST | `/v1/admin/jobs` `/v1/admin/jobs/:id/run` `/pause` `/resume` `/runs` | persistentni poslovi |
+| POST | `/v1/admin/processes` | dugoročni proces (koraci kroz dane) |
+| GET/POST | `/v1/admin/episodes` | epizodična memorija (prošli slučajevi) |
 
 ---
 
@@ -159,7 +198,16 @@ console.log(res.output, res.costUsd, res.approvals);
 | [docs/09-MONETIZACIJA.md](docs/09-MONETIZACIJA.md) | paketi, jedinična ekonomija, GTM 90 dana |
 | [docs/10-RIZICI.md](docs/10-RIZICI.md) | tehnički, poslovni i rizici izgradnje + mitigacije |
 | [docs/11-POKRETANJE.md](docs/11-POKRETANJE.md) | kako se pokreće, testira i deployuje |
+| [docs/12-MAX-ARHITEKTURA.md](docs/12-MAX-ARHITEKTURA.md) | MAX arhitektura: slojevi, tokovi, izolacija, kada na K8s |
+| [docs/13-KONTROLNA-RAVAN.md](docs/13-KONTROLNA-RAVAN.md) | lifecycle agenata, per-agent identitet i budžet, RBAC/ABAC, admin API |
+| [docs/14-PERSISTENTNI-AGENTI.md](docs/14-PERSISTENTNI-AGENTI.md) | scheduler, cron, event triggeri, dugoročni procesi, leasing |
+| [docs/15-EPIZODICNA-MEMORIJA.md](docs/15-EPIZODICNA-MEMORIJA.md) | robot koji uči iz svojih slučajeva (few-shot) |
+| [docs/16-PATTERNI-MAX.md](docs/16-PATTERNI-MAX.md) | ReAct, Planning, Reflection, Debate, specijalistički tim |
+| [docs/17-ENTERPRISE-SIGURNOST.md](docs/17-ENTERPRISE-SIGURNOST.md) | sandbox, izolacija, identitet, enkripcija, incident |
+| [docs/18-OBSERVABILITY-MAX.md](docs/18-OBSERVABILITY-MAX.md) | OTel izvoz, sve metrike, alerti, dashboardi, SLO |
+| [docs/19-MVP-MAX-PLAN.md](docs/19-MVP-MAX-PLAN.md) | plan 16 nedjelja: od v0.2 do enterprise spremnosti |
 | [infra/DEPLOY.md](infra/DEPLOY.md) | Hetzner, Hostinger, Docker, Cloudflare tunnel |
+| [infra/k8s/README.md](infra/k8s/README.md) | Kubernetes: namespace po tenantu, NetworkPolicy, RBAC, scheduler |
 
 ---
 
@@ -177,5 +225,8 @@ console.log(res.output, res.costUsd, res.approvals);
 
 ## Status
 
-`v0.1.0` — MVP koji radi: 70/70 testova, demo svih patterna, 13/13 smoke provjera, bez ijedne npm zavisnosti.
+`v0.2.0` — MAX nivo: **106/106 testova**, 19 agenata, 11 patterna/ulaza, 20 ugrađenih alata,
+persistentni agenti (scheduler + cron + event triggeri + dugoročni procesi), kontrolna ravan
+(deploy/rollback, per-agent ključevi i budžeti), epizodična memorija, sandbox i OTLP izvoz —
+sve bez ijedne npm zavisnosti.
 Vlasnik: **NMQ — Dejan Milošević PR** · Licenca: vlasnička (SaaS + self-hosted).

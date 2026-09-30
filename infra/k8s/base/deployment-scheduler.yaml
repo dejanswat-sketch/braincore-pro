@@ -1,0 +1,87 @@
+# Zaseban scheduler (persistentni agenti) — 1 replika, bez HTTP saobraćaja.
+# Koristi se kad API ima više replika (NMQ_SCHEDULER=0 u API-ju).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nmq-robot-scheduler
+  namespace: nmq-system
+  labels:
+    app.kubernetes.io/name: nmq-robot
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: 1 # NIKAD više od 1 dok se ne uvede distributed lock (docs/14 §7)
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nmq-robot
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nmq-robot
+        app.kubernetes.io/component: scheduler
+    spec:
+      serviceAccountName: nmq-robot
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: scheduler
+          image: nmq-robot:0.2.0
+          command: ['node', '-e', "import('./src/index.js').then(async (m) => { const r = await m.createRobot({ root: '/app' }); r.logger.info('scheduler.mode', { mode: 'dedicated' }); });"]
+          envFrom:
+            - configMapRef:
+                name: nmq-robot-config
+          env:
+            - name: NMQ_HOST
+              value: 127.0.0.1
+            - name: NMQ_PORT
+              value: '8788' # ne sluša spolja
+            - name: NMQ_DATA_DIR
+              value: /data
+            - name: NMQ_SCHEDULER
+              value: '1'
+            - name: NMQ_LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nmq-robot-secrets
+                  key: NMQ_LLM_API_KEY
+            - name: NMQ_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nmq-robot-secrets
+                  key: NMQ_MASTER_KEY
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ['ALL']
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nmq-robot-data
+        - name: config
+          configMap:
+            name: nmq-robot-agents
+        - name: tmp
+          emptyDir: {}

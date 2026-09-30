@@ -18,7 +18,7 @@ import { redact } from '../core/logger.js';
 const tpath = (dataDir, tenantId, ...parts) => path.join(dataDir, 'tenants', tenantId, ...parts);
 
 export function registerBuiltinTools(registry, services = {}) {
-  const { dataDir, memory, env = {}, logger, metrics } = services;
+  const { dataDir, memory, env = {}, logger, metrics, sandbox, jobs } = services;
   const allowlist = env.httpAllowlist?.length ? env.httpAllowlist : [];
 
   const store = (tenantId, kind) => tpath(dataDir, tenantId, kind, `${kind}.jsonl`);
@@ -79,7 +79,9 @@ export function registerBuiltinTools(registry, services = {}) {
       riskLevel: 'medium',
       tags: ['integration'],
       handler: async ({ url, method = 'GET', headers = {}, body, timeoutMs = 10_000 }, ctx) => {
-        assertUrlAllowed(url, allowlist, env);
+        // Sandbox prvo (ako postoji), pa allowlist domena
+        if (ctx.sandbox?.assertNetwork) ctx.sandbox.assertNetwork(url);
+        else assertUrlAllowed(url, allowlist, env);
         const ac = new AbortController();
         const timer = setTimeout(() => ac.abort(new Error('timeout')), timeoutMs);
         const onAbort = () => ac.abort(new Error('aborted'));
@@ -441,6 +443,75 @@ export function registerBuiltinTools(registry, services = {}) {
       riskLevel: 'low',
       tags: ['orchestration'],
       handler: async ({ goal, steps }) => ({ goal, steps, count: steps?.length ?? 0 }),
+    },
+    // ---------- 19. ažuriranje dugoročnog procesa (persistentni agent) ----------
+    {
+      name: 'process_update',
+      description: 'Ažurira dugoročni proces (posao): stanje, bilješku, označava korak kao završen, odgađa sljedeće pokretanje ili završava proces.',
+      params: {
+        type: 'object',
+        properties: {
+          jobId: { type: 'string', description: 'ako nije zadat, koristi se proces iz kog je agent pokrenut' },
+          state: { type: 'string' },
+          note: { type: 'string' },
+          markStepDone: { type: 'string' },
+          nextRunInMs: { type: 'number' },
+          complete: { type: 'boolean' },
+        },
+        additionalProperties: false,
+      },
+      riskLevel: 'medium',
+      tags: ['orchestration', 'persistence'],
+      handler: async (args, ctx) => {
+        if (!jobs) throw new PolicyError('Trajno skladište poslova nije dostupno (scheduler nije pokrenut)');
+        const jobId = args.jobId ?? ctx.jobId;
+        if (!jobId) throw new ValidationError('jobId je obavezan (ili pokreni zadatak iz posla)');
+        const job = await jobs.get(ctx.tenantId, jobId);
+        if (!job) throw new NotFoundError('Posao', jobId);
+
+        const process = { ...(job.process ?? {}) };
+        if (args.markStepDone) process.done = [...new Set([...(process.done ?? []), args.markStepDone])];
+        if (args.state) process.state = args.state;
+        if (args.note) process.log = [...(process.log ?? []).slice(-50), { ts: iso(), note: args.note, by: ctx.agentId }];
+
+        const patch = { id: jobId, process };
+        if (args.nextRunInMs !== undefined) patch.nextRunAt = Date.now() + Number(args.nextRunInMs);
+        if (args.complete) {
+          patch.status = 'completed';
+          patch.nextRunAt = null;
+          patch.enabled = false;
+        }
+        const saved = await jobs.upsert(ctx.tenantId, patch);
+        logger?.info?.('process.updated', { tenantId: ctx.tenantId, jobId, by: ctx.agentId, state: process.state });
+        return { jobId, state: process.state ?? null, stepsDone: process.done?.length ?? 0, nextRunAt: saved.nextRunAt ?? null, complete: Boolean(args.complete) };
+      },
+    },
+
+    // ---------- 20. epizodična memorija ----------
+    {
+      name: 'episode_record',
+      description: 'Pamti epizodu (problem → koraci → rješenje → pouka) da bi se slični slučajevi kasnije rješavali brže.',
+      params: {
+        type: 'object',
+        properties: {
+          problem: { type: 'string' },
+          solution: { type: 'string' },
+          outcome: { type: 'string' },
+          success: { type: 'boolean' },
+          lessons: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['problem', 'solution'],
+        additionalProperties: false,
+      },
+      riskLevel: 'low',
+      tags: ['memory'],
+      handler: async (args, ctx) =>
+        memory.episodic.record(ctx.tenantId, {
+          ...args,
+          agentId: ctx.agentId,
+          runId: ctx.runId,
+          tags: args.tags ?? [],
+        }),
     },
   ]);
 

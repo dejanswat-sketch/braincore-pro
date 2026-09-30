@@ -1,0 +1,93 @@
+# OpenTelemetry Collector za NMQ Robot.
+# Dva načina prikupljanja (može i oba):
+#   A) robot šalje OTLP HTTP: OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+#   B) robot piše fajl data/_global/otel-traces.jsonl → collector ga čita (filelog receiver) — radi i kad nema mreže
+#
+# Rezultat: trace-ovi u Tempo/Jaeger, metrike u Prometheus, logovi u Loki.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+  # Čita JSONL koji robot piše (jedan OTLP/JSON objekat po liniji).
+  # Napomena: filelog ne parsira OTLP/JSON automatski — koristi se kao sirovi izvor za debug/arhiv,
+  # a za prave trace-ove je preporučen OTLP prijem (A).
+  filelog:
+    include: ['/var/log/nmq/otel-traces.jsonl']
+    start_at: beginning
+    operators:
+      - type: json_parser
+        parse_from: body
+
+processors:
+  batch:
+    timeout: 5s
+    send_batch_size: 512
+  memory_limiter:
+    check_interval: 5s
+    limit_percentage: 75
+    spike_limit_percentage: 20
+  # Dodaje tenant kao atribut na sve spanove (za per-tenant upite u Tempo/Grafana)
+  attributes/normalize:
+    actions:
+      - key: nmq.tenant
+        action: upsert
+        from_attribute: nmq.tenant
+  resource:
+    attributes:
+      - key: deployment.environment
+        value: production
+        action: upsert
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    policies:
+      # Sve sa greškom uvijek čuvamo
+      - name: errors
+        type: status_code
+        status_code: { status_codes: [ERROR] }
+      # Spori runovi (preko 8s) — za analizu latencije
+      - name: slow
+        type: latency
+        latency: { threshold_ms: 8000 }
+      # Ostalo uzorkujemo 20%
+      - name: sample
+        type: probabilistic
+        probabilistic: { sampling_percentage: 20 }
+
+exporters:
+  otlp/tempo:
+    endpoint: tempo.observability.svc.cluster.local:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: true
+  loki:
+    endpoint: http://loki.observability.svc.cluster.local:3100/loki/api/v1/push
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes/normalize, tail_sampling, batch]
+      exporters: [otlp/tempo]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+    logs:
+      receivers: [otlp, filelog]
+      processors: [memory_limiter, batch]
+      exporters: [loki]
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

@@ -6,7 +6,7 @@ import { spawn } from 'node:child_process';
 import { ToolError, TimeoutError } from '../core/errors.js';
 import { uid } from '../core/ids.js';
 
-export function createStdioMcpClient({ id = uid('mcp'), command, args = [], env = {}, cwd, logger, requestTimeoutMs = 20_000 } = {}) {
+export function createStdioMcpClient({ id = uid('mcp'), command, args = [], env = {}, processEnv, cwd, logger, requestTimeoutMs = 20_000 } = {}) {
   const pending = new Map();
   const notificationHandlers = new Set();
   let buffer = '';
@@ -16,7 +16,7 @@ export function createStdioMcpClient({ id = uid('mcp'), command, args = [], env 
 
   const child = spawn(command, args, {
     cwd,
-    env: { ...process.env, ...env },
+    env: processEnv ?? { ...process.env, ...env },
     stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true,
   });

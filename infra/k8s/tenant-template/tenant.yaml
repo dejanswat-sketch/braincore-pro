@@ -1,0 +1,186 @@
+# Šablon za izolaciju JEDNOG klijenta (tenant).
+# Zamijeni `TENANT` imenom tenanta (npr. `demo-shop`) — skripta provision-tenant.sh to radi automatski.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nmq-TENANT
+  labels:
+    app.kubernetes.io/part-of: nmq-platform
+    nmq.io/tenant: TENANT
+    pod-security.kubernetes.io/enforce: restricted
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  namespace: nmq-TENANT
+spec:
+  hard:
+    requests.cpu: '1'
+    requests.memory: 2Gi
+    limits.cpu: '2'
+    limits.memory: 4Gi
+    persistentvolumeclaims: '2'
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant-limits
+  namespace: nmq-TENANT
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 200m
+        memory: 256Mi
+      defaultRequest:
+        cpu: 50m
+        memory: 128Mi
+---
+# Kontrolna ravan smije da čita stanje ovog namespace-a (za dashboard), ali NE i da mijenja tuđe.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: tenant-reader
+  namespace: nmq-TENANT
+rules:
+  - apiGroups: ['']
+    resources: ['pods', 'services', 'configmaps']
+    verbs: ['get', 'list', 'watch']
+  - apiGroups: ['apps']
+    resources: ['deployments']
+    verbs: ['get', 'list', 'watch']
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tenant-reader
+  namespace: nmq-TENANT
+subjects:
+  - kind: ServiceAccount
+    name: nmq-operator
+    namespace: nmq-system
+roleRef:
+  kind: Role
+  name: tenant-reader
+  apiGroup: rbac.authorization.k8s.io
+---
+# Tenant namespace ne smije primati saobraćaj iz drugih namespace-ova osim iz nmq-system.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-default-deny
+  namespace: nmq-TENANT
+spec:
+  podSelector: {}
+  policyTypes: ['Ingress', 'Egress']
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: tenant-allow-from-platform
+  namespace: nmq-TENANT
+spec:
+  podSelector: {}
+  policyTypes: ['Ingress']
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: nmq-system
+---
+# Ako klijent ima sopstveni proces (fizička izolacija), ovo je njegov Deployment.
+# Za SaaS režim (dijeljeni proces, tenantId u ključu) ovaj dio se NE primjenjuje.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nmq-robot-TENANT
+  namespace: nmq-TENANT
+  labels:
+    app.kubernetes.io/name: nmq-robot
+    nmq.io/tenant: TENANT
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nmq-robot
+      nmq.io/tenant: TENANT
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nmq-robot
+        nmq.io/tenant: TENANT
+    spec:
+      serviceAccountName: nmq-robot
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: robot
+          image: nmq-robot:0.2.0
+          ports:
+            - name: http
+              containerPort: 8787
+          env:
+            - name: NMQ_HOST
+              value: 0.0.0.0
+            - name: NMQ_DATA_DIR
+              value: /data
+            - name: NMQ_DEFAULT_TENANT
+              value: TENANT
+            - name: NMQ_ALLOW_ANONYMOUS
+              value: '0'
+            - name: NMQ_SCHEDULER
+              value: '1'
+          envFrom:
+            - configMapRef:
+                name: nmq-robot-config
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /app/config
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ['ALL']
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: nmq-robot-TENANT-data
+        - name: config
+          configMap:
+            name: nmq-robot-agents
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nmq-robot-TENANT-data
+  namespace: nmq-TENANT
+spec:
+  accessModes: ['ReadWriteOnce']
+  resources:
+    requests:
+      storage: 5Gi

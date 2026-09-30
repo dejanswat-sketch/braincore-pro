@@ -1,5 +1,13 @@
 {
-  "$comment": "Konfiguracija alata. `builtin` podešava ugrađene alate; `mcpServers` spaja spoljne MCP servere (stdio ili Streamable HTTP). Tajne NIKAD ovdje — samo imena env varijabli.",
+  "$comment": "Konfiguracija alata. `builtin` podešava ugrađene alate; `mcpServers` spaja spoljne MCP servere (stdio ili Streamable HTTP); `sandbox` definiše granice. Tajne NIKAD ovdje — samo imena env varijabli.",
+  "sandbox": {
+    "$comment": "Aplikativne granice za alate i MCP podprocese. OS izolacija (namespaces/seccomp) je na kontejneru/K8s.",
+    "level": "restricted",
+    "envAllowlist": ["PATH", "HOME", "LANG", "TZ", "SLACK_BOT_TOKEN", "NOTION_TOKEN", "GITHUB_TOKEN", "HUBSPOT_TOKEN", "SHOPIFY_TOKEN", "STRIPE_SECRET_KEY"],
+    "maxMemoryMb": 256,
+    "maxTimeoutMs": 20000,
+    "allowChildProcess": true
+  },
   "builtin": {
     "http_fetch": {
       "enabled": true,

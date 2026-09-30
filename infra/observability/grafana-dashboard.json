@@ -1,0 +1,199 @@
+{
+  "__comment": "Grafana dashboard (import kroz Grafana UI → Dashboards → Import). Datasource: Prometheus koji šalje OTel Collector (infra/observability/otel-collector-config.yaml) ili direktno scraper na /metrics.",
+  "title": "NMQ Robot — operacije i naplata",
+  "uid": "nmq-robot-v2",
+  "tags": ["nmq", "ai-agent", "robot"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "tenant",
+        "label": "Tenant",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(nmq_runs_started_total, tenant)",
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      },
+      {
+        "name": "agent",
+        "label": "Agent",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(nmq_runs_started_total{tenant=~\"$tenant\"}, agent)",
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Runovi (1h)",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(nmq_runs_started_total{tenant=~\"$tenant\"}[1h]))", "refId": "A", "legendFormat": "runova" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Greške (1h)",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(nmq_runs_finished_total{status=\"error\",tenant=~\"$tenant\"}[1h]))", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 5 }] } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Trošak 24h (USD)",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(nmq_cost_usd_total{tenant=~\"$tenant\"}[24h]))", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value", "unit": "currencyUSD" }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Odobrenja koja čekaju",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(nmq_approvals_pending{tenant=~\"$tenant\"})", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 5 }] } }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Aktivni poslovi",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(nmq_jobs_active)", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Odbijene akcije (1h)",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(nmq_policy_denied_total{tenant=~\"$tenant\"}[1h]))", "refId": "A" }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Runovi po statusu",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (status) (rate(nmq_runs_finished_total{tenant=~\"$tenant\"}[5m]))", "legendFormat": "{{status}}" }],
+      "fieldConfig": { "defaults": { "custom": { "stacking": { "mode": "normal" } } } }
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "p95 latencija run-a po agentu (s)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(nmq_run_duration_seconds_bucket{tenant=~\"$tenant\",agent=~\"$agent\"}[5m])) by (le, agent))", "legendFormat": "{{agent}}" }],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Trošak po tenantu (USD/h)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (tenant) (rate(nmq_cost_usd_total[1h])) * 3600", "legendFormat": "{{tenant}}" }],
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } }
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Alati: pozivi vs greške",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (tool) (rate(nmq_tool_calls_total{status=\"ok\"}[5m]))", "legendFormat": "ok {{tool}}" },
+        { "expr": "sum by (tool) (rate(nmq_tool_errors_total[5m]))", "legendFormat": "greška {{tool}}" }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Tokeni (in/out) po tenantu",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (tenant, type) (rate(nmq_tokens_total{tenant=~\"$tenant\"}[5m]))", "legendFormat": "{{tenant}} {{type}}" }]
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Poslovi: pokrenuti / pali / na čekanju",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum(rate(nmq_jobs_runs_total[5m]))", "legendFormat": "pokrenuti" },
+        { "expr": "sum(rate(nmq_jobs_failed_total[5m]))", "legendFormat": "pali" },
+        { "expr": "sum(rate(nmq_jobs_waiting_approval_total[5m]))", "legendFormat": "čekaju odobrenje" }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "table",
+      "title": "Kontrolna ravan: deploy/rollback/status/blokade (24h)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (agent) (increase(nmq_controlplane_deploys_total[24h]))", "format": "table", "legendFormat": "deploy" },
+        { "expr": "sum by (agent) (increase(nmq_controlplane_rollbacks_total[24h]))", "format": "table", "legendFormat": "rollback" },
+        { "expr": "sum by (agent, reason) (increase(nmq_controlplane_blocked_total[24h]))", "format": "table", "legendFormat": "blokade" }
+      ]
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Ruter: odluke po metodi (heuristika vs LLM vs fallback)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (method) (rate(nmq_router_decisions_total[10m]))", "legendFormat": "{{method}}" }]
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "Kritičar: ocjene (accept/revise)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (verdict) (rate(nmq_critic_reviews_total[10m]))", "legendFormat": "{{verdict}}" }]
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "LLM pozivi i keš",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (provider, status) (rate(nmq_llm_calls_total[5m]))", "legendFormat": "{{provider}} {{status}}" },
+        { "expr": "sum(rate(nmq_llm_cache_hits_total[5m]))", "legendFormat": "keš pogoci" }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "MCP: pozivi i greške po serveru",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        { "expr": "sum by (server) (rate(nmq_mcp_calls_total[5m]))", "legendFormat": "{{server}}" },
+        { "expr": "sum by (server) (rate(nmq_mcp_errors_total[5m]))", "legendFormat": "greška {{server}}" }
+      ]
+    }
+  ]
+}

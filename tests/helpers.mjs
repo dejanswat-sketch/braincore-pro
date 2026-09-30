@@ -60,7 +60,7 @@ export function smartScript({ planJson, handoffTo = null } = {}) {
   };
 }
 
-export async function buildTestRobot({ script, dataDir, env = {}, connectMcp = false } = {}) {
+export async function buildTestRobot({ script, dataDir, env = {}, connectMcp = false, scheduler = false, overrides: extraOverrides = {} } = {}) {
   const dir = dataDir ?? (await tempDataDir('robot'));
   const llm = createMockProvider({ script: script ?? smartScript(), model: 'deepseek-chat' });
   const robot = await createRobot({
@@ -68,7 +68,7 @@ export async function buildTestRobot({ script, dataDir, env = {}, connectMcp = f
     dataDir: dir,
     connectMcp,
     env: { ...process.env, NMQ_LOG_LEVEL: 'silent', ...env },
-    overrides: { llm, logLevel: 'silent' },
+    overrides: { llm, logLevel: 'silent', scheduler, ...extraOverrides },
   });
   robot.__dir = dir;
   return robot;
