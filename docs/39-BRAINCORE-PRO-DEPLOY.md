@@ -272,3 +272,50 @@ Preporuka: ostaviti **jedan** A zapis po imenu (dva rade, ali unose neodređenos
 stranica prepisana **bez bekapa**. `.htaccess` i `swarm.png` su ostali netaknuti. Greška je popravljena:
 preflight sada provjerava **marker**, a `--backup` režim sklanja tuđi sadržaj u `~/domains/<domen>/_osnova-<datum>/`
 prije uploada. Ako želiš Coming Soon stranicu nazad (npr. kao `soon.html`), mogu je rekonstruisati za 5 minuta.
+
+---
+
+## 13. STATUS: MAŠINA JE ŽIVA na Hetzneru (30.09.2026) — sajt + API + live
+
+Postavljeno od strane agenta, bez ručnih koraka (osim mailboxa). Hostinger API token je korišten za DNS.
+
+### DNS (Hostinger API, zona braincore.pro)
+| Ime | Tip | Vrijednost |
+|---|---|---|
+| `@` | ALIAS | `braincore.pro.cdn.hstgr.net.` (Hostinger CDN) |
+| `www` | CNAME | `www.braincore.pro.cdn.hstgr.net.` |
+| **`api`** | **A** | **62.238.35.78** (Hetzner) — dodato preko API-ja |
+| **`live`** | **A** | **62.238.35.78** (Hetzner) — dodato preko API-ja |
+
+### Mašina (Hetzner, 62.238.35.78)
+* Node **v22.23.2** (već bio — NodeSource nije trebao), bez npm zavisnosti u projektu
+* Instalirano: nginx, redis-server, certbot (+ python3-certbot-nginx), rsync
+* **ufw je bio aktivan i propuštao samo SSH** → otvoreni `80/tcp` i `443/tcp`.
+  **Portovi 8081 i 8001–8003 su i dalje zatvoreni spolja** (API i roj su iza nginxa, odnosno na loopback-u).
+* Servisi: `braincore-api` (node :8001 + API/live :8081), `braincore-node@8002`, `braincore-node@8003` — svi **active**
+* Postojeći servisi **netaknuti**: `nmq-server`, `oaa-trial`, `cloudflared` (svi i dalje active)
+* Kod: `/root/braincore-src` → `/opt/braincore` (data izvan releases)
+* SSL: Let's Encrypt za `api.braincore.pro` i `live.braincore.pro`, auto-renew uključen
+
+### Prijemni test (izmjereno spolja, preko interneta)
+| Provjera | Rezultat |
+|---|---|
+| `https://api.braincore.pro/health` | **HTTP 200** (`npmDependencies: 0`) |
+| `https://live.braincore.pro/live` | **HTTP 200** |
+| `wss://live.braincore.pro/events` | **HTTP/1.1 101 Switching Protocols** (+ `sec-websocket-accept`) |
+| Roj | **3 čvora** (`peersAlive=2`, `alive: node-8001 · node-8002 · node-8003`) |
+| Task preko interneta | prihvaćen, **`durable: true`**, potvrdio `node-8003`, izvršio **node-8003** (cross-node) |
+| Prometheus | `braincore_nodes 3`, `braincore_tasks_done_total`, `braincore_queue_depth` |
+| Sajt | `https://braincore.pro/` HTTP 200 |
+
+### Šta je ostalo ručno (jedina dvije stavke)
+1. **Mailboxi** `sales@` i `privacy@braincore.pro` — hPanel → Email → Create account (API token ne pokriva email hosting).
+2. **Stripe** (opciono, kada bude nalog): `STRIPE_WEBHOOK_SECRET` u `/etc/braincore/braincore.env` → `systemctl restart braincore-api`.
+
+### Ops komande na mašini
+```bash
+journalctl -u braincore-api -f
+bash /opt/braincore/current/deploy/alertcheck.sh      # API, peers, red, odbijeni potpisi, systemd
+bash /opt/braincore/current/deploy/release.sh         # nova verzija + backup podataka
+bash /opt/braincore/current/deploy/rollback.sh        # povratak (<60 s)
+```

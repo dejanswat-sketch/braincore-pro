@@ -1,0 +1,108 @@
+{
+  "scope": "single process, in-process nodes (loopback)",
+  "runId": "2026-09-30T14-45-58-320Z",
+  "targetRate": 40,
+  "runnerDelayMs": 60,
+  "results": [
+    {
+      "nodes": 1,
+      "discoveryMs": 0,
+      "setupMs": 3,
+      "seconds": 10,
+      "targetRate": 40,
+      "submitted": 319,
+      "completed": 319,
+      "lost": 0,
+      "duplicated": 0,
+      "throughputPerSec": 31.9,
+      "latencyMs": {
+        "p50": 3276,
+        "p95": 5443,
+        "p99": 5643,
+        "max": 5690
+      },
+      "cpuMs": 531,
+      "cpuPerTaskMs": 1.66,
+      "rssMb": 71.2,
+      "heapUsedMb": 10.2,
+      "heapDeltaMb": 1.9,
+      "crdtEntries": 957,
+      "gossipSent": 0
+    },
+    {
+      "nodes": 3,
+      "discoveryMs": 0,
+      "setupMs": 63,
+      "seconds": 10,
+      "targetRate": 40,
+      "submitted": 321,
+      "completed": 321,
+      "lost": 0,
+      "duplicated": 0,
+      "throughputPerSec": 32.1,
+      "latencyMs": {
+        "p50": 1208,
+        "p95": 1409,
+        "p99": 1435,
+        "max": 1454
+      },
+      "cpuMs": 1157,
+      "cpuPerTaskMs": 3.6,
+      "rssMb": 86,
+      "heapUsedMb": 15.5,
+      "heapDeltaMb": 5,
+      "crdtEntries": 2889,
+      "gossipSent": 3932
+    },
+    {
+      "nodes": 10,
+      "discoveryMs": 0,
+      "setupMs": 270,
+      "seconds": 10,
+      "targetRate": 40,
+      "submitted": 326,
+      "completed": 302,
+      "lost": 24,
+      "duplicated": 268,
+      "throughputPerSec": 30.2,
+      "latencyMs": {
+        "p50": 8504,
+        "p95": 13818,
+        "p99": 15023,
+        "max": 15506
+      },
+      "cpuMs": 6250,
+      "cpuPerTaskMs": 20.7,
+      "rssMb": 141.6,
+      "heapUsedMb": 30.2,
+      "heapDeltaMb": 12.7,
+      "crdtEntries": 8338,
+      "gossipSent": 45518
+    },
+    {
+      "nodes": 25,
+      "discoveryMs": 1,
+      "setupMs": 764,
+      "seconds": 10,
+      "targetRate": 40,
+      "submitted": 218,
+      "completed": 214,
+      "lost": 4,
+      "duplicated": 190,
+      "throughputPerSec": 21.4,
+      "latencyMs": {
+        "p50": 7497,
+        "p95": 12391,
+        "p99": 14019,
+        "max": 15563
+      },
+      "cpuMs": 18906,
+      "cpuPerTaskMs": 88.35,
+      "rssMb": 247.6,
+      "heapUsedMb": 42.1,
+      "heapDeltaMb": 9.1,
+      "crdtEntries": 11145,
+      "gossipSent": 197954
+    }
+  ]
+}

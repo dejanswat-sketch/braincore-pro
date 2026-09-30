@@ -25,7 +25,7 @@ need_root
 log "1/6 Paketi (Node 20, nginx, certbot, Redis) — bez npm zavisnosti"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y ca-certificates curl gnupg git nginx redis-server certbot python3-certbot-nginx jq
+apt-get install -y ca-certificates curl gnupg git rsync nginx redis-server certbot python3-certbot-nginx jq
 if ! command -v node >/dev/null 2>&1 || [ "$(node -v | sed 's/v\([0-9]*\).*/\1/')" -lt 20 ]; then
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y nodejs
