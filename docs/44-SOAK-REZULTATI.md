@@ -316,3 +316,50 @@ računa iz izmjerene detekcije. Uz to: duplo izvršenje treba da bude **eksplici
 već postoji) da se u izvještaju vidi koliko ih je „izgubljena trka", a ne prava greška.
 
 ### Odluka: video se **još ne snima** (duplo > 0), ali smo na 0,06 %
+
+---
+
+## 13. GRACE PROZOR (Dio 1–4) — stanje i tačan nastavak
+
+### Zašto
+Soak #5: **11 duplih** (0,06 %). Uzrok je **restart-trka**: prozor za preuzimanje (1,5 s grace + 0,6 s
+confirm = **2,1 s**) bio je **kraći** od izmjerene detekcije smrti (**1,3–2,2 s**), pa su i restartovani
+čvor i peer koji je detektovao smrt preuzeli isti task.
+
+### Predložena popravka (implementirana, **nije aktivirana**)
+```
+claimGraceMs   = eksplicitno ?? max(3000, ceil(detekcija * 1.5))     // 1.500 -> 3.000 ms
+claimConfirmMs = eksplicitno ?? max(600, 2*interval, ceil(detekcija * 1.25))  // 600 -> 1.625 ms
+ukupan prozor  : 2,1 s -> 4,6 s   (detekcija 1,3-2,2 s)
+```
+
+### Šta je završeno i zeleno (274/275)
+* **Dio 1 (`4e2ce1a`)**: `claimWindows()` izlaže aktivne prozore, `detectionMs`, `derived` (izračunati
+  minimum) i `explicit` (da li je pozivalac zadao vrijednost). Default **nepromijenjen**.
+  Testovi: eksplicitnih 50 ms ostaje 50 ms; `claimConfirmMs: 60` ide na **donji prag 600 ms**, a NE na
+  izvedenih 1 625 ms (donji prag ≠ derivacija).
+* **Dio 2 (`8c8c50d`)**: dva prava timing testa čekaju **imenovano polje** iz `claimWindows()`:
+  `chaos.test.mjs` → `totalMs + 50` (čeka preuzimanje) · `3-nodes.test.mjs` → `confirmMs + 200`
+  (čeka da je čvor **još zauzet**; sa `totalMs` A bi već završio → `A load je 0`).
+
+### Zašto Dio 3 nije aktiviran (nalaz)
+Sa aktiviranom derivacijom padaju **`Live feed` (`braincore.test.mjs:313`)** i **`webhook`
+(`max.test.mjs:753`)**. Uzrok **nije** flakiness nego promijenjena semantika `tick()`-a:
+sa `claimConfirmMs` 600 ms jedan `tick()` potvrdi claim i izvrši task; sa **1 625 ms** prvi `tick()`
+završi u fazi **verifikacije claim-a**, pa nema `done` traga i `tasksDone` je 0.
+
+`webhook` je zanimljiviji: već ima rok **8 000 ms** i ipak padne posle 8,3 s → dakle posao koji čeka
+event **ne završi u 8 s**, što znači da je sprega dublja od samog roka u testu (treba provjeriti da li
+scheduler put prolazi kroz claim verifikaciju, ili job uopšte ne startuje).
+
+### Tačan nastavak (Dio 4)
+1. `Live feed`: umjesto jednog `tick()` → petlja do `done` traga, rok `claimWindows().confirmMs + 1000`.
+2. `webhook`: **prvo dijagnostika sa logom** (da li se run pokrene i sa kojim `reason`), pa rok iz
+   izvedenog prozora — ne još jedno slepo povećanje roka.
+3. Ponoviti derivaciju (dva reda), puni set **mora 274/275**.
+4. Tek onda **deploy → soak #6** (`shed=0`, `lost=0`, `duplo=0`, `p95≤1,5 s`, heap<100 MB, CRDT
+   ograničen, rate-limited 0).
+
+### Stanje mašine (nepromijenjeno)
+`releases/v1.8.0` (fencing živ) · sva tri servisa aktivna · `nmq-server` / `oaa-trial` / `cloudflared`
+netaknuti · video čeka `duplo = 0` · `api.braincore.pro/llms.txt` i Grafana na 3030 poslije soak-a #6.
