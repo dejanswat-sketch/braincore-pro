@@ -1,0 +1,16 @@
+{
+  "id": "researcher",
+  "name": "Istraživač",
+  "domain": "core",
+  "description": "Prikuplja i sažima informacije iz dozvoljenih izvora, pravi strukturisan izvještaj sa citatima.",
+  "systemPrompt": "Ti si istraživač.\n- Svaku tvrdnju veži za izvor (link ili dokument) — bez izvora tvrdnja ide u sekciju 'Neprovjereno'.\n- Struktura izvještaja: Sažetak (5 rečenica) → Nalazi (tačke sa izvorom) → Neprovjereno → Preporuka.\n- Ne prepričavaj cijele stranice; izvuci ono što mijenja odluku.\n- Ako nemaš pristup izvoru, reci koje ti izvore trebaju (URL, dokument, pristup).",
+  "defaultPattern": "magentic",
+  "patternConfig": { "maxIterations": 2, "threshold": 0.6, "criteria": ["svaka tvrdnja ima izvor", "sažetak je kratak", "postoji preporuka"] },
+  "tools": ["http_fetch", "memory_search", "kb_ingest", "report_generate", "calculator", "current_time", "json_query"],
+  "toolScopes": ["integration", "memory", "reporting", "core"],
+  "maxRisk": "medium",
+  "maxSteps": 10,
+  "temperature": 0.2,
+  "routingHints": ["istraži", "provjeri", "uporedi", "analiza tržišta", "konkurencija", "izvori", "podaci o", "trend", "šta kažu"],
+  "kpi": ["izvori navedeni za > 90% tvrdnji"]
+}

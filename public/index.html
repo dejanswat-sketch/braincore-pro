@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="sr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NMQ Robot — univerzalni AI agent</title>
+    <meta name="description" content="NMQ Robot: multi-tenant AI agent sa 6 orchestration patterna, MCP alatima, memorijom i observability slojem." />
+    <style>
+      :root { --orange: #ff6a00; --bg: #0b1020; --panel: #131b33; --line: #22304a; --txt: #e6ecf7; --muted: #93a2c4; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: radial-gradient(1200px 600px at 80% -10%, #1b2a52 0%, var(--bg) 55%); color: var(--txt);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif; line-height: 1.5; }
+      .wrap { max-width: 1060px; margin: 0 auto; padding: 48px 20px 80px; }
+      header.top { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+      .logo { width: 46px; height: 46px; border-radius: 13px; background: linear-gradient(135deg, var(--orange), #ff9d4d);
+        display: grid; place-items: center; font-weight: 800; font-size: 20px; color: #fff; box-shadow: 0 10px 30px rgba(255,106,0,.35); }
+      h1 { font-size: clamp(26px, 4vw, 42px); margin: 0 0 8px; letter-spacing: -.02em; }
+      h2 { font-size: 20px; margin: 40px 0 12px; }
+      p.lead { color: var(--muted); font-size: 17px; margin: 0; max-width: 720px; }
+      .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 8px; }
+      .badge { font-size: 12.5px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 5px 12px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; margin-top: 14px; }
+      .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+      .card h3 { margin: 0 0 6px; font-size: 15.5px; }
+      .card p { margin: 0; color: var(--muted); font-size: 14px; }
+      code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      pre { background: #0a0f1e; border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow-x: auto; font-size: 13px; color: #cfe0ff; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+      .btn { background: var(--orange); color: #fff; border: none; border-radius: 10px; padding: 11px 18px; font-size: 15px;
+        font-weight: 600; cursor: pointer; text-decoration: none; display: inline-block; }
+      .btn.ghost { background: transparent; border: 1px solid var(--line); color: var(--txt); font-weight: 500; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+      th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 8px 6px; }
+      th { color: var(--muted); font-weight: 600; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+      .muted { color: var(--muted); }
+      footer.bot { margin-top: 56px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 18px; }
+      .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-right: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="logo">NMQ</div>
+        <div>
+          <div style="font-weight: 700; letter-spacing: .04em; font-size: 13px; color: var(--muted)">NMQ ROBOT · v0.1.0</div>
+          <div style="font-size: 15px">Univerzalni AI agent koji radi, a ne samo odgovara</div>
+        </div>
+      </header>
+
+      <h1>Jedan robot — chat, mejl, CRM, fakture, support, kod, podaci.</h1>
+      <p class="lead">
+        Multi-tenant izolacija, 6 orchestration patterna, MCP alati, tri sloja memorije, budžet i audit trag.
+        Ugrađuje se kao JS widget u bilo koji sajt ili kao API u bilo koji interni proces.
+      </p>
+
+      <div class="badges">
+        <span class="badge"><span class="dot"></span> Gateway na ovoj adresi</span>
+        <span class="badge">13 agenata</span>
+        <span class="badge">6 patterna</span>
+        <span class="badge">MCP: stdio + HTTP</span>
+        <span class="badge">Bez npm zavisnosti</span>
+        <span class="badge">Cost tracking po tenantu</span>
+      </div>
+
+      <div class="row" style="margin-top: 24px">
+        <button class="btn" onclick="NMQRobot.auto ? NMQRobot.auto.open() : NMQRobot.init({ auto: true }).open()">Otvori chat</button>
+        <a class="btn ghost" href="/v1/agents">GET /v1/agents</a>
+        <a class="btn ghost" href="/v1/tools">GET /v1/tools</a>
+        <a class="btn ghost" href="/metrics">GET /metrics</a>
+        <a class="btn ghost" href="/readyz">GET /readyz</a>
+      </div>
+
+      <h2>Kako se ugrađuje (bilo koji sajt)</h2>
+      <pre>&lt;script src="https://robot.vasa-domena.com/widget.js"
+        data-tenant="demo-shop"
+        data-agent="support"
+        data-auto="1"
+        data-color="#ff6a00"
+        data-title="Podrška"
+        defer&gt;&lt;/script&gt;</pre>
+
+      <h2>Kako se poziva iz koda (bilo koji proces)</h2>
+      <pre>curl -X POST http://127.0.0.1:8787/v1/agents/support/run \
+  -H "content-type: application/json" \
+  -d '{"input":"Status narudžbine 1042?","tenantId":"demo-shop"}'
+
+# streaming (SSE)
+curl -N -X POST http://127.0.0.1:8787/v1/agents/support/stream \
+  -H "content-type: application/json" \
+  -d '{"input":"Napravi ponudu za prima d.o.o."}'</pre>
+
+      <h2>Šest orchestration patterna</h2>
+      <div class="grid">
+        <div class="card"><h3>router</h3><p>Prepozna namjeru i proslijedi nadležnom agentu (bez LLM-a gdje može — jeftinije).</p></div>
+        <div class="card"><h3>sequential</h3><p>Linearni tok: analiza → plan → checklista → izvještaj.</p></div>
+        <div class="card"><h3>orchestrator-worker</h3><p>Planer razbija zadatak, worker agenti izvršavaju, orchestrator sintetiše.</p></div>
+        <div class="card"><h3>fanout / fan-in</h3><p>Isti ulaz pod 3 ugla (pravno, finansijski, operativno), pa spoj u jedan odgovor.</p></div>
+        <div class="card"><h3>handoff (p2p)</h3><p>Support predaje billing-u, billing tehničkom — bez ping-pong petlje.</p></div>
+        <div class="card"><h3>magentic</h3><p>Plan → akcija → refleksija → korekcija, dok kritičar ne kaže „dovoljno dobro".</p></div>
+      </div>
+
+      <h2>Endpointi (skraćeno)</h2>
+      <table>
+        <thead><tr><th>Metod</th><th>Putanja</th><th>Šta radi</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td>/v1/agents/:id/run</td><td>Jedan zadatak, JSON odgovor sa troškom i koracima</td></tr>
+          <tr><td>POST</td><td>/v1/agents/:id/stream</td><td>Isto, ali SSE tok (tokeni, alati, odluke)</td></tr>
+          <tr><td>POST</td><td>/v1/router/run</td><td>Automatski izbor agenta</td></tr>
+          <tr><td>POST</td><td>/v1/hooks/:source</td><td>Ulaz iz mejla, Slacka, Shopify-a, GitHub-a…</td></tr>
+          <tr><td>POST</td><td>/v1/approvals/:runId</td><td>Odobrenje akcije visokog rizika (human-in-the-loop)</td></tr>
+          <tr><td>POST</td><td>/v1/kb</td><td>Ubacivanje dokumenta u bazu znanja (RAG)</td></tr>
+          <tr><td>GET</td><td>/v1/usage</td><td>Potrošnja po tenantu (naplata)</td></tr>
+          <tr><td>GET</td><td>/v1/audit</td><td>Hash-chain provjera i poslednji zapisi</td></tr>
+        </tbody>
+      </table>
+
+      <footer class="bot">
+        NMQ Robot · Dejan Milošević PR · dokumentacija u <code>docs/</code> · pokretanje: <code>node src/cli.js serve</code>
+      </footer>
+    </div>
+
+    <script
+      src="/widget.js"
+      data-tenant="nmq"
+      data-agent="support"
+      data-auto="1"
+      data-title="NMQ Robot"
+      data-subtitle="Support agent · demo"
+      data-color="#ff6a00"
+      data-greeting="Zdravo! Pitaj me o narudžbini, fakturi, podršci ili reci šta da napravim."
+      data-suggested="Kako da resetujem lozinku?|Status narudžbine 1042|Napravi izvještaj o projektu"
+      defer
+    ></script>
+  </body>
+</html>

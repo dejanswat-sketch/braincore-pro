@@ -1,0 +1,46 @@
+{
+  "$comment": "Konfiguracija alata. `builtin` podešava ugrađene alate; `mcpServers` spaja spoljne MCP servere (stdio ili Streamable HTTP). Tajne NIKAD ovdje — samo imena env varijabli.",
+  "builtin": {
+    "http_fetch": {
+      "enabled": true,
+      "allowlistFromEnv": "NMQ_HTTP_ALLOWLIST",
+      "defaultAllowlist": ["api.deepseek.com", "api.openai.com", "generativelanguage.googleapis.com"]
+    },
+    "email_send": { "enabled": true, "mode": "outbox", "webhookEnv": "NMQ_EMAIL_WEBHOOK" },
+    "notify": { "enabled": true, "webhookEnvSuffix": "_WEBHOOK" },
+    "invoice_create": { "enabled": true, "defaultVatRate": 0.2, "defaultCurrency": "EUR", "defaultDueDays": 15 }
+  },
+  "mcpServers": [
+    {
+      "id": "nmq-crm",
+      "transport": "stdio",
+      "command": "node",
+      "args": ["mcp/example-server.mjs"],
+      "enabled": true,
+      "riskLevel": "medium",
+      "scopes": ["crm:read", "crm:write", "support:read"],
+      "tags": ["crm", "support"],
+      "timeoutMs": 15000,
+      "tools": {
+        "crm_note_add": { "riskLevel": "medium" },
+        "crm_contact_lookup": { "riskLevel": "low" },
+        "tickets_search": { "riskLevel": "low" }
+      }
+    },
+    {
+      "$comment": "Šablon za pravi HTTP MCP server (npr. interne NMQ API-je). Uključiti kad postoji URL i token.",
+      "id": "nmq-internal-http",
+      "transport": "http",
+      "url": "https://api.aicommandcenter.pro/mcp",
+      "headers": { "authorization": "Bearer ${NMQ_INTERNAL_MCP_TOKEN}" },
+      "enabled": false,
+      "riskLevel": "high",
+      "scopes": ["internal:read"],
+      "timeoutMs": 20000
+    }
+  ],
+  "notes": [
+    "Talas 1 integracija (Gmail, Slack, Notion, GitHub, Jira, HubSpot, Stripe, Shopify, Postgres…) dodaje se ovdje kao novi unos u mcpServers — vidi docs/03-MCP-INTEGRACIJE.md.",
+    "Svaki MCP server dobija riskLevel; politika (config/policies.json) odlučuje da li alat smije, ne smije ili traži odobrenje."
+  ]
+}

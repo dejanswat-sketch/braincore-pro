@@ -1,0 +1,51 @@
+{
+  "$comment": "Governance politike. Redoslijed odlučivanja: deny (alat/agent) → allow lista → radno vrijeme → requireApproval → risk nivo → uslovi. `deny` uvijek pobjeđuje. Tenant nasljeđuje `defaults` i može samo da pooštri.",
+  "defaults": {
+    "tools": {
+      "allow": ["*"],
+      "deny": ["shell_exec", "filesystem.delete_any", "db_drop", "db_truncate"],
+      "requireApproval": ["email_send", "invoice_create"],
+      "conditions": {
+        "invoice_create": { "maxAmountUsd": 10000 }
+      }
+    },
+    "agents": {},
+    "risk": { "low": "allow", "medium": "allow", "high": "require_approval" },
+    "pii": { "redact": ["email", "card", "iban", "jmbg", "phone"] },
+    "maxSteps": 12,
+    "budget": { "runUsd": 0.5, "monthlyUsd": 50 },
+    "rateLimitPerMin": 60,
+    "businessHoursOnly": false
+  },
+  "tenants": {
+    "nmq": {
+      "tools": {
+        "allow": ["*"],
+        "deny": ["shell_exec", "db_drop"],
+        "requireApproval": ["email_send", "invoice_create", "http_fetch"]
+      },
+      "risk": { "high": "require_approval", "medium": "allow", "low": "allow" },
+      "maxSteps": 14,
+      "budget": { "runUsd": 1.5, "monthlyUsd": 200 },
+      "rateLimitPerMin": 120,
+      "businessHoursOnly": false
+    },
+    "demo-shop": {
+      "$comment": "Primjer strogog tenanta: samo alati za support prodavnice, sve ostalo zabranjeno.",
+      "tools": {
+        "allow": ["memory_search", "kb_ingest", "order_lookup", "ticket_create", "notify", "handoff", "calculator", "current_time", "json_query", "make_plan", "report_generate", "email_send"],
+        "deny": ["invoice_create", "http_fetch", "crm_upsert", "lead_score", "nmq-crm.crm_note_add"],
+        "requireApproval": ["email_send"]
+      },
+      "risk": { "high": "require_approval", "medium": "allow", "low": "allow" },
+      "agents": {
+        "support": { "deny": ["invoice_create"] },
+        "ecommerce": { "requireApproval": ["email_send"] }
+      },
+      "maxSteps": 8,
+      "budget": { "runUsd": 0.2, "monthlyUsd": 15 },
+      "rateLimitPerMin": 30,
+      "businessHoursOnly": false
+    }
+  }
+}

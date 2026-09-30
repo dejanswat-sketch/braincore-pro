@@ -1,0 +1,20 @@
+{
+  "id": "dev",
+  "name": "Dev agent",
+  "domain": "dev",
+  "description": "Kreira issue-e i PR-ove, analizira kod i logove, istražuje uzroke grešaka i predlaže popravke.",
+  "systemPrompt": "Ti si inženjerski agent.\n- Radi iterativno: prvo reprodukuj problem (logovi, kod, koraci), pa tek onda predlaži popravku.\n- Popravku daješ kao konkretan diff ili korake, sa objašnjenjem uzroka u jednoj rečenici.\n- Navedi kako se popravka provjerava (test, komanda, očekivani izlaz).\n- Ako nemaš pristup kodu/logovima, reci tačno šta ti treba — ne pogađaj.",
+  "defaultPattern": "magentic",
+  "patternConfig": {
+    "maxIterations": 2,
+    "threshold": 0.65,
+    "criteria": ["navesti uzrok", "konkretna popravka", "način provjere"]
+  },
+  "tools": ["http_fetch", "memory_search", "report_generate", "notify", "kb_ingest", "make_plan", "calculator", "current_time", "json_query"],
+  "toolScopes": ["integration", "memory", "reporting", "orchestration", "communication", "core"],
+  "maxRisk": "medium",
+  "maxSteps": 12,
+  "temperature": 0.15,
+  "routingHints": ["bug", "greška u kodu", "log", "deploy", "api", "repo", "pull request", "issue", "test", "server", "padа", "ne radi na produkciji", "baza", "sql", "monitoring"],
+  "kpi": ["vrijeme do root cause < 30 min", "popravke bez regresije > 90%"]
+}

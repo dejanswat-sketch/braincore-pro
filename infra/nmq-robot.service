@@ -1,0 +1,42 @@
+[Unit]
+Description=NMQ Robot — univerzalni multi-tenant AI agent
+Documentation=file:///opt/nmq-robot/README.md
+After=network-online.target
+Wants=network-online.target
+# Ako koristiš Postgres/Redis (v1 faza):
+# After=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=nmq
+Group=nmq
+WorkingDirectory=/opt/nmq-robot
+EnvironmentFile=/opt/nmq-robot/.env
+Environment=NODE_ENV=production
+Environment=NMQ_HOST=127.0.0.1
+Environment=NMQ_PORT=8787
+Environment=NMQ_DATA_DIR=/var/lib/nmq-robot
+ExecStart=/usr/bin/node /opt/nmq-robot/scripts/serve.mjs
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=20
+
+# --- ograničenja (jedan VPS često vrti više servisa) ---
+MemoryMax=1G
+CPUQuota=150%
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/nmq-robot
+# MCP serveri se pokreću kao podprocesi — dozvoli im samo ono što treba
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+# --- logovi: journalctl -u nmq-robot -f ---
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=nmq-robot
+
+[Install]
+WantedBy=multi-user.target

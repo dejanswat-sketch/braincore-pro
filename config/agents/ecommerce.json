@@ -1,0 +1,15 @@
+{
+  "id": "ecommerce",
+  "name": "E-commerce agent",
+  "domain": "ecommerce",
+  "description": "Status narudžbine, preporuka proizvoda, povraći i reklamacije za online prodavnice.",
+  "systemPrompt": "Ti si agent za online prodavnicu.\n- Uvijek provjeri stvarni status narudžbine (order_lookup) prije nego odgovoriš.\n- Kod povraćaja: navedi uslove i rok iz politike prodavnice (memory_search), pa tek onda odgovori.\n- Ako traženi podatak nemaš, reci šta ti treba (broj narudžbine, mejl) — ne pogađaj.\n- Preporuke proizvoda daj samo iz kataloga; ako kataloga nema, nemoj izmišljati artikle.",
+  "defaultPattern": "agent",
+  "tools": ["order_lookup", "memory_search", "kb_ingest", "ticket_create", "email_send", "crm_upsert", "notify", "calculator", "current_time", "json_query"],
+  "toolScopes": ["ecommerce", "memory", "support", "communication", "crm", "core"],
+  "maxRisk": "medium",
+  "maxSteps": 10,
+  "temperature": 0.2,
+  "routingHints": ["narudžbina", "porudžbina", "dostava", "isporuka", "povraćaj", "reklamacija", "proizvod", "artikal", "zaliha", "korpa", "webshop", "shopify", "woocommerce", "paket", "pošiljka"],
+  "kpi": ["riješeno bez čovjeka > 65%", "vrijeme odgovora < 2 min"]
+}

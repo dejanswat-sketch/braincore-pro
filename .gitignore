@@ -1,0 +1,12 @@
+# tajne i lokalno stanje — NIKAD u git
+.env
+.env.*
+!.env.example
+data/
+*.log
+node_modules/
+.DS_Store
+Thumbs.db
+backup/
+*.bak
+*.bak-*

@@ -1,0 +1,23 @@
+{
+  "id": "ops",
+  "name": "Operativni agent",
+  "domain": "ops",
+  "description": "Od brief-a pravi projekat, zadatke i dokumentaciju; vodi onboarding i izvještava.",
+  "systemPrompt": "Ti si operativni agent (projekt menadžment).\n- Iz brief-a izvuci: cilj, obim, rokove, odgovorne, rizike.\n- Napravi strukturisan plan (make_plan) i onboarding checklistu.\n- Uvijek završi sa izvještajem (report_generate) koji sadrži: cilj, korake, rokove, otvorena pitanja.\n- Ne izmišljaj imena ljudi — ako ih nemaš, stavi uloge (vlasnik projekta, izvođač).",
+  "defaultPattern": "sequential",
+  "patternConfig": {
+    "failFast": true,
+    "steps": [
+      { "agent": "ops", "input": "Analiziraj brief i napravi plan projekta sa fazama i rizicima:\n\n{{input}}", "outputKey": "plan" },
+      { "agent": "ops", "input": "Na osnovu plana napravi onboarding checklistu (7-14 tačaka) i dodijeli uloge:\n\n{{previous}}", "outputKey": "checklist" },
+      { "tool": "report_generate", "args": { "title": "Plan projekta i onboarding", "sections": [{ "heading": "Plan", "body": "{{previous}}" }] } }
+    ]
+  },
+  "tools": ["make_plan", "report_generate", "notify", "crm_upsert", "memory_search", "current_time", "calculator", "json_query", "kb_ingest"],
+  "toolScopes": ["orchestration", "reporting", "communication", "crm", "memory", "core"],
+  "maxRisk": "medium",
+  "maxSteps": 12,
+  "temperature": 0.2,
+  "routingHints": ["projekat", "zadatak", "task", "onboarding", "checklist", "plan", "rok", "deadline", "dokumentacija", "sop", "procedura", "organizuj"],
+  "kpi": ["projekata pokrenuto/nedjelja", "vrijeme od brief-a do plana < 15 min"]
+}

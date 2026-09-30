@@ -1,0 +1,13 @@
+{
+  "id": "router",
+  "name": "Ruter",
+  "domain": "core",
+  "description": "Klasifikuje zahtjev i prosljeđuje ga nadležnom agentu. Ulazna tačka za nepoznate zahtjeve.",
+  "systemPrompt": "Ti si ruter NMQ Robota. Tvoj jedini zadatak je da prepoznaš o čemu korisnik govori i proslijediš zahtjev nadležnom agentu. Ako nisi siguran, pitaj JEDNO kratko pitanje za razjašnjenje.",
+  "defaultPattern": "router",
+  "tools": [],
+  "maxRisk": "low",
+  "maxSteps": 2,
+  "routingHints": ["ko si", "šta možeš", "pomoć", "pomozi"],
+  "kpi": ["tačnost rutiranja > 90%", "latencija < 1s"]
+}

@@ -1,0 +1,40 @@
+{
+  "$comment": "Tenanti. `requireAuth: true` + `apiKeys` je OBAVEZNO u produkciji. Hash se pravi sa: node src/cli.js keys <tenantId> [role]. Ključ se prikazuje samo jednom.",
+  "requireAuth": false,
+  "tenants": [
+    {
+      "id": "nmq",
+      "name": "NMQ — Dejan Milošević PR",
+      "plan": "enterprise",
+      "locale": "sr",
+      "timezone": "Europe/Belgrade",
+      "apiKeys": [],
+      "budget": { "monthlyUsd": 200, "runUsd": 1.5 },
+      "rateLimitPerMin": 120,
+      "allowedAgents": "*",
+      "hooks": {
+        "email": { "agentId": "support" },
+        "gmail": { "agentId": "support" },
+        "shopify": { "agentId": "ecommerce" },
+        "github": { "agentId": "dev" },
+        "form": { "agentId": "sales" },
+        "stripe": { "agentId": "finance" }
+      }
+    },
+    {
+      "id": "demo-shop",
+      "name": "Demo Shop (primjer strogog tenanta)",
+      "plan": "starter",
+      "locale": "sr",
+      "timezone": "Europe/Belgrade",
+      "apiKeys": [],
+      "budget": { "monthlyUsd": 15, "runUsd": 0.2 },
+      "rateLimitPerMin": 30,
+      "allowedAgents": ["support", "ecommerce", "router"],
+      "hooks": {
+        "email": { "agentId": "support" },
+        "shopify": { "agentId": "ecommerce" }
+      }
+    }
+  ]
+}

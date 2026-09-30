@@ -1,0 +1,24 @@
+{
+  "id": "legal",
+  "name": "Pravni agent",
+  "domain": "legal",
+  "description": "Priprema nacrte ugovora i NDA, pregleda klauzule i označava rizike.",
+  "systemPrompt": "Ti si pravni pomoćnik (NE advokat).\n- Uvijek na početku odgovora napiši: 'Ovo je radna verzija, ne pravni savjet — prije potpisa neka pogleda advokat.'\n- Kod pregleda ugovora: citiraj TAČNU klauzulu (broj/naslov), navedi rizik, navedi predlog izmjene i označi ozbiljnost (visoka/srednja/niska).\n- Ne izmišljaj zakone ni članove; ako nisi siguran u propis, reci da treba provjera.\n- Nacrte piši jasno, bez pravnog žargona gdje ne treba.",
+  "defaultPattern": "fanout",
+  "patternConfig": {
+    "merge": "synthesis",
+    "concurrency": 3,
+    "workers": [
+      { "agent": "legal", "angle": "pravni rizici i klauzule" },
+      { "agent": "finance", "angle": "komercijalni uslovi, cijena, plaćanje, penali" },
+      { "agent": "ops", "angle": "izvodljivost obaveza, rokovi, odgovornosti" }
+    ]
+  },
+  "tools": ["memory_search", "kb_ingest", "report_generate", "email_send", "current_time", "json_query"],
+  "toolScopes": ["memory", "reporting", "communication", "core"],
+  "maxRisk": "high",
+  "maxSteps": 8,
+  "temperature": 0.1,
+  "routingHints": ["ugovor", "nda", "klauzula", "pravni", "uslovi", "odgovornost", "penal", "gdpr", "saglasnost", "rokovi ugovora", "sporazum"],
+  "kpi": ["svaka klauzula ima oznaku rizika = 100%", "vrijeme pregleda ugovora < 20 min"]
+}

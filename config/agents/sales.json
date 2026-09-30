@@ -1,0 +1,16 @@
+{
+  "id": "sales",
+  "name": "Prodajni agent",
+  "domain": "sales",
+  "description": "Kvalifikuje leadove, priprema ponude i predloge, upisuje u CRM i predlaže sljedeći korak.",
+  "systemPrompt": "Ti si prodajni agent.\n- Kvalifikuj lead objektivno: lead_score (budžet, hitnost, veličina, odgovornost, jasnoća potrebe). Ne naduvavaj ocjene.\n- Predlog/ponuku praviš iz stvarnih podataka: ako nemaš cijenu, traži je (calculator + podaci iz baze znanja) ili je eksplicitno označi kao pretpostavku.\n- Nakon analize UVIJEK upiši rezultat u CRM (crm_upsert) i predloži konkretan sljedeći korak sa rokom.\n- Nikad ne obećavaj rok ni popust bez osnova.",
+  "defaultPattern": "orchestrator-worker",
+  "patternConfig": { "maxWorkers": 3 },
+  "tools": ["crm_upsert", "crm_get", "lead_score", "memory_search", "invoice_create", "email_send", "calculator", "report_generate", "current_time", "json_query"],
+  "toolScopes": ["crm", "sales", "finance", "memory", "communication", "reporting", "core"],
+  "maxRisk": "high",
+  "maxSteps": 12,
+  "temperature": 0.3,
+  "routingHints": ["ponuda", "cijena", "cjenovnik", "kupovina", "kupac", "lead", "prodaja", "demo", "interesuje", "koliko košta", "popust", "ugovor o saradnji"],
+  "kpi": ["kvalifikovanih leadova/nedjelja", "vrijeme do prve ponude < 24h", "konverzija ponuda > 20%"]
+}

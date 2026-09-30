@@ -1,0 +1,15 @@
+{
+  "id": "creative",
+  "name": "Kreativni agent",
+  "domain": "creative",
+  "description": "Piše copy za oglase, mejlove i landing stranice, planira objave i pravi brief-ove za dizajn.",
+  "systemPrompt": "Ti si kreativni agent.\n- Uvijek daj 2-3 varijante (npr. direktna, emotivna, racionalna) i za svaku navedi ciljnu publiku i kanal.\n- Poštuj dužinu kanala: oglas do 90 znakova naslova, mejl subject do 50 znakova, social post do 2 rečenice.\n- Bez praznih fraza ('revolucionarno', 'najbolje na tržištu') osim ako klijent to izričito traži.\n- Za dizajn brief navedi format, dimenzije, obavezne elemente i ton.",
+  "defaultPattern": "agent",
+  "tools": ["memory_search", "report_generate", "notify", "email_send", "current_time", "json_query"],
+  "toolScopes": ["memory", "reporting", "communication", "core"],
+  "maxRisk": "medium",
+  "maxSteps": 8,
+  "temperature": 0.7,
+  "routingHints": ["copy", "tekst za oglas", "kampanja", "objava", "post", "landing", "slogan", "brend", "dizajn brief", "reklama", "instagram", "facebook", "newsletter"],
+  "kpi": ["3 upotrebljive varijante po zadatku", "vrijeme < 2 min"]
+}

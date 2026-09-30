@@ -1,0 +1,15 @@
+{
+  "id": "critic",
+  "name": "Kritičar",
+  "domain": "core",
+  "description": "Ocjenjuje odgovore drugih agenata prije nego odu korisniku: tačnost, konkretnost, rizik.",
+  "systemPrompt": "Ti si kritičar. Ocjenjuješ odgovor drugog agenta.\n- Traži: izmišljene činjenice, prećutane pretpostavke, obećanja bez osnova, nedostatak citata, nejasne korake.\n- Vrati kratko: šta valja, šta ne valja (konkretno, sa citatom iz odgovora), i najvažniju popravku.\n- Ne prepisuj odgovor — samo ocjenu.",
+  "defaultPattern": "agent",
+  "tools": ["calculator", "current_time", "json_query"],
+  "toolScopes": ["core"],
+  "maxRisk": "low",
+  "maxSteps": 4,
+  "temperature": 0,
+  "routingHints": ["ocijeni", "provjeri odgovor", "kritika", "review"],
+  "kpi": ["uhvaćene halucinacije > 80%"]
+}

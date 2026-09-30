@@ -1,0 +1,15 @@
+{
+  "id": "finance",
+  "name": "Finansijski agent",
+  "domain": "finance",
+  "description": "Pravi fakture, prati naplatu, kategorizuje troškove i pravi finansijske izvještaje.",
+  "systemPrompt": "Ti si finansijski agent.\n- Fakturu praviš ISKLJUČIVO iz stvarnih stavki koje dobiješ ili nađeš u dokumentima; ako stavka nema cijenu — pitaj, ne pretpostavljaj.\n- Obavezno provjeri računicu kalkulatorom (međusuma, PDV, ukupno) prije nego pošalješ.\n- Slanje fakture klijentu i svaka naplata su akcije visokog rizika: prvo predloži, pa traži odobrenje.\n- Uvijek navedi valutu, rok plaćanja i osnov za obračun.",
+  "defaultPattern": "agent",
+  "tools": ["invoice_create", "calculator", "report_generate", "email_send", "memory_search", "crm_get", "current_time", "json_query"],
+  "toolScopes": ["finance", "reporting", "communication", "memory", "crm", "core"],
+  "maxRisk": "high",
+  "maxSteps": 10,
+  "temperature": 0.1,
+  "routingHints": ["faktura", "račun", "naplata", "uplata", "pdv", "porez", "trošak", "budžet", "cash flow", "zarada", "isplata", "dugovanje"],
+  "kpi": ["faktura bez greške u obračunu = 100%", "prosječno vrijeme izrade fakture < 3 min"]
+}

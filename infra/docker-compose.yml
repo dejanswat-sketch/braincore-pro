@@ -1,0 +1,86 @@
+# NMQ Robot — lokalni/produkcijski stack.
+#   docker compose up -d
+#   docker compose --profile data up -d     (uključi i Postgres+Redis za v1 fazu)
+#
+# MVP radi bez Postgresa i Redisa (fajl-skladište u ./data). Oni su tu za prelazak na v1.
+
+services:
+  robot:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    image: nmq-robot:0.1.0
+    container_name: nmq-robot
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:8787:8787' # spolja ide samo kroz Cloudflare tunnel / reverse proxy
+    environment:
+      NMQ_HOST: 0.0.0.0
+      NMQ_PORT: 8787
+      NMQ_DATA_DIR: /data
+      NMQ_LOG_LEVEL: info
+      NMQ_DEFAULT_TENANT: nmq
+      NMQ_LLM_PROVIDER: openai-compatible
+      NMQ_LLM_BASE_URL: https://api.deepseek.com/v1
+      NMQ_LLM_MODEL: deepseek-chat
+      # TAJNE: ne pisati ovdje — koristi .env fajl (env_file) ili Docker secrets
+    env_file:
+      - ../.env
+    volumes:
+      - ../data:/data
+      - ../config:/app/config:ro
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://127.0.0.1:8787/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '5'
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: nmq-robot-pg
+    profiles: ['data']
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nmq
+      POSTGRES_USER: nmq_app
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+    secrets:
+      - pg_password
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./sql:/docker-entrypoint-initdb.d:ro
+    ports:
+      - '127.0.0.1:5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nmq_app -d nmq']
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nmq-robot-redis
+    profiles: ['data']
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb', '--maxmemory-policy', 'allkeys-lru']
+    volumes:
+      - redis_data:/data
+    ports:
+      - '127.0.0.1:6379:6379'
+
+secrets:
+  pg_password:
+    file: ../.secrets/pg_password.txt
+
+volumes:
+  pg_data:
+  redis_data:
