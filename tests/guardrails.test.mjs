@@ -9,7 +9,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGuardrails, detectSensitive, requestedJsonFields, extractJsonObject } from '../src/core/guardrails.js';
+import { createGuardrails, detectSensitive, requestedJsonFields, extractJsonObject, normalizeSchema, enforceSchema } from '../src/core/guardrails.js';
 import { createTicketRouter } from '../src/support/ticket-router.js';
 import { redactPii } from '../src/core/policy.js';
 
@@ -76,6 +76,49 @@ test('guardrails: stroga JSON polja — detektuje šemu i traži popravku', () =
   assert.equal(g.apply({ input: 'Just answer normally', output: 'ok' }).needsRepair, null);
   // nevalidan JSON → popravka
   assert.ok(g.apply({ input, output: 'I could not produce JSON.' }).needsRepair);
+});
+
+test('schema: payload.outputSchema se primjenjuje PRISILNO (isijeca, tipovi, enum)', () => {
+  const g = createGuardrails({});
+  const schema = {
+    type: 'object',
+    additionalProperties: false,
+    required: ['category', 'priority'],
+    properties: { category: { enum: ['refund', 'billing', 'technical'] }, priority: { enum: ['low', 'normal', 'high'] } },
+  };
+  // Model vrati SVOJU šemu + prozu → guardrail isijeca na deklarisanu šemu i uklanja prozu
+  const messy = g.apply({ input: 'Triage this ticket.', schema, output: 'Here is the triage:\n```json\n{"category":"refund","priority":"high","intent":"refund","summary":"x","missing_info":[]}\n```' });
+  assert.equal(messy.needsRepair, null, 'šema je zadovoljena → nema popravnog poziva');
+  assert.deepEqual(JSON.parse(messy.output), { category: 'refund', priority: 'high' });
+  assert.ok(messy.actions.some((a) => a.type === 'schema_enforced'));
+
+  // Nedostaje obavezno polje → traži popravku sa jasnom instrukcijom
+  const missing = g.apply({ input: 'Triage this ticket.', schema, output: '{"category":"refund"}' });
+  assert.ok(missing.needsRepair, 'mora tražiti popravku');
+  assert.deepEqual(missing.needsRepair.missing, ['priority']);
+  assert.match(missing.needsRepair.instruction, /Missing required: priority/);
+
+  // Vrijednost van enum-a → popravka sa dozvoljenim vrijednostima
+  const badEnum = g.apply({ input: 'Triage this ticket.', schema, output: '{"category":"shipping","priority":"high"}' });
+  assert.ok(badEnum.needsRepair);
+  assert.match(badEnum.needsRepair.instruction, /must be one of: refund, billing, technical/);
+
+  // Tipovi se koerciraju; višak se odbacuje; opciona polja se ne izmišljaju
+  const typed = g.apply({
+    input: 'x',
+    schema: { fields: [{ name: 'amount', type: 'number' }, { name: 'paid', type: 'boolean' }, { name: 'note', required: false }] },
+    output: '{"amount":"12.5","paid":"true","note":"ok","extra":1}',
+  });
+  assert.deepEqual(JSON.parse(typed.output), { amount: 12.5, paid: true, note: 'ok' });
+
+  // Bez šeme: nema prisilnog isijecanja (samo uska inferencija iz teksta)
+  const noSchema = g.apply({ input: 'Triage this ticket and return JSON.', output: '{"category":"refund","intent":"x"}' });
+  assert.equal(noSchema.actions.some((a) => a.type === 'schema_enforced'), false, 'bez šeme nema prisilnog sređivanja');
+
+  // Direktna provjera normalizacije i enforce-a
+  assert.deepEqual(normalizeSchema(['a', 'b']).fields.map((f) => f.name), ['a', 'b']);
+  assert.equal(enforceSchema('{"a":1}', { fields: ['a', 'b'] }).ok, false);
+  assert.equal(enforceSchema('{"a":1,"b":2}', { fields: ['a', 'b'] }).json, '{"a":1,"b":2}');
 });
 
 test('guardrails: extractJsonObject i detekcija osjetljivih kategorija', () => {

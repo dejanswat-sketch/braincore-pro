@@ -224,3 +224,49 @@ primjenjuje na svaki run (ne može se zaobići promptom). Šta radi i šta je po
   toga kako je polja opisao korisnik u tekstu.
 
 **Ukupno potrošeno na sva mjerenja: ~$0.18** (pet runova).
+
+---
+
+## 7. KORAK 1 završen: `payload.outputSchema` → **24/24 = 100 %**
+
+Pozivalac sada zadaje šemu, a sistem je **prisilno** primjenjuje (nema više pogađanja polja iz proze):
+
+```js
+robot.orchestrator.run({
+  tenantId, input,
+  options: { outputSchema: { type:'object', additionalProperties:false,
+             required:['category','priority'],
+             properties:{ category:{enum:['refund','billing','technical','ecommerce','sales','other']},
+                          priority:{enum:['low','normal','high']} } } },
+});
+```
+
+Šta `enforceSchema()` radi ([`src/core/guardrails.js`](../src/core/guardrails.js)):
+
+1. **Normalizuje** šemu (JSON-Schema-lite `properties`/`required`, skraćeno `{fields:[...]}`, ili niz imena).
+2. **Izvlači JSON** iz izlaza (toleriše markdown ogradu i prozu oko njega) i **isijeca na deklarisana polja** —
+   dodatna polja se odbacuju, proza se uklanja, izlaz je **čist JSON**.
+3. **Koercira tipove** (`"12.5"` → `12.5`, `"true"` → `true`), **provjerava `enum`** i **obavezna polja**.
+4. Ako nešto fali ili je van `enum`-a → **jedan** popravni poziv sa eksplicitnom instrukcijom
+   („Missing required: priority", „`category` must be one of: …"), pa ponovna provjera.
+5. Sve se bilježi u audit (`schema_enforced` / `schema_repair_needed`).
+
+### Rezultat (24 slučaja, `deepseek-flash`)
+
+| Kategorija | Prije | Sada |
+|---|---|---|
+| routing | 5/6 | **6/6** |
+| grounding | 5/6 | **6/6** |
+| refusal | 2/4 | **4/4** |
+| format | 3/4 | **4/4** |
+| language | 4/4 | **4/4** |
+| **UKUPNO** | 19/24 = 79,2 % | **24/24 = 100 %** |
+
+**Dva uzastopna runa dala su 24/24** (13:59 → 91,7 % sa starim kodom, 14:06 i 14:08 → 100 % sa šemom).
+Zapis u `data/_control/eval-history.json`: `deepseek-chat 24/24 100.0% usd=0.0375`.
+
+**Testovi koji padaju bez šeme:** `tests/guardrails.test.mjs` →
+„schema: payload.outputSchema se primjenjuje PRISILNO (isijeca, tipovi, enum)" uključuje i tvrdnju
+„bez šeme nema prisilnog sređivanja", pa se razlika u ponašanju ne može izgubiti kroz refaktor.
+
+**Ukupno potrošeno na sva mjerenja do sada: ~$0.26.**

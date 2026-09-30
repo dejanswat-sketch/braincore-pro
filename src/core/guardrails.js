@@ -96,6 +96,73 @@ export function extractJsonObject(text) {
   return null;
 }
 
+/**
+ * Normalizuj šemu u jedinstveni oblik `{ fields:[{name,type,enum,required}], strict }`.
+ * Prihvata:
+ *   • JSON-Schema-lite: `{ type:'object', properties:{a:{type:'string'}}, required:['a'], additionalProperties:false }`
+ *   • skraćeno: `{ fields:['email','amount'] }` ili `{ fields:[{name:'email',type:'string'}] }`
+ *   • niz: `['email','amount']`
+ */
+export function normalizeSchema(schema) {
+  if (!schema) return null;
+  if (Array.isArray(schema)) {
+    const fields = schema.filter((f) => typeof f === 'string').map((name) => ({ name, type: null, required: true }));
+    return fields.length ? { fields, strict: true, source: 'array' } : null;
+  }
+  if (schema.properties && typeof schema.properties === 'object') {
+    const required = new Set(Array.isArray(schema.required) ? schema.required : Object.keys(schema.properties));
+    const fields = Object.entries(schema.properties).map(([name, def]) => ({
+      name,
+      type: def?.type ?? null,
+      enum: Array.isArray(def?.enum) ? def.enum : null,
+      required: required.has(name),
+    }));
+    return { fields, strict: schema.additionalProperties === false || schema.additionalProperties === undefined, source: 'json-schema' };
+  }
+  if (Array.isArray(schema.fields)) {
+    const fields = schema.fields.map((f) => (typeof f === 'string' ? { name: f, type: null, required: true } : { name: f.name, type: f.type ?? null, enum: f.enum ?? null, required: f.required !== false }));
+    return fields.length ? { fields, strict: schema.additionalProperties !== true, source: 'fields' } : null;
+  }
+  return null;
+}
+
+/** Prisilno primijeni šemu na izlaz: izvuci JSON, provjeri obavezna polja, isijeci na deklarisana, provjeri tipove. */
+export function enforceSchema(output, schema) {
+  const norm = normalizeSchema(schema);
+  if (!norm) return { ok: false, reason: 'nema_seme', normalized: null };
+  const parsed = extractJsonObject(output);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { ok: false, reason: 'nije_validan_json', normalized: norm, missing: norm.fields.filter((f) => f.required).map((f) => f.name), extra: [] };
+  }
+  const missing = norm.fields.filter((f) => f.required && !(f.name in parsed)).map((f) => f.name);
+  const extra = Object.keys(parsed).filter((k) => !norm.fields.some((f) => f.name === k));
+  if (missing.length) return { ok: false, reason: 'nedostaju_polja', normalized: norm, missing, extra };
+
+  const out = {};
+  const coerced = [];
+  for (const field of norm.fields) {
+    if (!(field.name in parsed)) continue; // opciono polje koje ne postoji se ne izmišlja
+    let value = parsed[field.name];
+    if (field.type === 'number' && typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) {
+      value = Number(value);
+      coerced.push(field.name);
+    }
+    if (field.type === 'boolean' && typeof value === 'string' && /^(true|false)$/i.test(value.trim())) {
+      value = value.trim().toLowerCase() === 'true';
+      coerced.push(field.name);
+    }
+    if (field.type === 'string' && typeof value !== 'string') {
+      value = String(value);
+      coerced.push(field.name);
+    }
+    if (field.enum && !field.enum.includes(value)) {
+      return { ok: false, reason: 'van_enum', normalized: norm, field: field.name, allowed: field.enum, got: value };
+    }
+    out[field.name] = value;
+  }
+  return { ok: true, normalized: norm, value: out, json: JSON.stringify(out), dropped: extra, coerced };
+}
+
 export function createGuardrails({ audit, metrics, logger, config = {} } = {}) {
   const cfg = { redact: true, enforceRefusal: true, strictJson: true, ...(config ?? {}) };
 
@@ -107,9 +174,10 @@ export function createGuardrails({ audit, metrics, logger, config = {} } = {}) {
 
     /**
      * Primijeni guardrails na izlaz. Vraća NOVI izlaz + šta je urađeno (za audit i za UI).
+     * Ako je zadata `schema` (payload.outputSchema), ona ima PRIORITET nad izvlačenjem polja iz proze.
      * @returns {{ output:string, actions:Array, needsRepair:null|{instruction:string,missing:string[],extra:string[]} }}
      */
-    apply({ input, output, agentId = null, tenantId = 'nmq', runId = null } = {}) {
+    apply({ input, output, agentId = null, tenantId = 'nmq', runId = null, schema = null } = {}) {
       const actions = [];
       let text = String(output ?? '');
 
@@ -141,9 +209,28 @@ export function createGuardrails({ audit, metrics, logger, config = {} } = {}) {
         logger?.info?.('guardrail.refusal_added', { tenantId, agentId, runId, categories: addedRefusals });
       }
 
-      // 3) Stroga JSON provjera (samo ako zadatak traži JSON)
+      // 3) Stroga JSON provjera. Ako je šema ZADATA (payload.outputSchema) — ona je zakon; inače uska
+      //    inferencija iz teksta (koja je po prirodi nepouzdana, zato je šema pravi put).
       let needsRepair = null;
-      if (cfg.strictJson) {
+      const declared = normalizeSchema(schema);
+      if (declared) {
+        const enforced = enforceSchema(text, schema);
+        if (enforced.ok) {
+          text = enforced.json;
+          actions.push({ type: 'schema_enforced', fields: declared.fields.map((f) => f.name), dropped: enforced.dropped, coerced: enforced.coerced });
+          metrics?.inc('guardrail_schema_enforced_total', { tenant: tenantId });
+        } else {
+          const fieldList = declared.fields.map((f) => `${f.name}${f.required ? '' : '?'}${f.type ? `:${f.type}` : ''}`).join(', ');
+          needsRepair = {
+            instruction: `Return ONLY a JSON object matching this schema: { ${fieldList} }. No prose, no markdown fence.${enforced.missing?.length ? ` Missing required: ${enforced.missing.join(', ')}.` : ''}${enforced.allowed ? ` "${enforced.field}" must be one of: ${enforced.allowed.join(', ')}.` : ''}`,
+            missing: enforced.missing ?? [],
+            extra: enforced.extra ?? [],
+            reason: enforced.reason,
+          };
+          actions.push({ type: 'schema_repair_needed', reason: enforced.reason, missing: enforced.missing ?? [], extra: enforced.extra ?? [] });
+          metrics?.inc('guardrail_schema_repair_total', { tenant: tenantId, reason: enforced.reason });
+        }
+      } else if (cfg.strictJson) {
         const fields = requestedJsonFields(input);
         if (fields?.length) {
           const parsed = extractJsonObject(text);

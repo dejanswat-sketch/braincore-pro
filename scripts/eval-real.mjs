@@ -516,7 +516,13 @@ async function runGoldenSet(robot, cases, meta) {
         input: testCase.input,
         sessionId: `eval-real:${testCase.id}`,
         userId: 'eval-real',
-        options: { ...(testCase.options ?? {}), maxRunUsd: testCase.checks?.maxCostUsd ?? 0.05 },
+        options: {
+          ...(testCase.options ?? {}),
+          maxRunUsd: testCase.checks?.maxCostUsd ?? 0.05,
+          // Ako slučaj traži JSON šemu, pozivalac je ZADaje (kao što bi to radio integracijom preko API-ja).
+          // Sistem je prisilno primjenjuje u guardrails sloju — bez sečenja iz proze.
+          outputSchema: testCase.expect?.json ?? testCase.outputSchema ?? null,
+        },
       });
     } catch (e) {
       err = e;

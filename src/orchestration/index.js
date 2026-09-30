@@ -200,14 +200,14 @@ export function createOrchestrator(services) {
      * Ako stroga JSON provjera traži popravku, radimo TAČNO JEDAN dodatni poziv sa eksplicitnom
      * instrukcijom (i onda ponovo propuštamo kroz guardrails, bez daljeg popravljanja).
      */
-    let guarded = guardrails.apply({ input, output: result.output, agentId: ctx.agentId, tenantId, runId: run0.runId });
+    let guarded = guardrails.apply({ input, output: result.output, agentId: ctx.agentId, tenantId, runId: run0.runId, schema: options.outputSchema ?? null });
     if (guarded.needsRepair && patterns[usedPattern]) {
       try {
         metrics?.inc('guardrail_json_repair_total', { tenant: tenantId });
         const repairInput = `${input}\n\n[OUTPUT REQUIREMENT] ${guarded.needsRepair.instruction}`;
         const repaired = await patterns[usedPattern].run({ input: repairInput, ctx, config: patternConfigFor(ctx.agentId ? tCatalog.get(ctx.agentId) : tCatalog.get('support'), usedPattern, options) });
         if (repaired?.output) {
-          const second = guardrails.apply({ input, output: repaired.output, agentId: ctx.agentId, tenantId, runId: run0.runId });
+          const second = guardrails.apply({ input, output: repaired.output, agentId: ctx.agentId, tenantId, runId: run0.runId, schema: options.outputSchema ?? null });
           if (!second.needsRepair) {
             result = { ...result, output: second.output };
             guarded = { ...second, actions: [...guarded.actions, ...second.actions, { type: 'json_repaired' }] };
