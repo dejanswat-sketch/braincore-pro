@@ -52,3 +52,15 @@ jobs:
 
       - name: Soak (kratki: 0.5 min) — p95 u budžetu
         run: node scripts/soak.mjs --minutes=0.5 --rate=6 --base-port=8911
+
+      - name: Alert skripta protiv žive mašine (Ubuntu — ovdje bash radi)
+        run: |
+          node scripts/serve-demo.mjs --ticket-every=0 --api-port=8081 > /tmp/demo.log 2>&1 &
+          DEMO_PID=$!
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8081/health >/dev/null 2>&1 && break
+            sleep 1
+          done
+          API=http://127.0.0.1:8081 PEERS_MIN=0 bash deploy/alertcheck.sh
+          API=http://127.0.0.1:8081 PEERS_MIN=0 bash -c 'curl -fsS "http://127.0.0.1:8081/metrics?format=prom" | head -20'
+          kill $DEMO_PID || true

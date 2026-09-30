@@ -87,6 +87,42 @@ export function createCrdtBlackboard({ nodeId = 'node', logger, metrics, maxKeys
       return true;
     },
 
+    /**
+     * KOMPAKCIJA (GC tombstone-a).
+     *
+     * Zašto: brisanje je operacija koja se širi (tombstone), pa tabla s vremenom raste i na stabilnom
+     * roju. Tombstone stariji od `olderThanMs` (default 10 min) se uklanja — dovoljno je da su ga svi
+     * živi članovi vidjeli (gossip je epidemijski i brz).
+     *
+     * ISKRENO OGRANIČENJE: čvor koji je bio ISKLJUČEN duže od `olderThanMs` i vrati se sa starim
+     * zapisom može „vaskrsnuti" obrisani ključ (LWW će mu dati prednost jer ima veći brojač). Zato je
+     * rok konzervativan (10 min) i zato se ključevi sa kratkim životom (claim/result) i onako zamjenjuju.
+     */
+    compact({ olderThanMs = 600_000, now = Date.now() } = {}) {
+      const removed = [];
+      for (const [key, entry] of state) {
+        if (!entry.deleted) continue;
+        const age = now - Date.parse(entry.ts ?? 0);
+        if (Number.isFinite(age) && age >= olderThanMs) {
+          state.delete(key);
+          removed.push(key);
+        }
+      }
+      if (removed.length) {
+        metrics?.inc('crdt_compacted_total', {}, removed.length);
+        logger?.info?.('crdt.compacted', { nodeId, removed: removed.length, size: state.size });
+        emitter.emit('compact', { removed, size: state.size });
+      }
+      return { removed: removed.length, keys: removed, size: state.size };
+    },
+
+    /** Koliko zapisa i koliko tombstone-a drži tabla (za metrike i soak). */
+    stats() {
+      let deleted = 0;
+      for (const entry of state.values()) if (entry.deleted) deleted += 1;
+      return { size: state.size, deleted, live: state.size - deleted, maxKeys };
+    },
+
     entries({ includeDeleted = false } = {}) {
       return [...state.values()].filter((e) => includeDeleted || !e.deleted);
     },

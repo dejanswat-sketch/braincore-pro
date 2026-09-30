@@ -58,6 +58,9 @@ export const NODE_DEFAULTS = {
    */
   maxQueueDepth: 500,
   shedWhenBusy: true,
+  /** Kompakcija CRDT-a (GC tombstone-a) — koliko često i koliko star zapis smije biti obrisan. */
+  compactionIntervalMs: 300_000,
+  compactionAgeMs: 600_000,
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -131,6 +134,7 @@ export async function createSwarmNode({
     host,
     advertiseHost,
     secret,
+    secretPrev: cfg.secretPrev ?? process.env.NMQ_CLUSTER_SECRET_PREV ?? null, // rotacija ključa bez prekida
     peers,
     config: cfg.gossip,
     logger,
@@ -431,8 +435,17 @@ export async function createSwarmNode({
     if (claimTimer.unref) claimTimer.unref();
     const queueTimer = setInterval(() => queue.requeueStale().catch(() => {}), Math.max(1000, cfg.taskTtlMs));
     if (queueTimer.unref) queueTimer.unref();
+    // Kompakcija CRDT-a: uklanja tombstone-e starije od `compactionAgeMs` (tabla ne raste u nedogled)
+    const compactTimer = setInterval(() => {
+      try {
+        crdt.compact({ olderThanMs: cfg.compactionAgeMs });
+      } catch (err) {
+        logger?.warn?.('node.compact_failed', { error: err.message });
+      }
+    }, cfg.compactionIntervalMs);
+    if (compactTimer.unref) compactTimer.unref();
     pheromone.startDecay();
-    loopRefs = { claimTimer, queueTimer };
+    loopRefs = { claimTimer, queueTimer, compactTimer };
     return loopRefs;
   }
 
@@ -598,6 +611,7 @@ export async function createSwarmNode({
       if (loopRefs) {
         clearInterval(loopRefs.claimTimer);
         clearInterval(loopRefs.queueTimer);
+        if (loopRefs.compactTimer) clearInterval(loopRefs.compactTimer);
         loopRefs = null;
       }
       await gossip.stop().catch(() => {});

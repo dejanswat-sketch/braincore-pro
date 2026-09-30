@@ -115,7 +115,30 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
       if (req.method === 'GET' && url.pathname === '/tasks') {
         return send(200, { tasks: [...node.tasks.values()], done: node.done.slice(-100), crdt: node.crdt.toObject() });
       }
-      if (req.method === 'GET' && url.pathname === '/metrics') {
+      if (req.method === 'GET' && url.pathname === '/metrics' && (url.searchParams.get('format') === 'prom' || String(req.headers.accept ?? '').includes('text/plain'))) {
+        // Prometheus text format (v0.0.4) — bez npm klijenta, samo tekst
+        const stats = node.stats();
+        const m = [];
+        const put = (name, help, type, value, labels = '') => m.push(`# HELP ${name} ${help}`, `# TYPE ${name} ${type}`, `${name}${labels} ${value}`);
+        put('braincore_peers_alive', 'Broj živih peer-ova u roju', 'gauge', stats.peersAlive);
+        put('braincore_nodes', 'Ukupan broj čvorova u roju', 'gauge', stats.swarmNodes);
+        put('braincore_tasks_known', 'Poznati taskovi', 'gauge', stats.tasksKnown);
+        put('braincore_tasks_done_total', 'Završeni taskovi (cijeli roj)', 'counter', stats.swarmTasksDone);
+        put('braincore_tasks_done_local', 'Završeni taskovi na ovom čvoru', 'counter', stats.tasksDone);
+        put('braincore_load', 'Zadaci u izvršenju na ovom čvoru', 'gauge', stats.load);
+        put('braincore_crdt_entries', 'Zapisa u CRDT tabli', 'gauge', node.crdt.size);
+        put('braincore_crdt_tombstones', 'Tombstone zapisa u CRDT tabli', 'gauge', node.crdt.stats().deleted);
+        put('braincore_pheromones_active', 'Aktivnih feromona', 'gauge', node.pheromone.stats().active);
+        put('braincore_queue_depth', 'Taskova koji čekaju u redu', 'gauge', stats.queue?.queued ?? 0);
+        put('braincore_live_clients', 'Povezanih live (WS) klijenata', 'gauge', ws.clientCount());
+        put('braincore_gossip_sent_total', 'Poslanih gossip poruka', 'counter', node.gossip.stats.sent);
+        put('braincore_gossip_received_total', 'Primljenih gossip poruka', 'counter', node.gossip.stats.received);
+        put('braincore_gossip_rejected_total', 'Odbijenih gossip poruka (potpis/tip)', 'counter', node.gossip.stats.rejected);
+        put('braincore_gossip_rate_limited_total', 'Odbijenih zbog rate limita', 'counter', node.gossip.stats.rateLimited ?? 0);
+        put('braincore_gossip_prev_key_total', 'Prihvaćenih potpisa STARIM ključem (rotacija)', 'counter', node.gossip.stats.acceptedWithPrevKey ?? 0);
+        put('braincore_uptime_seconds', 'Vrijeme rada čvora', 'gauge', Math.round(stats.uptimeMs / 1000));
+        return send(200, `${m.join('\n')}\n`, { 'content-type': 'text/plain; version=0.0.4; charset=utf-8' });
+      }      if (req.method === 'GET' && url.pathname === '/metrics') {
         const stats = node.stats();
         return send(200, {
           peersAlive: stats.peersAlive,

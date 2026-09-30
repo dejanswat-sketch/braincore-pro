@@ -54,7 +54,7 @@ const safeEqual = (a, b) => {
  * @param {string} opts.secret       HMAC tajna (obavezno)
  * @param {string[]} opts.peers      bootstrap peer-ovi ("host:port")
  */
-export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.0', advertiseHost = '127.0.0.1', secret, peers = [], config = {}, logger, metrics, onMessage = null, onMembership = null, status = null } = {}) {
+export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.0', advertiseHost = '127.0.0.1', secret, secretPrev = null, peers = [], config = {}, logger, metrics, onMessage = null, onMembership = null, status = null } = {}) {
   if (!secret) throw new ValidationError('Gossip traži "secret" (bez potpisa svaki node bi mogao da se lažno predstavi)');
   const cfg = { ...GOSSIP_DEFAULTS, ...(config ?? {}) };
   const emitter = new EventEmitter();
@@ -89,6 +89,14 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
     return Buffer.from(JSON.stringify({ body: JSON.parse(json), sig: sign(secret, json) }));
   }
 
+  /**
+   * Verifikacija potpisa — uz **rotaciju ključa bez prekida**.
+   *
+   * Tokom rotacije (`secretPrev`) prihvatamo potpis i starim ključem, a potpisujemo uvijek NOVIM.
+   * Tako se čvorovi mogu restartovati jedan po jedan (rolling restart) bez ispadanja iz roja:
+   * prvo se na sve čvorove doda `NMQ_CLUSTER_SECRET_PREV=<stari>`, pa se promijeni glavni ključ,
+   * pa se (poslije jednog gossip intervala) `_PREV` ukloni.
+   */
   function verify(buf) {
     let outer;
     try {
@@ -98,10 +106,17 @@ export function createGossip({ nodeId = uid('node'), port = 8001, host = '0.0.0.
     }
     if (!outer?.body || !outer?.sig) return { ok: false, reason: 'nema_potpisa' };
     const raw = JSON.stringify(outer.body);
-    if (!safeEqual(outer.sig, sign(secret, raw))) return { ok: false, reason: 'losi_potpis' };
+    let matchedKey = null;
+    if (safeEqual(outer.sig, sign(secret, raw))) matchedKey = 'current';
+    else if (secretPrev && safeEqual(outer.sig, sign(secretPrev, raw))) matchedKey = 'previous';
+    if (!matchedKey) return { ok: false, reason: 'losi_potpis' };
     if (!MESSAGE_TYPES.includes(outer.body.type)) return { ok: false, reason: 'nedozvoljen_tip' };
     if (Math.abs(Date.now() - Number(outer.body.ts ?? 0)) > 120_000) return { ok: false, reason: 'istekao_timestamp' };
-    return { ok: true, body: outer.body };
+    if (matchedKey === 'previous') {
+      stats.acceptedWithPrevKey = (stats.acceptedWithPrevKey ?? 0) + 1;
+      metrics?.inc('gossip_prev_key_accepted_total', {});
+    }
+    return { ok: true, body: outer.body, keyUsed: matchedKey };
   }
 
   // ── membership ────────────────────────────────────────────────────────────
