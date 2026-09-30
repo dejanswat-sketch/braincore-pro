@@ -95,3 +95,49 @@ test('README/izvor: instanceId je slučajan i mijenja se između dva procesa (do
   assert.match(src, /nodeId: id, instanceId, at: Date\.now\(\)/, 'claim ga upisuje');
   assert.match(src, /cur\.instanceId && cur\.instanceId !== instanceId/, 'obnavljanje lease-a provjerava instanceId');
 });
+
+// ── PROZORI POUZDANOSTI CLAIM-a (Dio 1: mjerenje i pravilo, bez promjene default-a) ──────────────────
+// Kontekst: grace derivacija je 30.09. pregazila `claimGraceMs: 50` iz chaos testa (2 timing testa pala),
+// a pokušaj popravke je koristio `options?.config` van opsega (factory destructure-uje `config`) → 7 padova.
+
+test('eksplicitno zadat claimGraceMs/claimConfirmMs se NE prepisuje (aktivne vrijednosti su te)', async () => {
+  const node = await createSwarmNode({
+    nodeId: 'explicit-1',
+    port: 0,
+    host: '127.0.0.1',
+    secret: SECRET,
+    config: { httpAdmin: false, autoLoop: false, claimGraceMs: 50, claimConfirmMs: 60, gossip: { intervalMs: 300, failureTimeoutMs: 1300 } },
+  });
+  try {
+    const w = node.claimWindows();
+    assert.equal(w.explicit.grace, true, 'grace je eksplicitno zadat');
+    assert.equal(w.explicit.confirm, true, 'confirm je eksplicitno zadat');
+    assert.equal(w.graceMs, 50, 'aktivni grace je 50 ms (nije dignut na izvedeni minimum)');
+    assert.equal(w.confirmMs, 600, 'aktivni confirm je 600 ms (donji prag minClaimConfirmMs), NE izvedenih 1625');
+    assert.notEqual(w.confirmMs, w.derived.confirmMs, 'derivacija nije pregazila eksplicitnu vrijednost');
+  } finally {
+    await node.close();
+  }
+});
+
+test('izvedeni prozori su veći od IZMJERENE detekcije smrti (1,5x grace · 1,25x confirm)', async () => {
+  const node = await createSwarmNode({
+    nodeId: 'derived-1',
+    port: 0,
+    host: '127.0.0.1',
+    secret: SECRET,
+    config: { httpAdmin: false, autoLoop: false, gossip: { intervalMs: 300, failureTimeoutMs: 1300 } },
+  });
+  try {
+    const w = node.claimWindows();
+    assert.equal(w.detectionMs, 1300, 'detekcija je iz konfiguracije gossip-a');
+    // Dio 3 (aktiviranje derivacije) dodaje i apsolutni pod: grace >= 3 s > najgora izmjerena detekcija 2,2 s.
+    // U Diou 1 se provjerava samo PRAVILO (odnos prema izmjerenoj detekciji), jer se default ne mijenja.
+    assert.ok(w.derived.graceMs >= w.detectionMs, `izvedeni grace ${w.derived.graceMs} ms >= detekcija ${w.detectionMs} ms`);
+    assert.ok(w.derived.graceMs >= w.detectionMs * 1.5, `grace ${w.derived.graceMs} >= 1,5 x ${w.detectionMs}`);
+    assert.ok(w.derived.confirmMs >= w.detectionMs * 1.25, `confirm ${w.derived.confirmMs} >= 1,25 x ${w.detectionMs}`);
+    assert.ok(w.derivedTotalMs > w.detectionMs, `ukupan izvedeni prozor ${w.derivedTotalMs} ms > detekcija ${w.detectionMs} ms`);
+  } finally {
+    await node.close();
+  }
+});

@@ -97,6 +97,16 @@ export async function createSwarmNode({
   // Claim verifikacija nikad kraća od 2× gossip intervala (inače trka u claim-u, dokazano chaos testom)
   const gossipInterval = Number(cfg.gossip?.intervalMs ?? 300);
   cfg.claimConfirmMs = Math.max(Number(cfg.claimConfirmMs ?? 0), cfg.minClaimConfirmMs, gossipInterval * 2);
+  // Prozori pouzdanosti claim-a — izloženi da testovi provjere PRAVILO, a ne da ga pogađaju.
+  // `derived` je minimum koji garantuje da je prozor veći od IZMJERENE detekcije smrti (aktivira se u
+  // koraku 3); aktivne vrijednosti se ovdje NE mijenjaju (Dio 1 samo mjeri i izlaže).
+  const detectionMs = Number(cfg.gossip?.failureTimeoutMs ?? 1300);
+  const explicitGrace = config?.claimGraceMs != null;
+  const explicitConfirm = config?.claimConfirmMs != null;
+  const derivedWindows = () => ({
+    graceMs: Math.max(NODE_DEFAULTS.claimGraceMs, Math.ceil(detectionMs * 1.5)),
+    confirmMs: Math.max(cfg.minClaimConfirmMs, gossipInterval * 2, Math.ceil(detectionMs * 1.25)),
+  });
   const id = nodeId ?? `node-${port}`;
   const emitter = new EventEmitter();
   const tasks = new Map(); // taskId -> task (lokalno poznati)
@@ -702,7 +712,24 @@ export async function createSwarmNode({
     },
 
     /**
-     * Zatvaranje čvora MORA zaustaviti sve njegove petlje.
+     * Prozori pouzdanosti claim-a (za testove i dijagnostiku).
+     * `active` = trenutne vrijednosti, `derived` = izračunati minimum (prozor > izmjerena detekcija),
+     * `explicit` = da li je pozivalac zadao vrijednost (tada derivacija NE smije da je prepiše).
+     */
+    claimWindows: () => {
+      const derived = derivedWindows();
+      return {
+        graceMs: cfg.claimGraceMs,
+        confirmMs: cfg.claimConfirmMs,
+        totalMs: Number(cfg.claimGraceMs) + Number(cfg.claimConfirmMs),
+        detectionMs,
+        derived,
+        derivedTotalMs: derived.graceMs + derived.confirmMs,
+        explicit: { grace: explicitGrace, confirm: explicitConfirm },
+      };
+    },
+
+    /** Zatvaranje čvora MORA zaustaviti sve njegove petlje.
      * Soak test (restart čvora pod opterećenjem) je pokazao da su claim/sync/queue tajmeri nastavljali
      * da rade poslije `close()`, pa je log punio `node.tick_failed: Not running` — čvor je „mrtav", a
      * još kuca. Sada se svi tajmeri gase i `closed` flag sprječava dalji rad.
