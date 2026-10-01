@@ -126,6 +126,7 @@ export async function createSwarmNode({
   const claimEvents = new Map(); // taskId -> [događaji] — samo za NEDOVRŠENE zadatke
   const executing = new Set(); // taskovi koje OVAJ cvor TRENUTNO izvrsava (guard; inFlight drzi tryClaim)
   const reclaimCount = new Map(); // taskId -> koliko je puta OVAJ cvor preuzeo (za dijagnostiku storm-a)
+  const claimSetByAttempt = new Map(); // taskId -> Map(attempt -> Set(nodeId)) — dokaz dvostrukog claim-a
   const myClaimAt = new Map(); // taskId -> kada je OVAJ cvor upisao svoj claim (za mjerenje gossip kruga)
   const attemptFloor = new Map(); // taskId -> najvisi attempt koji je OVAJ cvor koristio (monotoni token)
   function noteClaimEvent(kind, task, extra = {}) {
@@ -426,10 +427,34 @@ export async function createSwarmNode({
     // izvršen DVA PUTA u istom pokušaju (prava greška) ili je riječ o ponovnom pokušaju (očekivano
     // kod „at-least-once" isporuke kad čvor umre poslije posla, a prije potvrde).
     // MONOTONI TOKEN: LWW moze vratiti STARIJI claim zapis, pa bi token pao (1,2,2,2).
-    const attempt = Math.max(Number(existing?.attempt ?? 0), attemptFloor.get(task.id) ?? 0) + 1;
+    // FLOOR IZ ROJA (soak #13, `dupSameNode=1`): `attemptFloor` je per-process, pa poslije restarta novi
+    // proces krece od 0 i moze ponovo izracunati `attempt = 1` za isti task (isti nodeId, novi instanceId)
+    // => ponovno izvrsavanje. Zato se floor izvodi i iz CRDT-a (`task:` zapis cuva `attempt` preko restarta).
+    const swarmAttempt = Number(crdt.get(`task:${task.id}`)?.attempt ?? 0) || 0;
+    const attempt = Math.max(Number(existing?.attempt ?? 0), attemptFloor.get(task.id) ?? 0, swarmAttempt) + 1;
     attemptFloor.set(task.id, attempt);
     crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
     myClaimAt.set(task.id, Date.now());
+    // CLAIM-NIVO MJERENJE (docs/44 §27): `result:` je jedan kljuc i ne cuva istoriju, pa se dvostruki
+    // claim mora mjeriti OVDJE — koliko razlicitih cvorova je uzelo ISTI (taskId, attempt) i sa kojim
+    // razmakom. `deltaMs` izmedju dva cvora za isti attempt daje odgovor: prozor ili mjesto provjere.
+    {
+      let byAttempt = claimSetByAttempt.get(task.id);
+      if (!byAttempt) { byAttempt = new Map(); claimSetByAttempt.set(task.id, byAttempt); }
+      let nodes = byAttempt.get(attempt);
+      if (!nodes) { nodes = new Map(); byAttempt.set(attempt, nodes); }
+      if (!nodes.has(id)) {
+        const firstAt = nodes.size ? Math.min(...[...nodes.values()]) : null;
+        nodes.set(id, Date.now());
+        if (nodes.size > 1) {
+          logger?.warn?.('node.claim_double_attempt', {
+            taskId: task.id, attempt, nodes: [...nodes.keys()],
+            deltaMs: firstAt ? Date.now() - firstAt : null,
+            confirmMs: cfg.claimConfirmMs, gossipIntervalMs: Number(cfg.gossip?.intervalMs ?? 300),
+          });
+        }
+      }
+    }
     noteClaimEvent('claim_set', task, { attempt, existingNode: existing?.nodeId ?? null, existingInstance: existing?.instanceId ?? null, existingAttempt: existing?.attempt ?? null });
     // MJERENJE STORM-a (docs/44 §24): task 2899 je u soak-u #11 preuziman ~105 puta i nikad nije zavrsen.
     // Brojimo preuzimanja po tasku i, preko praga, logujemo RAZLOG (nema claim-a / lease istekao / grace
