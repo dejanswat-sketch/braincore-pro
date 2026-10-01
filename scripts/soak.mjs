@@ -212,6 +212,18 @@ const dupDetail = [...executorByTask.entries()]
     sameNode: new Set(arr.map((a) => a.nodeId)).size === 1,
   }));
 const dupCrossNode = dupDetail.filter((d) => !d.sameNode).length;
+// PRAVI kriterij: ponovljeno izvrsavanje ISTOG `attempt`-a (isti ili drugi cvor) = stvarni duplikat.
+// Novi `attempt` na drugom cvoru = `retryAfterKill` (ocekivano `at-least-once`: posao je ostao bez vlasnika).
+const dupSameAttemptDetail = dupDetail.filter((d) => {
+  const seen = new Set();
+  for (const a of d.attempts) {
+    if (a !== null && a !== undefined && seen.has(a)) return true;
+    seen.add(a);
+  }
+  return false;
+});
+const duplicateSameAttempt = dupSameAttemptDetail.length;
+const retryAfterKill = dupDetail.length - duplicateSameAttempt;
 const dupSameNode = dupDetail.filter((d) => d.sameNode).length;
 const durationSec = (Date.now() - t0) / 1000;
 const sorted = [...latencies].sort((a, b) => a - b);
@@ -238,6 +250,9 @@ const result = {
   duplicated,
   extraExecutions,
   dupCrossNode,
+  duplicateSameAttempt,
+  retryAfterKill,
+  duplicateSameAttemptDetail: dupSameAttemptDetail.slice(0, 12),
   dupSameNode,
   dupDetail: dupDetail.slice(0, 12),
   completedSubmitted,
