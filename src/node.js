@@ -578,6 +578,15 @@ export async function createSwarmNode({
       // `pre_execute` ne može: kod istovremenog rada rezultata još nema ni kod jednog.
       const priorResult = crdt.get(`result:${task.id}`);
       if (priorResult && priorResult.nodeId && priorResult.nodeId !== id) {
+        /**
+         * MJERENJE NA PROMASAJIMA (docs/44 §23/§26) — ovo je trenutak kada su OBA cvora izvrsila isti task.
+         * Za razliku od `claim_lost_before_execute` (uzorak samo uspjesno izbjegnutih trka, §20), ovdje se
+         * mjeri koliko je tudji zapis kasnio i KADA smo ga prvi put vidjeli:
+         *   deltaMs > confirmMs  -> gossip kasni -> tek tada ima smisla birati prozor
+         *   deltaMs < confirmMs  -> zapis je bio tu, a provjera se desila prerano -> mjesto provjere
+         */
+        const ourAtMiss = myClaimAt.get(task.id) ?? null;
+        const remoteAtMiss = Number(priorResult.at ?? 0) || null;
         logger?.warn?.('node.duplicate_result_write', {
           taskId: task.id,
           firstNode: priorResult.nodeId,
@@ -586,6 +595,14 @@ export async function createSwarmNode({
           secondInstance: instanceId,
           secondAt: record.at,
           attempt,
+          ourClaimAt: ourAtMiss,
+          remoteClaimAt: remoteAtMiss,
+          deltaMs: ourAtMiss && remoteAtMiss ? remoteAtMiss - ourAtMiss : null,
+          runnerStartAt: started,
+          runnerMs: record.ms,
+          sawPeerAfterRunnerMs: Date.now() - started,
+          confirmMs: cfg.claimConfirmMs,
+          gossipIntervalMs: Number(cfg.gossip?.intervalMs ?? 300),
         });
       }
       crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: record.ms, at: record.at });
