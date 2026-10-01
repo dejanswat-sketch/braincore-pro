@@ -349,8 +349,9 @@
       </p>
     </div>
     <div class="glass reveal overflow-hidden rounded-3xl">
-      <img src="assets/live-preview.png" width="1200" height="760" loading="lazy" decoding="async"
-           alt="Braincore Pro live swarm view: three nodes, pheromone trails and task pool" class="w-full" />
+      <canvas id="livePreview" width="1200" height="760" class="w-full" role="img"
+              aria-label="Animated Braincore Pro live swarm view: three nodes, pheromone trails fading with a 30-second TTL, and a task pool"
+              style="display:block;aspect-ratio:1200/760"></canvas>
     </div>
   </div>
 </section>
@@ -831,6 +832,112 @@ node src/index.js --port=8003 --peers=127.0.0.1:8001,127.0.0.1:8002
     requestAnimationFrame(draw);
   };
   draw();
+})();
+<script>
+/* Živi live-swarm preview — 3 čvora, feromonski tragovi koji blede (TTL), task čestice (zeleno=uspjeh, crveno=pad), pool. */
+(() => {
+  const cv = document.getElementById('livePreview');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = 1200, H = 760;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cx = W / 2, cy = H / 2 + 16;
+  const NR = Math.min(W, H) * 0.33;
+  const nodes = [0, 1, 2].map((i) => {
+    const a = -Math.PI / 2 + (i * Math.PI * 2) / 3;
+    return { x: cx + Math.cos(a) * NR * 1.45, y: cy + Math.sin(a) * NR * 1.0, id: 'node-800' + (i + 2), load: 0, pulse: Math.random() * 6 };
+  });
+  const parts = [];
+  const trails = [];
+  let done = 0, failed = 0, t = 0, acc = 0;
+
+  const drawGrid = () => {
+    ctx.fillStyle = '#05070e'; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(120,170,255,.05)'; ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+  };
+
+  const frame = () => {
+    t += 0.016;
+    drawGrid();
+    // veze između čvorova (live peers)
+    for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) {
+      const a = nodes[i], b = nodes[j];
+      ctx.strokeStyle = 'rgba(120,190,255,.16)'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    // feromonski tragovi — blede (TTL)
+    for (let i = trails.length - 1; i >= 0; i--) {
+      const tr = trails[i]; tr.life -= 0.006;
+      if (tr.life <= 0) { trails.splice(i, 1); continue; }
+      const g = ctx.createLinearGradient(tr.x1, tr.y1, tr.x2, tr.y2);
+      const c = tr.ok ? '120,255,190' : '255,110,110';
+      g.addColorStop(0, `rgba(${c},${0.5 * tr.life})`); g.addColorStop(1, `rgba(${c},0)`);
+      ctx.strokeStyle = g; ctx.lineWidth = 3.4 * tr.life + 0.6;
+      ctx.beginPath(); ctx.moveTo(tr.x1, tr.y1); ctx.lineTo(tr.x2, tr.y2); ctx.stroke();
+    }
+    // spawn task čestica
+    acc += 0.016;
+    if (acc > (reduced ? 1.2 : 0.16)) {
+      acc = 0;
+      const n = nodes[(Math.random() * nodes.length) | 0];
+      parts.push({ n, k: 0, sp: 0.012 + Math.random() * 0.012, ok: Math.random() > 0.08 });
+    }
+    // putovanje ka pool-u
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const P = parts[i]; P.k += P.sp;
+      const sx = P.n.x, sy = P.n.y;
+      if (P.k >= 1) {
+        trails.push({ x1: sx, y1: sy, x2: cx, y2: cy, life: 1, ok: P.ok });
+        if (P.ok) done++; else failed++;
+        parts.splice(i, 1); continue;
+      }
+      const x = sx + (cx - sx) * P.k, y = sy + (cy - sy) * P.k;
+      ctx.beginPath(); ctx.arc(x, y, 3.4, 0, Math.PI * 2);
+      ctx.fillStyle = P.ok ? '#5dffc0' : '#ff6e6e';
+      ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 12; ctx.fill(); ctx.shadowBlur = 0;
+    }
+    // task pool (centar)
+    const pp = 1 + Math.sin(t * 2.4) * 0.06;
+    const pg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 74 * pp);
+    pg.addColorStop(0, 'rgba(120,225,255,.30)'); pg.addColorStop(1, 'rgba(120,225,255,0)');
+    ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(cx, cy, 74 * pp, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 52, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(150,225,255,.75)'; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.fillStyle = 'rgba(150,225,255,.07)'; ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(200,235,255,.85)'; ctx.font = '600 15px Inter, sans-serif';
+    ctx.fillText('TASK POOL', cx, cy - 6);
+    ctx.fillStyle = 'rgba(255,214,121,.95)'; ctx.font = '700 22px "Space Grotesk", Inter, sans-serif';
+    ctx.fillText(`${parts.length}`, cx, cy + 22);
+    // čvorovi
+    for (const n of nodes) {
+      n.pulse += 0.016; n.load = Math.max(0, n.load - 0.01);
+      const r = 13 + Math.sin(n.pulse * 2) * 1.6;
+      const ng = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 3.2);
+      ng.addColorStop(0, 'rgba(255,196,96,.55)'); ng.addColorStop(1, 'rgba(255,180,61,0)');
+      ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(n.x, n.y, r * 3.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,214,121,.95)'; ctx.shadowColor = '#ffb43d'; ctx.shadowBlur = 18; ctx.fill(); ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(20,12,0,.85)'; ctx.font = '700 11px Inter, sans-serif';
+      ctx.fillText(String(nodes.indexOf(n) + 1), n.x, n.y + 4);
+      ctx.fillStyle = 'rgba(200,220,255,.75)'; ctx.font = '600 12px "JetBrains Mono", monospace';
+      ctx.fillText(n.id, n.x, n.y + r + 22);
+    }
+    // HUD (gore lijevo/desno)
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(150,200,240,.75)'; ctx.font = '600 13px "JetBrains Mono", monospace';
+    ctx.fillText('● 3 NODES LIVE', 28, 40);
+    ctx.fillStyle = 'rgba(120,255,190,.9)';
+    ctx.fillText(`${done} done`, 28, 64);
+    ctx.fillStyle = 'rgba(255,110,110,.85)';
+    ctx.fillText(`${failed} failed`, 28, 86);
+    ctx.fillStyle = 'rgba(150,200,240,.75)';
+    ctx.fillText(`${trails.length} pheromones (TTL 30s)`, 28, 108);
+    requestAnimationFrame(frame);
+  };
+  frame();
 })();
 </script>
 </body>
