@@ -125,6 +125,7 @@ export async function createSwarmNode({
   const CLAIM_TRACE_MAX = 1000;
   const claimEvents = new Map(); // taskId -> [događaji] — samo za NEDOVRŠENE zadatke
   const executing = new Set(); // taskovi koje OVAJ cvor TRENUTNO izvrsava (guard; inFlight drzi tryClaim)
+  const myClaimAt = new Map(); // taskId -> kada je OVAJ cvor upisao svoj claim (za mjerenje gossip kruga)
   const attemptFloor = new Map(); // taskId -> najvisi attempt koji je OVAJ cvor koristio (monotoni token)
   function noteClaimEvent(kind, task, extra = {}) {
     const taskId = task?.id ?? null;
@@ -407,6 +408,7 @@ export async function createSwarmNode({
     const attempt = Math.max(Number(existing?.attempt ?? 0), attemptFloor.get(task.id) ?? 0) + 1;
     attemptFloor.set(task.id, attempt);
     crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
+    myClaimAt.set(task.id, Date.now());
     noteClaimEvent('claim_set', task, { attempt, existingNode: existing?.nodeId ?? null, existingInstance: existing?.instanceId ?? null, existingAttempt: existing?.attempt ?? null });
     // SIGNAL 1: preuzimanje claim-a koji pripada DRUGOM, JOŠ ŽIVOM čvoru — direktan dokaz dvostrukog
     // preuzimanja (domen `confirm` prozora i LWW verifikacije). Ovo je SAM događaj, ne posljedica.
@@ -436,9 +438,17 @@ export async function createSwarmNode({
     // OVDJE, poslije verifikacije a PRIJE izvrsavanja: gubitnik izlazi bez posla.
     const ownerAfterConfirm = crdt.get(claimKey);
     if (ownerAfterConfirm && ownerAfterConfirm.nodeId !== id) {
+      // MJERENJE (docs/44 §19): koliko je tudji claim kasnio za nasim — iz toga se odredjuje koliki
+      // `claimConfirmMs` mora biti, umjesto da se pogadja. `deltaMs` > nas prozor => trka je neminovna.
+      const ourAt = myClaimAt.get(task.id) ?? null;
+      const remoteAt = Number(ownerAfterConfirm.at ?? 0) || null;
       logger?.warn?.('node.claim_lost_before_execute', {
         taskId: task.id, nodeId: id, instanceId, attempt,
         ownerNow: ownerAfterConfirm.nodeId, ownerInstance: ownerAfterConfirm.instanceId ?? null,
+        ourClaimAt: ourAt, remoteClaimAt: remoteAt,
+        deltaMs: ourAt && remoteAt ? remoteAt - ourAt : null,
+        waitedMs: ourAt ? Date.now() - ourAt : null,
+        confirmMs: cfg.claimConfirmMs, gossipIntervalMs: Number(cfg.gossip?.intervalMs ?? 300),
       });
       return { taskId: task.id, nodeId: id, skipped: true, reason: 'izgubio_trku_prije_izvrsavanja' };
     }

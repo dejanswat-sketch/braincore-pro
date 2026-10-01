@@ -610,3 +610,36 @@ postaviti prozor na **izmjereno**, ne na pogodjeno.
 * `p95 783 ms` (9 sati stabilno), `shed 0`, `rate-limited 0`, CRDT ogranicen,
 * duplikati su svedeni na **iskljucivo cross-node trku** (`dupSameNode = 0` u svim runovima poslije
   `attemptFloor` + `executing` guard → ti fiksevi rade).
+
+---
+
+## 20. MJERENJE GOSSIP KRUGA — nalaz: NIJE latencija, nego LWW tie-break
+
+Kratki run (3 min, restart 45 s) sa `deltaMs = remoteClaimAt - ourClaimAt` u `node.claim_lost_before_execute`:
+
+```
+broj claim_lost_before_execute (uspjesno izbjegnute trke): 363
+deltaMs:  min -1 ms · max 0 ms   (prosjek ~ -0,3)
+waitedMs: 600-611 ms  (koliko smo cekali prije provjere)
+primjer:  taskId soak-task-2  nodeId soak-9122  ownerNow soak-9121  deltaMs -1  confirmMs 600
+```
+
+### STA TO ZNACI (i zasto rusi prethodnu hipotezu)
+1. **Konkurentski claim je upisan u ISTOJ MILISEKUNDI** (`deltaMs ≈ 0`), a ne poslije gossip kruga.
+   Dakle **povecanje `claimConfirmMs` na 1200-1600 ms NE BI RIJESILO** preostale duplikate — tuđi zapis je
+   vec lokalno prisutan u trenutku provjere.
+2. **Provjera radi:** 363 trke su rijecene tako sto je gubitnik izasao **prije** runner-a (§19, `61639fd`).
+3. Ostaje mali broj (3 u tom runu) gdje **oba cvora ostanu uvjereni da su vlasnici** — to nije latencija,
+   nego **LWW razrjesavanje po (priblizno) istom timestamp-u**: dvije strane mogu razlicito razrijesiti
+   isti par zapisa u svom lokalnom pogledu.
+
+### TACNA POPRAVKA (mjerenjem utvrdjena)
+Umjesto LWW po vremenu za `claim:` zapise → **deterministicki pobjednik iz skupa claim-ova**:
+za isti `(taskId, attempt)` vlasnik je npr. **najmanji `nodeId`** (ili `(instanceId)` kao tie-break).
+Tada **svaki cvor iz istog skupa izracuna ISTOG pobjednika** — nema asimetrije, nema dva izvrsavanja.
+`claimConfirmMs` ostaje 600 ms (nije problem).
+
+### USPUTNI NALAZ (efikasnost)
+**363 trke u 3 min (~870 zadataka) = ~40 % zadataka ima konkurentski claim.** Gubitnik plati 600 ms
+cekanja (bez posla), ali to znaci da claim mehanizam **previse cesto** dopusta dva kandidata — vrijedi
+suziti uslove preuzimanja (npr. samo najslobodniji peer, ili pheromone-based izbor) da se smanji broj trka.
