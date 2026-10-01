@@ -75,8 +75,17 @@
 
   function draw() {
     if (!state.w) return;
-    ctx.fillStyle = 'rgba(3,7,10,0.30)';
+    ctx.fillStyle = 'rgba(4,11,16,0.24)';
     ctx.fillRect(0, 0, state.w, state.h);
+    // ambijentalni sjaj u centru (da scena ne bude prazna/tamna)
+    if (state.w) {
+      const cg = ctx.createRadialGradient(state.w / 2, state.h / 2, 0, state.w / 2, state.h / 2, Math.min(state.w, state.h) * 0.58);
+      cg.addColorStop(0, 'rgba(25,217,140,0.11)');
+      cg.addColorStop(0.5, 'rgba(92,225,255,0.05)');
+      cg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = cg;
+      ctx.fillRect(0, 0, state.w, state.h);
+    }
     const s = state.snap;
     if (s) {
       const pos = layout(s.nodes || []);

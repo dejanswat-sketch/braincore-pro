@@ -27,6 +27,9 @@ if (!url || !outFile) {
 const SECONDS = Number(secArg);
 const KILL_AT = Number(killArg);
 const FPS = 20;
+// TRAFFIC=n → šalje ~n taskova/s na API tokom snimanja (da roj bude ŽIV u kadru)
+const TRAFFIC = Number(process.env.TRAFFIC ?? 0);
+const API = (process.env.BRAINCORE_API ?? 'https://api.braincore.pro').replace(/\/$/, '');
 
 const CANDIDATES = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -108,9 +111,21 @@ await send('Page.startScreencast', { format: 'jpeg', quality: 82, maxWidth: 1280
 console.log(`snimam ${SECONDS}s (kill na ${KILL_AT}s)...`);
 
 let killed = false;
+let sent = 0, ok = 0;
 const t0 = Date.now();
 while ((Date.now() - t0) / 1000 < SECONDS) {
   const el = (Date.now() - t0) / 1000;
+  if (TRAFFIC > 0) {
+    const want = Math.round(TRAFFIC * el) - sent;
+    for (let i = 0; i < want; i++) {
+      sent++;
+      fetch(`${API}/task`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'support.ticket', payload: { text: `demo task #${sent}` } }),
+      }).then((r) => { if (r.ok) ok++; }).catch(() => { });
+    }
+  }
   if (!killed && KILL_AT > 0 && el >= KILL_AT) {
     killed = true;
     console.log(`  t+${el.toFixed(1)}s → KILL NODE`);
@@ -126,13 +141,21 @@ while ((Date.now() - t0) / 1000 < SECONDS) {
   await sleep(200);
 }
 await send('Page.stopScreencast');
-console.log('frejmova sirovo:', frames.length);
+console.log(`frejmova sirovo: ${frames.length} · taskova poslano: ${sent} (prihvaćeno ${ok})`);
 
 // ── uzorkuj na ciljni fps da prenos ne bude ogroman ─────────────────────────
 const targetFps = Math.min(FPS, 20);
 const step = Math.max(1, Math.round(frames.length / (SECONDS * targetFps)));
 const sampled = frames.filter((_, i) => i % step === 0);
 console.log(`uzorkovano: ${sampled.length} frejmova (svaki ${step}., cilj ${targetFps} fps)`);
+
+// still frejm (za dokaz/provjeru sadržaja) — frejmovi su već JPEG
+try {
+  const stillAt = Number(process.env.STILL_AT ?? Math.floor(sampled.length * 0.6));
+  const still = Buffer.from(sampled[Math.min(stillAt, sampled.length - 1)], 'base64');
+  fs.writeFileSync(outFile.replace(/\.(webm|mp4)$/i, '.still.jpg'), still);
+  console.log('still:', outFile.replace(/\.(webm|mp4)$/i, '.still.jpg'));
+} catch (e) { console.log('still greška:', e.message); }
 
 // ── enkodiranje u WebM preko MediaRecorder-a u browseru ──────────────────────
 await send('Page.navigate', { url: 'about:blank' });
