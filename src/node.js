@@ -733,7 +733,31 @@ export async function createSwarmNode({
           },
         });
       } catch (err) {
-        logger?.warn?.('node.compact_failed', { error: err.message });
+        // GC NOSIOCA MEMORIJE (docs/44 §30, izmjereno): heap ne drzi CRDT (on je ogranicen), nego
+        // `tasks` Map (raste 1:1 sa zadacima) + cetiri dijagnosticke mape + `done[]`. Cistimo ih po ISTOM
+        // principu kao CRDT: samo za ZAVRSENE zadatke starije od `gcAgeMs`, nikad one u radu.
+        {
+          const cutoff = Date.now() - cfg.gcAgeMs;
+          let pruned = 0;
+          for (const [taskId, t] of tasks) {
+            if (inFlight.has(taskId) || executing.has(taskId)) continue;
+            const finished = t?.state === 'done' || Boolean(crdt.get(`result:${taskId}`));
+            if (!finished) continue;
+            const at = Date.parse(t?.at ?? t?.createdAt ?? 0) || 0;
+            if (at && at < cutoff) {
+              tasks.delete(taskId);
+              attemptFloor.delete(taskId);
+              reclaimCount.delete(taskId);
+              claimSetByAttempt.delete(taskId);
+              myClaimAt.delete(taskId);
+              pruned += 1;
+            }
+          }
+          if (pruned) logger?.info?.('node.memory_gc', { nodeId: id, prunedTasks: pruned, tasks: tasks.size, done: done.length });
+          // `done[]` je za statistiku — dovoljno zadnjih 2000 (pri 5 t/s to je ~7 min)
+          const DONE_MAX = 2000;
+          if (done.length > DONE_MAX) done.splice(0, done.length - DONE_MAX);
+        }        logger?.warn?.('node.compact_failed', { error: err.message });
       }
     }, cfg.compactionIntervalMs);
     if (compactTimer.unref) compactTimer.unref();
