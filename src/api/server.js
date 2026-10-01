@@ -359,6 +359,51 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         const id = url.pathname.split('/')[3];
         return send(200, { revoked: await issuer.revoke(id, { by: 'admin' }) });
       }
+      // ── FAZA 2: spoljni radnici (npr. knjiga-biznissoft) ────────────────────
+      // ADITIVNO: koristi POSTOJEĆE node mehanizme (`tryClaim`, CRDT `result:`), ne mijenja logiku roja.
+      if (req.method === 'POST' && url.pathname === '/v1/worker/claim') {
+        const raw = await readBody(req);
+        let body = {};
+        try { body = raw ? JSON.parse(raw) : {}; } catch { return send(400, { error: { code: 'BAD_JSON', message: 'Tijelo nije JSON' } }); }
+        const types = Array.isArray(body.types) && body.types.length ? body.types.map(String) : null;
+        const workerId = String(body.workerId ?? 'worker');
+        const candidates = [...node.tasks.values()]
+          .filter((t) => t && t.id && (!types || types.includes(t.type)))
+          .filter((t) => !node.crdt.get(`result:${t.id}`) && node.crdt.get(`task:${t.id}`)?.state !== 'done')
+          .sort((a, b) => Number(a.createdAt ?? 0) - Number(b.createdAt ?? 0))
+          .slice(0, 25);
+        for (const t of candidates) {
+          const c = await node.tryClaim({ ...t, claimedBy: workerId });
+          if (c?.claimed) {
+            metrics?.inc('worker_claims_total', { type: String(t.type) });
+            return send(200, {
+              task: { id: t.id, type: t.type, payload: t.payload ?? null, attempt: c.attempt ?? node.crdt.get(`claim:${t.id}`)?.attempt ?? 1 },
+              claimedBy: workerId,
+              leaseMs: Number(body.leaseMs ?? 30000),
+            });
+          }
+        }
+        return send(204, null);
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/worker/done') {
+        const raw = await readBody(req);
+        let body = {};
+        try { body = raw ? JSON.parse(raw) : {}; } catch { return send(400, { error: { code: 'BAD_JSON', message: 'Tijelo nije JSON' } }); }
+        const taskId = String(body.taskId ?? '');
+        if (!taskId) return send(400, { error: { code: 'VALIDATION_ERROR', message: 'taskId obavezan' } });
+        const workerId = String(body.workerId ?? 'worker');
+        const ok = body.ok !== false;
+        const record = {
+          id: taskId, by: workerId, instanceId: String(body.instanceId ?? ''), attempt: body.attempt ?? null,
+          ok, result: body.result ?? null, error: body.error ?? null, ms: body.ms ?? null, at: Date.now(),
+        };
+        node.crdt.set(`result:${taskId}`, { ...record, state: 'done', doneBy: workerId });
+        node.crdt.set(`task:${taskId}`, { ...(node.crdt.get(`task:${taskId}`) ?? {}), id: taskId, state: 'done', doneBy: workerId });
+        node.done.push(record);
+        if (node.done.length > 2000) node.done.splice(0, node.done.length - 2000);
+        metrics?.inc(ok ? 'worker_tasks_done_total' : 'worker_tasks_failed_total', { worker: workerId });
+        return send(200, { recorded: true, taskId, ok });
+      }
       if (req.method === 'GET' && (url.pathname === '/live' || url.pathname === '/live/')) {
         const html = await readFile(path.join(HERE, 'live.html'), 'utf8');
         return send(200, html, { 'content-type': 'text/html; charset=utf-8' });
