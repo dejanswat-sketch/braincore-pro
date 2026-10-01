@@ -435,6 +435,10 @@ export async function createSwarmNode({
     attemptFloor.set(task.id, attempt);
     crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
     myClaimAt.set(task.id, Date.now());
+    // `attempt` u `task:` zapis ODMAH pri claim-u (ne tek na kraju): restartovani cvor tako PROCITA
+    // najvisi vidjeni attempt iz roja i ne moze ponovo izracunati `attempt = 1` (soak #13: `dupSameNode=1`,
+    // jer je `task.attempt` do tada bio prazan dok je task u toku). Ne dira `wins()` ni `confirm`.
+    crdt.set(`task:${task.id}`, { ...task, state: 'claimed', claimedBy: id, attempt });
     // CLAIM-NIVO MJERENJE (docs/44 §27): `result:` je jedan kljuc i ne cuva istoriju, pa se dvostruki
     // claim mora mjeriti OVDJE — koliko razlicitih cvorova je uzelo ISTI (taskId, attempt) i sa kojim
     // razmakom. `deltaMs` izmedju dva cvora za isti attempt daje odgovor: prozor ili mjesto provjere.

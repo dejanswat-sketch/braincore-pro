@@ -1,0 +1,141 @@
+{
+  "scope": "single machine (loopback), in-process nodes — mrežna particija nije simulirana",
+  "runId": "2026-10-01T14-50-00-752Z",
+  "startedAt": "2026-10-01T14:50:00.755Z",
+  "minutes": 3,
+  "nodes": 3,
+  "targetRate": 5,
+  "runnerDelayMs": 120,
+  "durationSec": 181.5,
+  "submitted": 869,
+  "shedByBackpressure": 0,
+  "failedSubmit": 3,
+  "completed": 869,
+  "lost": 0,
+  "duplicated": 5,
+  "extraExecutions": 5,
+  "dupCrossNode": 4,
+  "duplicateSameAttempt": 1,
+  "retryAfterKill": 4,
+  "duplicateSameAttemptDetail": [
+    {
+      "taskId": "soak-task-214",
+      "nodes": [
+        "soak-9263",
+        "soak-9263"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 1,
+      "sameNode": true
+    }
+  ],
+  "dupSameNode": 1,
+  "dupDetail": [
+    {
+      "taskId": "soak-task-214",
+      "nodes": [
+        "soak-9263",
+        "soak-9263"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 1,
+      "sameNode": true
+    },
+    {
+      "taskId": "soak-task-215",
+      "nodes": [
+        "soak-9263",
+        "soak-9262"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-432",
+      "nodes": [
+        "soak-9263",
+        "soak-9261"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-650",
+      "nodes": [
+        "soak-9263",
+        "soak-9261"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-652",
+      "nodes": [
+        "soak-9263",
+        "soak-9261"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    }
+  ],
+  "completedSubmitted": 869,
+  "executedNotSubmitted": 0,
+  "executedNotSubmittedIds": [],
+  "throughputPerSec": 4.79,
+  "latencyMs": {
+    "p50": 756,
+    "p95": 782,
+    "p99": 811,
+    "max": 11708,
+    "samples": 873
+  },
+  "memoryMb": {
+    "start": 10.2,
+    "end": 17.8,
+    "peak": 21.1,
+    "samples": 12
+  },
+  "crdtSizePerNode": [
+    2606,
+    2606,
+    6
+  ],
+  "pheromonesActive": 196,
+  "restarts": 4,
+  "gossip": {
+    "sent": 13486,
+    "received": 13796,
+    "rejected": 0,
+    "duplicates": 0,
+    "rateLimited": 0
+  },
+  "p95BudgetMs": 1500,
+  "verdict": {
+    "lostOk": true,
+    "duplicatedOk": false,
+    "p95Ok": true,
+    "memoryStable": true
+  }
+}
