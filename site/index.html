@@ -35,24 +35,31 @@
   html { scroll-behavior: smooth; }
   body {
     background:
-      radial-gradient(1200px 800px at 50% -10%, rgba(255,180,61,.18), transparent 60%),
-      radial-gradient(900px 620px at 8% 14%, rgba(96,150,255,.16), transparent 62%),
-      radial-gradient(900px 640px at 94% 20%, rgba(90,255,210,.12), transparent 62%),
-      linear-gradient(180deg, #060a14 0%, #03050c 55%, #01030a 100%);
+      radial-gradient(1200px 800px at 50% -10%, rgba(255,180,61,.22), transparent 60%),
+      radial-gradient(900px 620px at 8% 14%, rgba(96,150,255,.22), transparent 62%),
+      radial-gradient(900px 640px at 94% 20%, rgba(255,92,208,.16), transparent 62%),
+      radial-gradient(900px 700px at 50% 96%, rgba(70,255,200,.14), transparent 62%),
+      linear-gradient(180deg, #0a1020 0%, #060a18 55%, #03050e 100%);
     background-attachment: fixed;
   }
-  /* aurora blobs — animirano */
+  /* aurora blobs — animirano, JAKO */
   .aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-  .aurora span { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .5; mix-blend-mode: screen; animation: drift 26s ease-in-out infinite alternate; }
-  .aurora span:nth-child(1){ width: 52vw; height: 52vw; left: -12vw; top: -18vw; background: radial-gradient(circle, rgba(255,92,208,.42), transparent 70%); }
-  .aurora span:nth-child(2){ width: 46vw; height: 46vw; right: -14vw; top: 2vw; background: radial-gradient(circle, rgba(80,150,255,.45), transparent 70%); animation-delay: -9s; }
-  .aurora span:nth-child(3){ width: 44vw; height: 44vw; left: 28vw; bottom: -20vw; background: radial-gradient(circle, rgba(90,255,210,.32), transparent 70%); animation-delay: -17s; }
-  .aurora span:nth-child(4){ width: 38vw; height: 38vw; right: 6vw; bottom: -8vw; background: radial-gradient(circle, rgba(185,166,255,.35), transparent 70%); animation-delay: -22s; }
+  .aurora span { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .8; mix-blend-mode: screen; animation: drift 26s ease-in-out infinite alternate; }
+  .aurora span:nth-child(1){ width: 56vw; height: 56vw; left: -14vw; top: -20vw; background: radial-gradient(circle, rgba(255,92,208,.62), transparent 68%); }
+  .aurora span:nth-child(2){ width: 50vw; height: 50vw; right: -16vw; top: 0vw; background: radial-gradient(circle, rgba(80,150,255,.62), transparent 68%); animation-delay: -9s; }
+  .aurora span:nth-child(3){ width: 48vw; height: 48vw; left: 26vw; bottom: -22vw; background: radial-gradient(circle, rgba(70,255,200,.48), transparent 68%); animation-delay: -17s; }
+  .aurora span:nth-child(4){ width: 42vw; height: 42vw; right: 4vw; bottom: -10vw; background: radial-gradient(circle, rgba(185,166,255,.55), transparent 68%); animation-delay: -22s; }
+  .aurora span:nth-child(5){ width: 40vw; height: 40vw; left: 40vw; top: 30vh; background: radial-gradient(circle, rgba(255,190,90,.42), transparent 68%); animation-delay: -5s; }
   @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(4vw,3vw,0) scale(1.15); } }
   .glass { background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015));
     backdrop-filter: blur(16px); border: 1px solid rgba(190,220,255,.16); }
   .glass-hi { background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
     backdrop-filter: blur(20px); border: 1px solid rgba(255,214,140,.30); box-shadow: 0 0 40px rgba(255,190,90,.08); }
+  /* obojeni akcenti — da strana ne bude samo tamna */
+  .glass { border-top-color: rgba(140,215,255,.32); }
+  h2.font-display { background: linear-gradient(96deg, #ffffff 8%, #a8e6ff 46%, #ffd479 88%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  section { position: relative; }
   .gold-text { background: linear-gradient(94deg,#fff 4%,#ffe3a1 40%,#ffb43d 62%,#ffd479 96%);
     -webkit-background-clip: text; background-clip: text; color: transparent; }
   .cyan-text { background: linear-gradient(94deg,#fff 4%,#a8f0ff 45%,#5ce1ff 96%);
@@ -89,7 +96,7 @@
 </style>
 </head>
 <body class="text-ink font-sans antialiased selection:bg-gold/30">
-<div class="aurora" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+<div class="aurora" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
 
 <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 <header class="sticky top-0 z-50 border-b border-white/10 bg-night/70 backdrop-blur-xl">
