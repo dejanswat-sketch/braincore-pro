@@ -739,12 +739,18 @@ export async function createSwarmNode({
         {
           const cutoff = Date.now() - cfg.gcAgeMs;
           let pruned = 0;
+          // FALLBACK kad nema timestamp-a nigdje: zadrzi najnovijih 1500 taskova (Map cuva red dodavanja).
+          const recent = new Set([...tasks.keys()].slice(-1500));
           for (const [taskId, t] of tasks) {
             if (inFlight.has(taskId) || executing.has(taskId)) continue;
             const finished = t?.state === 'done' || Boolean(crdt.get(`result:${taskId}`));
             if (!finished) continue;
-            const at = Date.parse(t?.at ?? t?.createdAt ?? 0) || 0;
-            if (at && at < cutoff) {
+            // VRIJEME IZ CRDT ZAPISA: soak taskovi nemaju `at`/`createdAt`, pa je `at` bio 0 i uslov
+            // `at && at < cutoff` NIKAD nije prolazio — GC je bio mrtav kod (12 min: tasks 295 -> 3 494).
+            const entry = crdt.get(`result:${taskId}`) ?? crdt.get(`task:${taskId}`) ?? crdt.get(`claim:${taskId}`);
+            const at = Date.parse(entry?.at ?? t?.at ?? t?.createdAt ?? 0) || 0;
+            const old = at ? at < cutoff : !recent.has(taskId);
+            if (old) {
               tasks.delete(taskId);
               attemptFloor.delete(taskId);
               reclaimCount.delete(taskId);
