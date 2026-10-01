@@ -63,7 +63,7 @@ export const NODE_DEFAULTS = {
   allowShutdown: false,
   shutdownToken: null,
   /** Kompakcija CRDT-a (GC tombstone-a) — koliko često i koliko star zapis smije biti obrisan. */
-  compactionIntervalMs: 300_000,
+  compactionIntervalMs: 30_000, // GC provjerava svakih 30 s (5 min je značilo da 12-min mjerenje nikad ne vidi prune: tik na t=600 s briše zapise stare 599,5 s < 10 min)
   compactionAgeMs: 600_000,
   /** GC cijelih task:/result:/claim: zapisa (ne samo tombstone-a) — 1h soak je pokazao da tabla raste vječno. */
   gcAgeMs: 600_000, // 10 min (7 min je pogorsao reclaim_storm 82->246 i dao lost=1, a heap NIJE smanjio)
@@ -743,10 +743,10 @@ export async function createSwarmNode({
           const recent = new Set([...tasks.keys()].slice(-1500));
           for (const [taskId, t] of tasks) {
             if (inFlight.has(taskId) || executing.has(taskId)) continue;
-            const finished = t?.state === 'done' || Boolean(crdt.get(`result:${taskId}`));
-            if (!finished) continue;
             // VRIJEME IZ CRDT ZAPISA: soak taskovi nemaju `at`/`createdAt`, pa je `at` bio 0 i uslov
             // `at && at < cutoff` NIKAD nije prolazio — GC je bio mrtav kod (12 min: tasks 295 -> 3 494).
+            // NE tražimo `finished` (state:'done' se ne piše u lokalnu Map-u, a `result:` može biti već
+            // počišćen) — brišemo PO STAROSTI, uz zaštitu samo inFlight/executing.
             const entry = crdt.get(`result:${taskId}`) ?? crdt.get(`task:${taskId}`) ?? crdt.get(`claim:${taskId}`);
             const at = Date.parse(entry?.at ?? t?.at ?? t?.createdAt ?? 0) || 0;
             const old = at ? at < cutoff : !recent.has(taskId);
