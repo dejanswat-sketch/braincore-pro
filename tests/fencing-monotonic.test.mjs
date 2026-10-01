@@ -1,0 +1,45 @@
+/**
+ * MONOTONI FENCING TOKEN — regresija za nalaz iz soak-a (docs/44 §18).
+ *
+ * Dokaz iz mjerenja: `attempts = 1,2,2,2` — isti čvor je izvršio isti zadatak sa ISTIM `attempt`-om više
+ * puta. Uzrok: LWW merge može vratiti STARIJI `claim:` zapis (`attempt: 1` poslije `attempt: 2`), pa čvor
+ * ponovo izračuna `1 + 1 = 2`. Popravka: `attemptFloor` po taskId — token NIKAD ne opada.
+ */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createSwarmNode } from '../src/node.js';
+
+const SECRET = 'fencing-mono-secret-1234567890';
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test('attemptFloor: claim poslije STAROG zapisa ne ponavlja isti attempt', async () => {
+  const node = await createSwarmNode({
+    nodeId: 'mono-1',
+    port: 0,
+    host: '127.0.0.1',
+    secret: SECRET,
+    config: { httpAdmin: false, autoLoop: false, durableSubmit: false, claimGraceMs: 5, claimLeaseMs: 60_000 },
+    runner: async () => ({ output: 'ok' }),
+  });
+  try {
+    await node.start();
+    const t1 = await node.submitTask({ type: 'mono.test', payload: {}, ttl: 60_000 });
+    const c1 = await node.tryClaim(t1);
+    assert.equal(c1.claimed, true, 'prvi claim je prosao');
+    assert.equal(c1.attempt, 1, 'prvi attempt je 1');
+
+    // LWW je vratio STARIJI zapis: claim ponovo nosi attempt 1
+    node.crdt.set(`claim:${t1.id}`, { nodeId: 'drugi-cvor', instanceId: 'staro', at: Date.now() - 60_000, attempt: 1, leaseMs: 5 });
+    await wait(20); // > claimGraceMs(5) -> claim je slobodan
+    const c2 = await node.tryClaim(t1);
+    assert.equal(c2.claimed, true, 'drugi claim je prosao');
+    assert.ok(c2.attempt > 1, `attempt MORA rasti (dobijeno ${c2.attempt})`);
+
+    node.crdt.set(`claim:${t1.id}`, { nodeId: 'drugi-cvor', instanceId: 'staro', at: Date.now() - 60_000, attempt: 1, leaseMs: 5 });
+    await wait(20);
+    const c3 = await node.tryClaim(t1);
+    assert.ok(c3.attempt > c2.attempt, `attempt mora rasti i treci put (${c2.attempt} -> ${c3.attempt})`);
+  } finally {
+    await node.close();
+  }
+});

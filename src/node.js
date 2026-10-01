@@ -124,6 +124,7 @@ export async function createSwarmNode({
    */
   const CLAIM_TRACE_MAX = 1000;
   const claimEvents = new Map(); // taskId -> [događaji] — samo za NEDOVRŠENE zadatke
+  const attemptFloor = new Map(); // taskId -> najvisi attempt koji je OVAJ cvor koristio (monotoni token)
   function noteClaimEvent(kind, task, extra = {}) {
     const taskId = task?.id ?? null;
     if (!taskId) return;
@@ -401,7 +402,9 @@ export async function createSwarmNode({
     // FENCING TOKEN: svaki novi claim nosi veći `attempt`. Tako se u tragovima vidi da li je task
     // izvršen DVA PUTA u istom pokušaju (prava greška) ili je riječ o ponovnom pokušaju (očekivano
     // kod „at-least-once" isporuke kad čvor umre poslije posla, a prije potvrde).
-    const attempt = Number(existing?.attempt ?? 0) + 1;
+    // MONOTONI TOKEN: LWW moze vratiti STARIJI claim zapis, pa bi token pao (1,2,2,2).
+    const attempt = Math.max(Number(existing?.attempt ?? 0), attemptFloor.get(task.id) ?? 0) + 1;
+    attemptFloor.set(task.id, attempt);
     crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
     noteClaimEvent('claim_set', task, { attempt, existingNode: existing?.nodeId ?? null, existingInstance: existing?.instanceId ?? null, existingAttempt: existing?.attempt ?? null });
     // SIGNAL 1: preuzimanje claim-a koji pripada DRUGOM, JOŠ ŽIVOM čvoru — direktan dokaz dvostrukog
@@ -795,6 +798,7 @@ export async function createSwarmNode({
      * `explicit` = da li je pozivalac zadao vrijednost (tada derivacija NE smije da je prepiše).
      */
     /** Trag claim-ova za dati task (dijagnostika duplih izvršenja). Bez argumenta vraća zadnjih N. */
+    tryClaim, // za testove (monotoni fencing token)
     claimTrace: (taskId = null) => (taskId ? (claimEvents.get(taskId) ?? []) : [...claimEvents.values()].slice(-5).flat()),
 
     claimWindows: () => {
