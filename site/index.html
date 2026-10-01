@@ -44,9 +44,10 @@
   /* aurora blobs — animirano */
   .aurora { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
   .aurora span { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .5; mix-blend-mode: screen; animation: drift 26s ease-in-out infinite alternate; }
-  .aurora span:nth-child(1){ width: 52vw; height: 52vw; left: -12vw; top: -18vw; background: radial-gradient(circle, rgba(255,180,61,.5), transparent 70%); }
+  .aurora span:nth-child(1){ width: 52vw; height: 52vw; left: -12vw; top: -18vw; background: radial-gradient(circle, rgba(255,92,208,.42), transparent 70%); }
   .aurora span:nth-child(2){ width: 46vw; height: 46vw; right: -14vw; top: 2vw; background: radial-gradient(circle, rgba(80,150,255,.45), transparent 70%); animation-delay: -9s; }
   .aurora span:nth-child(3){ width: 44vw; height: 44vw; left: 28vw; bottom: -20vw; background: radial-gradient(circle, rgba(90,255,210,.32), transparent 70%); animation-delay: -17s; }
+  .aurora span:nth-child(4){ width: 38vw; height: 38vw; right: 6vw; bottom: -8vw; background: radial-gradient(circle, rgba(185,166,255,.35), transparent 70%); animation-delay: -22s; }
   @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(4vw,3vw,0) scale(1.15); } }
   .glass { background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015));
     backdrop-filter: blur(16px); border: 1px solid rgba(190,220,255,.16); }
@@ -88,7 +89,7 @@
 </style>
 </head>
 <body class="text-ink font-sans antialiased selection:bg-gold/30">
-<div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+<div class="aurora" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
 
 <!-- ── NAV ─────────────────────────────────────────────────────────────── -->
 <header class="sticky top-0 z-50 border-b border-white/10 bg-night/70 backdrop-blur-xl">
@@ -635,66 +636,84 @@ node src/index.js --port=8003 --peers=127.0.0.1:8001,127.0.0.1:8002
 
 <script src="script.js" defer></script>
 <script>
-/* Swarm canvas — 3 čvora, veze, tokovi taskova (feromoni). Bez npm-a. */
+/* Swarm canvas v2 — šareni neuralni swarm: pulsirajuća jezgra, orbitalni čvorovi, energetski impulsi, iskre. */
 (() => {
   const cv = document.getElementById('swarm');
   if (!cv || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const ctx = cv.getContext('2d');
   const sec = cv.parentElement;
   let w, h, dpr;
-  const nodes = [];
-  const parts = [];
+  const PALETTE = ['#5ce1ff', '#ff5cd0', '#b9a6ff', '#ffd479', '#5dffc0', '#ff8a5c'];
+  let nodes = [], pulses = [], sparks = [];
   const resize = () => {
     dpr = Math.min(devicePixelRatio || 1, 2);
     w = sec.clientWidth; h = sec.clientHeight;
     cv.width = w * dpr; cv.height = h * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const cx = w * 0.5, cy = h * 0.5, R = Math.min(w, h) * 0.30;
-    nodes.length = 0;
-    for (let i = 0; i < 3; i++) {
-      const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
-      nodes.push({ x: cx + Math.cos(a) * R, y: cy + Math.sin(a) * R * 0.82, r: 5 + i * 2, a });
+    nodes = [];
+    const N = w < 640 ? 8 : 12;
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2 + Math.random() * 0.6;
+      const rr = Math.min(w, h) * (0.20 + Math.random() * 0.20);
+      nodes.push({ a, rr, r: 2.5 + Math.random() * 4.5, sp: 0.15 + Math.random() * 0.45, c: PALETTE[i % PALETTE.length], x: 0, y: 0 });
     }
   };
   resize();
   addEventListener('resize', resize);
-  const hex = (x, y, r) => {
-    ctx.beginPath();
-    for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i - Math.PI / 6; const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
-    ctx.closePath();
-  };
+  const hex = (x, y, r) => { ctx.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 3 * i - Math.PI / 6; const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); } ctx.closePath(); };
   let t = 0;
   const draw = () => {
     t += 0.016;
     ctx.clearRect(0, 0, w, h);
-    // veze
+    const C = { x: w * 0.5, y: h * 0.5 };
+    // centralna jezgra
+    const corePulse = 1 + Math.sin(t * 2.4) * 0.13;
+    const g = ctx.createRadialGradient(C.x, C.y, 0, C.x, C.y, 60 * corePulse);
+    g.addColorStop(0, 'rgba(255,224,150,.95)'); g.addColorStop(0.4, 'rgba(255,180,61,.5)'); g.addColorStop(1, 'rgba(255,120,60,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(C.x, C.y, 60 * corePulse, 0, Math.PI * 2); ctx.fill();
+    // orbitiraj čvorove
+    for (const n of nodes) { n.a += n.sp * 0.004; n.x = C.x + Math.cos(n.a) * n.rr; n.y = C.y + Math.sin(n.a) * n.rr * 0.9; }
+    // veze čvor-čvor
     for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
       const a = nodes[i], b = nodes[j];
-      const g = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-      g.addColorStop(0, 'rgba(255,190,90,.22)'); g.addColorStop(1, 'rgba(90,225,255,.16)');
-      ctx.strokeStyle = g; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      if ((a.x - b.x) ** 2 + (a.y - b.y) ** 2 < (Math.min(w, h) * 0.42) ** 2) {
+        ctx.strokeStyle = 'rgba(150,210,255,.09)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+    // veza čvor → jezgra (obojena)
+    for (const n of nodes) {
+      const gg = ctx.createLinearGradient(n.x, n.y, C.x, C.y);
+      gg.addColorStop(0, n.c + '88'); gg.addColorStop(1, 'rgba(255,210,130,.10)');
+      ctx.strokeStyle = gg; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(n.x, n.y); ctx.lineTo(C.x, C.y); ctx.stroke();
+    }
+    // impulsi ka jezgri
+    if (pulses.length < 22 && Math.random() < 0.28) {
+      const n = nodes[(Math.random() * nodes.length) | 0];
+      pulses.push({ x: n.x, y: n.y, k: 0, sp: 0.02 + Math.random() * 0.03, c: n.c });
+    }
+    for (let p = pulses.length - 1; p >= 0; p--) {
+      const P = pulses[p]; P.k += P.sp;
+      if (P.k >= 1) { sparks.push({ c: P.c, l: 0 }); pulses.splice(p, 1); continue; }
+      const x = P.x + (C.x - P.x) * P.k, y = P.y + (C.y - P.y) * P.k;
+      ctx.beginPath(); ctx.arc(x, y, 2.5, 0, Math.PI * 2); ctx.fillStyle = P.c; ctx.shadowColor = P.c; ctx.shadowBlur = 12; ctx.fill(); ctx.shadowBlur = 0;
+    }
+    // iskre iz jezgre
+    for (let s = sparks.length - 1; s >= 0; s--) {
+      const S = sparks[s]; S.l += 1;
+      if (S.l > 26) { sparks.splice(s, 1); continue; }
+      const a = Math.random() * Math.PI * 2, d = S.l * 1.5;
+      ctx.beginPath(); ctx.arc(C.x + Math.cos(a) * d, C.y + Math.sin(a) * d, 1.7, 0, Math.PI * 2);
+      ctx.fillStyle = S.c; ctx.globalAlpha = 1 - S.l / 26; ctx.fill(); ctx.globalAlpha = 1;
     }
     // čvorovi
     for (const n of nodes) {
-      const pulse = 1 + Math.sin(t * 1.6 + n.a) * 0.14;
-      hex(n.x, n.y, n.r * pulse);
-      ctx.strokeStyle = 'rgba(255,200,110,.75)'; ctx.lineWidth = 1.4; ctx.stroke();
-      ctx.fillStyle = 'rgba(255,180,61,.14)'; ctx.fill();
-      hex(n.x, n.y, n.r * 0.45); ctx.fillStyle = 'rgba(255,220,150,.9)'; ctx.fill();
-    }
-    // tokovi (taskovi) — ponekad pošalji novi
-    if (parts.length < 26 && Math.random() < 0.16) {
-      const i = (Math.random() * nodes.length) | 0;
-      let j = (Math.random() * nodes.length) | 0; while (j === i) j = (Math.random() * nodes.length) | 0;
-      parts.push({ i, j, k: 0, sp: 0.006 + Math.random() * 0.012 });
-    }
-    for (let p = parts.length - 1; p >= 0; p--) {
-      const P = parts[p], a = nodes[P.i], b = nodes[P.j];
-      P.k += P.sp; if (P.k >= 1) { parts.splice(p, 1); continue; }
-      const x = a.x + (b.x - a.x) * P.k, y = a.y + (b.y - a.y) * P.k;
-      ctx.beginPath(); ctx.arc(x, y, 2.1, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(160,240,255,${0.9 - P.k * 0.6})`; ctx.fill();
+      const pul = 1 + Math.sin(t * 2 + n.a) * 0.2;
+      hex(n.x, n.y, n.r * pul);
+      ctx.strokeStyle = n.c; ctx.lineWidth = 1.7; ctx.shadowColor = n.c; ctx.shadowBlur = 16; ctx.stroke();
+      ctx.fillStyle = n.c + '30'; ctx.fill(); ctx.shadowBlur = 0;
+      hex(n.x, n.y, n.r * 0.42); ctx.fillStyle = n.c; ctx.fill();
     }
     requestAnimationFrame(draw);
   };
