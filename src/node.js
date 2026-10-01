@@ -125,6 +125,7 @@ export async function createSwarmNode({
   const CLAIM_TRACE_MAX = 1000;
   const claimEvents = new Map(); // taskId -> [događaji] — samo za NEDOVRŠENE zadatke
   const executing = new Set(); // taskovi koje OVAJ cvor TRENUTNO izvrsava (guard; inFlight drzi tryClaim)
+  const reclaimCount = new Map(); // taskId -> koliko je puta OVAJ cvor preuzeo (za dijagnostiku storm-a)
   const myClaimAt = new Map(); // taskId -> kada je OVAJ cvor upisao svoj claim (za mjerenje gossip kruga)
   const attemptFloor = new Map(); // taskId -> najvisi attempt koji je OVAJ cvor koristio (monotoni token)
   function noteClaimEvent(kind, task, extra = {}) {
@@ -410,6 +411,26 @@ export async function createSwarmNode({
     crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
     myClaimAt.set(task.id, Date.now());
     noteClaimEvent('claim_set', task, { attempt, existingNode: existing?.nodeId ?? null, existingInstance: existing?.instanceId ?? null, existingAttempt: existing?.attempt ?? null });
+    // MJERENJE STORM-a (docs/44 §24): task 2899 je u soak-u #11 preuziman ~105 puta i nikad nije zavrsen.
+    // Brojimo preuzimanja po tasku i, preko praga, logujemo RAZLOG (nema claim-a / lease istekao / grace
+    // istekao) + da li je prethodni vlasnik bio ZIV. Tek iz toga slijedi popravka (backoff), ne pogadjanje.
+    {
+      const reclaims = (reclaimCount.get(task.id) ?? 0) + 1;
+      reclaimCount.set(task.id, reclaims);
+      if (reclaims >= 5) {
+        const ageMs = existing ? Date.now() - Number(existing.at ?? 0) : null;
+        logger?.warn?.('node.reclaim_storm', {
+          taskId: task.id, reclaims, attempt, nodeId: id, instanceId,
+          existingNode: existing?.nodeId ?? null,
+          existingAttempt: existing?.attempt ?? null,
+          existingAgeMs: ageMs,
+          existingAlive: existing?.nodeId ? gossip.isAlive(existing.nodeId) : null,
+          leaseMs: cfg.claimLeaseMs,
+          graceMs: cfg.claimGraceMs,
+          reason: !existing ? 'nema_claima' : ageMs >= cfg.claimLeaseMs ? 'lease_istekao' : 'grace_istekao',
+        });
+      }
+    }
     // SIGNAL 1: preuzimanje claim-a koji pripada DRUGOM, JOŠ ŽIVOM čvoru — direktan dokaz dvostrukog
     // preuzimanja (domen `confirm` prozora i LWW verifikacije). Ovo je SAM događaj, ne posljedica.
     if (existing?.nodeId && existing.nodeId !== id && gossip.isAlive(existing.nodeId) && Date.now() - Number(existing.at ?? 0) < cfg.claimLeaseMs) {

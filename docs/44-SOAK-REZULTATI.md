@@ -807,3 +807,45 @@ iznova) i velik dio `lost = 3`, i `shed = 123` + `rate-limited = 203` (red i gos
 3. Mjerenje na **promasajima** (`duplicate_result_write`, anchor treba procitati) za onaj `1,1`.
 4. **Soak #12** tek poslije toga — kriterij nepromijenjen (`duplicateSameAttempt=0 · lost=0 · p95<=1,5 s ·
    heap<100 MB · shed=0 · rate-limited=0`).
+
+---
+
+## 25. KORIJEN STORM-a (izmjereno): claim ostaje zapisan kad cvor ODUSTANE od izvrsavanja
+
+Kratki run (3 min, restart 45 s) sa brojacem preuzimanja po tasku (prag 5):
+
+```
+reclaim_storm redova: 790 (u 3 minuta!)
+{"taskId":"soak-task-215","reclaims":5,"attempt":6,"nodeId":"soak-9182",
+ "existingNode":"soak-9183","existingAttempt":1,"existingAgeMs":10826,
+ "existingAlive":true,            <-- VLASNIK JE ZIV
+ "leaseMs":10000,"graceMs":3000,"reason":"lease_istekao"}
+takodje: lost = 167 ✖✖  (shed = 0)
+```
+
+### Sta ovo znaci (uzrocno-posljedicno)
+1. Cvor **upise claim** u `tryClaim` (prije verifikacije i prije guard-a), pa **odustane** od izvrsavanja
+   (izgubio LWW trku / `executing` guard / `ownerAfterConfirm` provjera) — **ali claim ostaje u tabeli**.
+2. **Obnavljanje lease-a se pokrece u `runTask`**, a do njega ne dodje jer je cvor odustao → claim **nikad
+   se ne osvjezava**.
+3. Poslije `claimLeaseMs` (10 s) claim izgleda „mrtav" — iako je vlasnik **ziv** (`existingAlive: true`).
+4. **Svi ostali ga preuzimaju** (`reason: lease_istekao`), svaki put sa **novim `attempt`** → token raste
+   (1 → 105), task kruzi, p99 ode na minute, `lost` eksplodira (167 u 3 min).
+
+**Zato je storm MASOVAN (790 u 3 min):** odustajanje je cesta pojava (u §20 je izmjereno **363 bail-a** u
+3 min), a svaki bail ostavlja claim koji poslije 10 s izaziva novo preuzimanje.
+
+### Tacna popravka (slijedi iz mjerenja, ne iz pogadjanja)
+* **Odustajanje mora POVUCI claim** — kad cvor izadje iz izvrsavanja bez posla (`skipped`), mora
+  obrisati/neutralisati svoj claim (`crdt.set(claimKey, { ...retired: true })` ili `crdt.delete`), da ne
+  izgleda kao ziv vlasnik;
+* **ili** claim pisati **tek poslije** verifikacije i provjere vlasnistva (kad je cvor siguran da izvrsava);
+* uz to: ne dirati `grace`/`confirm` (mjerenja §20 pokazuju da nisu krivi).
+
+### Veza sa rezidualnim duplikatom `1,1`
+Isti mehanizam objasnjava i njega: masovna preuzimanja povecavaju sansu da dva cvora udju u runner u istom
+prozoru. Zato se **prvo** rjesava storm — i tek onda, ako `1,1` ostane, mjeri se na promasajima.
+
+### Kriterij za #12 (nepromijenjen)
+`duplicateSameAttempt=0 · lost=0 · p95<=1,5 s · heap<100 MB · shed=0 · rate-limited=0`
+`lost = 167` u kratkom runu pokazuje da je storm sada **najveci** problem — veci od duplikata.
