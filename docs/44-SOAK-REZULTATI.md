@@ -936,3 +936,39 @@ unutar istog procesa, ali **ne preko restarta**.
 2. Za cross-node `1,1`: mjeriti na **claim** nivou, ne na `result:` — jer `result:` ne cuva istoriju:
    brojati **claim_set po (taskId, attempt)** sa razlicitim `nodeId` (to je direktan dokaz dvostrukog claim-a).
 3. Tek iz toga: prozor ili mjesto provjere.
+
+---
+
+## 28. SOAK #14 — `duplicateSameAttempt = 0` U PUNOM SATU (kriterij zadovoljen)
+
+```
+trajanje:      3601 s (60 min) · 6 restarta cvora
+poslano:       17 245 / izvrseno 17 245          -> lost = 0 ✔
+shed:          0 ✔        rate-limited: 0 ✔
+p50 758 · p95 787 ms ✔ · p99 819 ms ✔ · max 11 871 ms
+heap:          12,3 -> 77,4 MB (vrh 111,1 MB)     ~ iznad 100 MB (jedini kriterij koji nije)
+CRDT:          8 618 / 8 617 / 7 ✔
+duplicateSameAttempt = 0 ✔✔✔      <- PRAVI KRITERIJ ISPUNJEN
+dupSameNode = 0 ✔                 retryAfterKill = 10 (ocekivano, at-least-once)
+reclaim_storm = 82/h              claim_double_attempt = 0 (cross-node isti attempt: nije se pojavio)
+```
+
+### Vazno o citanju brojeva
+`duplo izvrseno: 10` u starom ispisu harness-a su **legitimna re-izvrsenja poslije ubijanja cvora**
+(`retryAfterKill`, svaki sa NOVIM `attempt`-om) — sto je `at-least-once` ponasanje, ne greska. **Pravi
+kriterij** (`duplicateSameAttempt`: isti `attempt` ponovljen) je **0**.
+
+### Sta je zatvorilo put do 0 (sve mjereno)
+| Mehanizam | Popravka | Dokaz |
+|---|---|---|
+| lease bez obnavljanja (11 200 duplih) | obnavljanje svakih lease/3 | #4: 43 |
+| tabla bez GC-a (37 751 zapis, 240 MB) | `gc()` 10 min | #5: 1 500 zapis |
+| lazni backpressure (`queued=500`) | real-backlog + `discard()` | #6: shed 0 |
+| restart-trka | `grace` 3 s | #6: 11 |
+| LWW vracao stari token (`1,2,2,2`) | `attemptFloor` | #12: dupSameNode 0 |
+| odustajanje ostavljalo ziv claim (`lost=167`) | `withdrawOwnClaim` | #12: lost 0 · storm 812 -> 34 |
+| restart resetovao token (`dupSameNode=1`) | `attempt` u `task:` pri claim-u | **#14: 0** |
+
+### Jedini preostali kriterij: heap vrh 111,1 MB (> 100 MB)
+Nije curenje (kraj 77,4 MB; GC radi) — to je **velicina GC prozora**: `gcAgeMs` 10 min pri ~4,8 t/s drzi
+~2 900 zadataka u tabeli. Ako kriterij ostaje < 100 MB: `gcAgeMs` 10 -> 7 min (ili `result:` sazeti).
