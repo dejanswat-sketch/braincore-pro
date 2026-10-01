@@ -29,3 +29,29 @@ proces ne može** — 10 i 25 čvorova u istom event loop-u se međusobno guše 
 isti CPU), pa se pojavljuju izgubljeni i dupli taskovi. To **nije** dokaz da roj ne skalira: to je dokaz da
 **više čvorova mora biti u više procesa/hostova** (pravi multi-host bench je F11). Backpressure (`maxQueueDepth`,
 429) je već u kodu i tačno je odgovor na ovaj nalaz.
+
+## Run na Hetzneru (01.10., `RATE=8`, 15 s po konfiguraciji, posao 60 ms)
+
+Cilj je bio **održiv ritam od 8 t/s** (istovetan soak-u #16), ne maksimalni — da broj bude iskren, ne umjetno
+napuhan (bench na 40 t/s mjeri PREKO kapaciteta, što je gore dokazano).
+
+| Čvorova | Propušteno | p50 | p95 | p99 | CPU/task | RSS | Izgubljeno | Duplo |
+|---|---|---|---|---|---|---|---|---|
+| **1** | 7,93/s | 683 ms | 701 ms | 701 ms | 3,82 ms | 66,6 MB | 0 | 0 |
+| **3** | 7,93/s | 675 ms | **698 ms** | 700 ms | 11,7 ms | 74 MB | **0** | **0** |
+| 10 | 7,93/s | 681 ms | 861 ms | 1 024 ms | 45,7 ms | 105,3 MB | 0 | **39** |
+| 25 | 7,67/s | 769 ms | **11 689 ms** | 15 161 ms | 154,9 ms | 132,6 MB | 0 | **97** |
+
+### Interpretacija (mjerena na Hetzneru, ne pogađana)
+1. **3 čvora su „slatka tačka" na jednom hostu**: pri 8 t/s daju p95 **698 ms**, **0 izgubljenih, 0 duplih**.
+   To je i razlog zašto produkcija ide sa 3 node-a (braincore-node@8002/@8003 + API :8001).
+2. **Više čvorova u JEDNOM procesu škodi, ne pomaže**: sa 10 čvorova raste broj istovremenih preuzimanja
+   istog taska → **39 duplih**; sa 25 čvorova p95 odlazi na **11,7 s** i **97 duplih** — jedan event loop se
+   zasićuje, a claim-trke eksplodiraju.
+3. **Skaliranje = više procesa/hostova, ne više čvorova u jednom procesu.** Gornja granica jednog hosta je
+   sada izmjerena: **~8 taskova/s sa p95 < 1 s na 3 čvora**. Za više kapaciteta treba više hostova (svaki po
+   3 čvora).
+
+### Broj za sajt (iskren)
+> **„Jedan host: 3 čvora, ~8 taskova/s, p95 < 1 s, 0 izgubljenih, 0 duplih. Skaliranje je horizontalno —
+> svaki dodatni host dodaje ~8 taskova/s sa istim garancijama."**
