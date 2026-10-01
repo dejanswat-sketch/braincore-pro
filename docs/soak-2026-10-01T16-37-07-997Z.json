@@ -1,0 +1,75 @@
+{
+  "scope": "single machine (loopback), in-process nodes — mrežna particija nije simulirana",
+  "runId": "2026-10-01T16-37-07-997Z",
+  "startedAt": "2026-10-01T16:37:07.999Z",
+  "minutes": 3,
+  "nodes": 3,
+  "targetRate": 5,
+  "runnerDelayMs": 120,
+  "durationSec": 181.6,
+  "submitted": 876,
+  "shedByBackpressure": 0,
+  "failedSubmit": 4,
+  "completed": 876,
+  "lost": 0,
+  "duplicated": 1,
+  "extraExecutions": 1,
+  "dupCrossNode": 1,
+  "duplicateSameAttempt": 0,
+  "retryAfterKill": 1,
+  "duplicateSameAttemptDetail": [],
+  "dupSameNode": 0,
+  "dupDetail": [
+    {
+      "taskId": "soak-task-217",
+      "nodes": [
+        "soak-9323",
+        "soak-9321"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    }
+  ],
+  "completedSubmitted": 876,
+  "executedNotSubmitted": 0,
+  "executedNotSubmittedIds": [],
+  "throughputPerSec": 4.82,
+  "latencyMs": {
+    "p50": 755,
+    "p95": 780,
+    "p99": 793,
+    "max": 11393,
+    "samples": 877
+  },
+  "memoryMb": {
+    "start": 12,
+    "end": 25.6,
+    "peak": 25.6,
+    "samples": 12
+  },
+  "crdtSizePerNode": [
+    2628,
+    2628,
+    8
+  ],
+  "pheromonesActive": 252,
+  "restarts": 4,
+  "gossip": {
+    "sent": 13962,
+    "received": 13833,
+    "rejected": 0,
+    "duplicates": 0,
+    "rateLimited": 0
+  },
+  "p95BudgetMs": 1500,
+  "verdict": {
+    "lostOk": true,
+    "duplicatedOk": false,
+    "p95Ok": true,
+    "memoryStable": true
+  }
+}

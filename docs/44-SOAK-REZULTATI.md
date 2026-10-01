@@ -972,3 +972,44 @@ kriterij** (`duplicateSameAttempt`: isti `attempt` ponovljen) je **0**.
 ### Jedini preostali kriterij: heap vrh 111,1 MB (> 100 MB)
 Nije curenje (kraj 77,4 MB; GC radi) — to je **velicina GC prozora**: `gcAgeMs` 10 min pri ~4,8 t/s drzi
 ~2 900 zadataka u tabeli. Ako kriterij ostaje < 100 MB: `gcAgeMs` 10 -> 7 min (ili `result:` sazeti).
+
+---
+
+## 29. SUD SOAK-a #15 — `duplicateSameAttempt=0` DRUGI SAT ZAREDOM, ali heap NIJE pao (hipoteza oborena)
+
+```
+trajanje:      3611 s (60 min) · 6 restarta · 17 412 / 17 411
+shed: 0 ✔        rate-limited: 0 ✔
+p50 758 · p95 785 ms ✔ · p99 797 ms ✔ · max 16 163 ms
+lost = 1 ✖
+duplicateSameAttempt = 0 ✔✔      dupSameNode = 0 ✔      retryAfterKill = 8 (ocekivano)
+heap: 11,2 -> 110,5 MB (vrh 110,5) ✖      CRDT: 6 138 / 6 134 / 3 (PALO sa 8 618)
+reclaim_storm = 246 (bilo 82 u #14)      claim_double_attempt = 0
+```
+
+| Kriterij | Cilj | Sud |
+|---|---|---|
+| `duplicateSameAttempt` | 0 | ✔ **0** (drugi sat zaredom) |
+| `dupSameNode` | 0 | ✔ 0 |
+| `lost` | 0 | ✖ **1** |
+| `p95` | <= 1,5 s | ✔ **785 ms** (p99 797 ms) |
+| heap vrh | < 100 MB | ✖ **110,5 MB** (nepromijenjeno!) |
+| `shed` | 0 | ✔ 0 |
+| `rate-limited` | 0 | ✔ 0 |
+
+### MOJA HIPOTEZA JE OBORENA: heap NE drzi CRDT
+`gcAgeMs` 10 -> 7 min je **snizio CRDT** (8 618 -> 6 138 zapisa, -29 %), ali **heap vrh je ostao 110,5 MB**
+(prije 111,1). Znaci: memoriju NE drzi tabela, nego **nestо drugo** — kandidati:
+* `done[]` — niz sa **17 000+ zapisa** (svaki nosi `taskId, nodeId, attempt, ms, output, at`),
+* `tasks` Map (lokalno poznati zadaci),
+* `claimSetByAttempt` / `reclaimCount` / `attemptFloor` (moje dijagnosticke mape — rastu po tasku!),
+* pheromone/tragovi.
+
+**Sljedece mjerenje mora biti PO STRUKTURI, ne po tabeli:** logovati velicine (`done.length`, `tasks.size`,
+`claimSetByAttempt.size`, `attemptFloor.size`, `reclaimCount.size`, `pheromone`) svakih 30 s i vidjeti koja
+raste linearno sa 17 000 zadataka. Tek onda brisanje/ogranicavanje te strukture.
+
+### `reclaim_storm` 82 -> 246 (paznja)
+Kraci GC prozor moze da ucini da `result:`/`task:` zapis istekne dok ga neki cvor jos nije vidio — pa se
+task **preuzme ponovo** (isti mehanizam kao „resurrect" tombstone-a, dokumentovan u `compact()`). To je
+kandidat i za `lost = 1`. Vrijedi izmjeriti: broj preuzimanja taskova **koji su vec imali rezultat**.
