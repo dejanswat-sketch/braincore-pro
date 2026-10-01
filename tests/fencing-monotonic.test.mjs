@@ -70,3 +70,35 @@ test('executing guard: drugi ulazak u isti task se preskace (runner pozvan TACNO
     await node.close();
   }
 });
+
+test('odustajanje povlaci claim: cvor koji preskoci izvrsavanje ne ostavlja ziv claim', async () => {
+  const node = await createSwarmNode({
+    nodeId: 'withdraw-1',
+    port: 0,
+    host: '127.0.0.1',
+    secret: SECRET,
+    config: { httpAdmin: false, autoLoop: false, durableSubmit: false },
+    runner: async () => {
+      await wait(150);
+      return { output: 'ok' };
+    },
+  });
+  try {
+    await node.start();
+    const t = await node.submitTask({ type: 'withdraw.test', payload: {}, ttl: 60_000 });
+    const claim = await node.tryClaim(t);
+    assert.equal(claim.claimed, true, 'claim je uzet');
+    assert.ok(node.crdt.get(`claim:${t.id}`), 'claim postoji poslije tryClaim');
+
+    const first = node.runTask({ ...t }, { attempt: claim.attempt });   // drzi executing
+    await wait(20);
+    const second = await node.runTask({ ...t }, { attempt: claim.attempt }); // guard -> odustaje
+    assert.equal(second.skipped, true, 'drugi ulazak je preskocen');
+    await first;
+    // poslije ZAVRSETKA posla claim se povlaci (finally/withdraw) — ne smije ostati "ziv" zapis
+    const after = node.crdt.get(`claim:${t.id}`);
+    assert.ok(!after || after.nodeId === undefined, `claim je povucen (ostalo: ${JSON.stringify(after)})`);
+  } finally {
+    await node.close();
+  }
+});

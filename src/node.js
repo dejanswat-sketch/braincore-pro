@@ -146,6 +146,26 @@ export async function createSwarmNode({
   function dropClaimTrace(taskId) {
     claimEvents.delete(taskId);
   }
+  /**
+   * POVLACENJE SOPSTVENOG CLAIM-a (popravka storm-a, docs/44 §25).
+   *
+   * Zasto: `tryClaim` upise `claim:<task>` PRIJE verifikacije i PRIJE guard-a. Ako cvor poslije odustane
+   * (izgubio LWW / `executing` guard), claim ostaje — a obnavljanje lease-a se pokrece tek u `runTask`,
+   * pa se NIKAD ne osvjezi. Poslije 10 s izgleda "mrtav" iako je vlasnik ZIV (`existingAlive: true` u
+   * mjerenju), pa ga svi preuzimaju (`lease_istekao`) → attempt raste do 105, `lost` eksplodira.
+   * Zato: kad odustanemo, brisemo SAMO ako je claim JOS NAS (nikad tudji).
+   */
+  function withdrawOwnClaim(taskId, why = 'bail') {
+    const key = `claim:${taskId}`;
+    const cur = crdt.get(key);
+    if (cur && cur.nodeId === id && (!cur.instanceId || cur.instanceId === instanceId)) {
+      crdt.delete(key);
+      noteClaimEvent('claim_withdrawn', { id: taskId }, { why });
+      metrics?.inc('node_claim_withdrawn_total', { node: id });
+      return true;
+    }
+    return false;
+  }
   const startedAt = Date.now();
 
   const crdt = createCrdtBlackboard({ nodeId: id, logger, metrics });
@@ -471,6 +491,7 @@ export async function createSwarmNode({
         waitedMs: ourAt ? Date.now() - ourAt : null,
         confirmMs: cfg.claimConfirmMs, gossipIntervalMs: Number(cfg.gossip?.intervalMs ?? 300),
       });
+      withdrawOwnClaim(task.id, 'izgubio_trku');
       return { taskId: task.id, nodeId: id, skipped: true, reason: 'izgubio_trku_prije_izvrsavanja' };
     }
     noteClaimEvent('confirm_passed', task, { attempt, stillOwner: crdt.get(claimKey)?.instanceId === instanceId, ownerNow: crdt.get(claimKey)?.nodeId ?? null });
@@ -496,6 +517,7 @@ export async function createSwarmNode({
     // preskocila i LEGITIMNO prvo izvrsenje (task se nikad ne zavrsi -> set visi 10+ min; dvaput potvrdjeno).
     if (executing.has(task.id)) {
       logger?.warn?.('node.run_skipped_inflight', { taskId: task.id, nodeId: id, attempt });
+      withdrawOwnClaim(task.id, 'executing_guard');
       return { taskId: task.id, nodeId: id, skipped: true, reason: 'vec_u_izvrsavanju' };
     }
     executing.add(task.id);
