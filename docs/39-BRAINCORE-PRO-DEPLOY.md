@@ -377,3 +377,24 @@ Vrijednosti `cpuPct`/`rssMb` **još se ne vide na živom dashboardu** (`/status`
 deployovan (provjereno `grep`-om na serveru i procesi rade iz `current/`). Sljedeći korak je da se nađe gdje se
 polje gubi u lancu `status() → statusPayload() → PING payload → handle() → membership → feed`, pa da se doda
 test koji to čuva. Do tada dashboard prikazuje `CPU —` i `RAM —` za peer-ove, a `load`/`tasks` su tačni.
+
+---
+
+## 16. GRAFANA + metrics.braincore.pro (01.10.)
+
+* `deploy/grafana-setup.sh` — instalirao Grafana na **127.0.0.1:3030** (default 3000 je nmq-server, NE dira se).
+* DNS `metrics` A → `62.238.35.78` (Hostinger API).
+* nginx reverse proxy `/etc/nginx/sites-available/braincore-metrics` → `127.0.0.1:3030`, `noindex`, WebSocket
+  (Grafana Live), `/api/health` otvoren. **Bez nginx basic-auth** — vrata je Grafana login (admin/admin → promijeniti).
+* `certbot --nginx -d metrics.braincore.pro` (auto-renew).
+
+### Provjereno spolja
+* `https://metrics.braincore.pro/api/health` → 200 (Grafana 13.2.3)
+* `https://metrics.braincore.pro/` → 200
+
+### Što ostaje za korisnika
+1. **Promijeniti Grafana lozinku**: login `admin/admin` → `/admin/users` ili CLI
+   `grafana-cli admin reset-admin-password <nova>`.
+2. **Import dashboard-a**: `deploy/grafana-dashboard.json` → Dashboards → Import → Upload JSON.
+3. **Izvor podataka**: Prometheus scrape `http://127.0.0.1:8081/metrics?format=prom` (svakih 15 s) **ili**
+   `data/_control/metrics-history.jsonl` (13 metrika, ~20 h, skuplja `braincore-scrape.timer`).
