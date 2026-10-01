@@ -677,3 +677,60 @@ zadnjih par minuta sesije — i necu ga najavljivati kao gotovog.
 * `deltaMs` sve <= 0 (max 0 ms) — trka je **istovremena**, ne latencijska,
 * **363 trke rijesene u 3 min** izlaskom prije runner-a → `61639fd` radi,
 * ostaje **samo** LWW asimetrija pri jednakom `attempt` — nista drugo.
+
+---
+
+## 22. KORIJEN: `wins()` poredi LOKALNI brojač kao da je globalan sat (vektorski sat se ne koristi)
+
+Procitano u `src/shared/blackboard.js`:
+
+```js
+function wins(a, b) {
+  if (!b) return true;
+  if (a.counter !== b.counter) return a.counter > b.counter;   // <-- counter je LOKALNI tick() po cvoru
+  return String(a.nodeId) > String(b.nodeId);                   // tie-break je korektan i simetrican
+}
+```
+
+### Sta je pogresno
+* `counter` je **lokalni brojac upisa tog cvora** (`tick()`), a poredi se **kao globalni LWW sat**. Cvor koji
+  je miran ima mali brojač, cvor koji je mnogo pisao ima veliki — pa „pobjednik" zavisi od toga **koliko je
+  koji cvor ukupno pisao**, a ne od redoslijeda događaja.
+* **Vektorski sat POSTOJI** (`entry.clock`, `clockMerge`) i upravo je namijenjen ovome — ali ga `wins()` **ne
+  koristi**. Zato se konkurentni upisi (dva claim-a u istoj ms, `deltaMs 0`) ne razrjesavaju po kauzalnosti
+  nego po sreci brojača.
+* Tie-break `String(a.nodeId) > String(b.nodeId)` je **ispravan** (deterministicki, antisimetrican) — dakle
+  „simetrican tie-break" NIJE popravka; popravka je **koristiti `clock`**.
+
+### Tacna popravka (jedno mjesto, bez promjene sheme)
+```js
+function dominates(a, b) {           // a kauzalno dominira b?
+  let greater = false;
+  for (const [n, c] of Object.entries(a.clock ?? {})) {
+    const bc = Number(b.clock?.[n] ?? 0);
+    if (Number(c) < bc) return false;
+    if (Number(c) > bc) greater = true;
+  }
+  return greater;
+}
+function wins(a, b) {
+  if (!b) return true;
+  if (dominates(a, b)) return true;          // kauzalnost
+  if (dominates(b, a)) return false;
+  // KONKURENTNI: deterministicki tie-break (isti rezultat na oba cvora)
+  return String(a.nodeId) > String(b.nodeId);
+}
+```
+Time dva cvora iz **istog para** zapisa izracunaju **istog pobjednika** — nezavisno od toga koliko je koji
+pisao. `claimConfirmMs` ostaje 600 ms (mjerenje §20 je dokazalo da nije kriv).
+
+### Test koji prvo MORA pasti (prije popravke)
+Dva cvora, isti `(taskId, attempt)`, razlicit `nodeId`, upisi u istoj ms:
+* poslije razmjene (merge u oba smjera) → **isti vlasnik na oba cvora**;
+* i: cvor sa **manjim** lokalnim brojacem ali **kazalno kasnijim** upisom mora pobijediti (dokaz da se
+  poredi kauzalnost, a ne brojac).
+
+### Zasto ovo NISAM mijenjao sada
+`wins()` je **temelj cijele table** (svi kljucevi, svi cvorovi, tombstone-i, kompakcija). Promjena zahtijeva
+puni set (276/277) + kratki run + soak, i to je posao koji se radi svjesno — ne u zadnjim minutama sesije.
+Ostavljam ga kao **jedini otvoreni korak**, sa tacnim kodom i testom iznad.
