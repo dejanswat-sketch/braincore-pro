@@ -643,3 +643,37 @@ Tada **svaki cvor iz istog skupa izracuna ISTOG pobjednika** — nema asimetrije
 **363 trke u 3 min (~870 zadataka) = ~40 % zadataka ima konkurentski claim.** Gubitnik plati 600 ms
 cekanja (bez posla), ali to znaci da claim mehanizam **previse cesto** dopusta dva kandidata — vrijedi
 suziti uslove preuzimanja (npr. samo najslobodniji peer, ili pheromone-based izbor) da se smanji broj trka.
+
+---
+
+## 21. DETERMINISTICKI POBJEDNIK — zasto ne ide bez promjene pravila spajanja (i tacan korak)
+
+### Problem u jednoj recenici
+`claim:<taskId>` je **jedan kljuc sa jednom vrijednoscu**. Dva cvora pisu isti kljuc u istoj milisekundi
+(izmjereno §20: `deltaMs` 0 ms), pa **svaki cvor u svom lokalnom pogledu zadrzi SVOJU vrijednost** (LWW).
+Skup kandidata **nije reprezentovan**, pa „izracunaj pobjednika iz skupa" ne postoji dok je kljuc jedan.
+
+### Dva ispravna rjesenja (oba mala, ali nisu „samo dodaj min()")
+1. **Pravilo spajanja za `claim:` kljuceve (preporuceno — ne mijenja shemu):**
+   u `src/shared/blackboard.js`, pri merge-u za kljuceve koji pocinju sa `claim:` ne koristiti LWW-po-vremenu
+   nego deterministicki poredak:
+   ```
+   ako (incoming.attempt > existing.attempt) -> incoming
+   ako (incoming.attempt < existing.attempt) -> existing
+   ako su jednaki -> pobjednik je manji nodeId (tie-break: manji instanceId)
+   ```
+   **Oba cvora primijene ISTO pravilo na ISTI par** → konvergiraju **istom** vlasniku. Gubitnik tada vidi
+   `ownerAfterConfirm.nodeId !== id` i izlazi **prije** runner-a (§19, `61639fd`). `claimConfirmMs` ostaje 600 ms.
+2. **Kljuc po kandidatu** (`claim:<taskId>:<nodeId>` + `min(nodeId)` kao pobjednik) — jace, ali mijenja shemu
+   i sve citace `claim:` (vise mjesta, veci rizik).
+
+### Zasto ovo NISAM odglumio
+Prvo rjesenje dira **pravilo spajanja CRDT-a**, a to je isti sloj koji drzi i `attempt` i LWW za sve ostale
+kljuceve. Takva izmjena trazi: (a) test konvergencije (dva cvora, isti `(taskId, attempt)`, razliciti `nodeId`
+→ **isti** vlasnik na oba), (b) puni set, (c) kratki run, (d) soak. To je posao za svjez kontekst, ne za
+zadnjih par minuta sesije — i necu ga najavljivati kao gotovog.
+
+### Mjerenja koja ostaju kao osnova za taj korak
+* `deltaMs` sve <= 0 (max 0 ms) — trka je **istovremena**, ne latencijska,
+* **363 trke rijesene u 3 min** izlaskom prije runner-a → `61639fd` radi,
+* ostaje **samo** LWW asimetrija pri jednakom `attempt` — nista drugo.
