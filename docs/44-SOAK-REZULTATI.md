@@ -849,3 +849,48 @@ prozoru. Zato se **prvo** rjesava storm — i tek onda, ako `1,1` ostane, mjeri 
 ### Kriterij za #12 (nepromijenjen)
 `duplicateSameAttempt=0 · lost=0 · p95<=1,5 s · heap<100 MB · shed=0 · rate-limited=0`
 `lost = 167` u kratkom runu pokazuje da je storm sada **najveci** problem — veci od duplikata.
+
+---
+
+## 26. SUD SOAK-a #12 — `lost=0` u punom satu, storm ~20x manji, ali `duplicateSameAttempt=6`
+
+```
+trajanje:      3601 s (60 min) · 6 restarta
+poslano:       17 307 / izvrseno 17 307      <- lost = 0 ✔
+shed:          0 ✔        rate-limited: 0 ✔
+p50 753 · p95 782 ms ✔ · p99 801 ms ✔ · max 30 065 ms (jedan straggler)
+heap:          12,5 -> 64,4 MB (vrh 105,3) ~ granicno
+CRDT:          8 643 / 8 642 / 3 ✔
+duplicateSameAttempt = 6 ✖        retryAfterKill = 8        dupSameNode = 0 ✔
+reclaim_storm u satu: 812         (u #11: 790 u TRI MINUTA -> ~15 800/h; sada ~20x manje)
+```
+
+| Kriterij | Cilj | Sud |
+|---|---|---|
+| Izgubljeno | 0 | ✔ **0** (17 307/17 307) |
+| Odbijeno (shed) | 0 | ✔ **0** |
+| Rate-limited | 0 | ✔ **0** |
+| p95 | <= 1,5 s | ✔ **782 ms** (p99 801 ms) |
+| Heap | < 100 MB | ~ 105,3 MB (granicno) |
+| **Duplo (isti attempt)** | 0 | ✖ **6** |
+| `retryAfterKill` | odvojeno | 8 (ocekivano) |
+| `reclaim_storm` | < 100/h | ✖ **812/h** (ali 20x manje nego prije) |
+
+### Sto je popravka `withdrawOwnClaim` POSTIGLA (mjereno)
+* **`lost` 167 -> 0** (kratki) i **0 u punom satu** — povlacenje claim-a je uklonilo masovna preuzimanja
+  koja su jela kapacitet,
+* `shed` i `rate-limited` su pali na **0** (u #11: 123 i 203),
+* storm **~15 800/h -> 812/h** (~20x),
+* `dedupSameNode = 0` i dalje.
+
+### Sto je OSTALO (dva odvojena problema, oba mjerljiva)
+1. **`duplicateSameAttempt = 6`** — svi istog oblika `attempts=1,1`, cross-node, razliciti cvorovi
+   (`9222,9223`, `9221,9223`). To je rezidualna trka: oba cvora u SVOM lokalnom pogledu jesu vlasnici i
+   **nijedan ne odustane** (zato `withdrawOwnClaim` tu ne pomaze). **Mjerenje na promasajima i dalje fali**
+   (anchor za `duplicate_result_write` treba PROCITATI, pa dopuniti poljima) — to je sljedeci korak.
+2. **`attempts=1,306`** (task 2898) — jedan task je i poslije popravke preuziman ~306 puta. Znaci da
+   postoji put preuzimanja koji **ne prolazi kroz `withdrawOwnClaim`** (npr. `requeueStale` u redu ili
+   ponovni claim bez bail-a). I to treba locirati iz traga (`reclaim_storm` daje `lastNode` i `reason`).
+
+### Kriterij za #13 (nepromijenjen) — ali sada sa mjerenjem na promasajima
+`duplicateSameAttempt=0 · lost=0 · p95<=1,5 s · heap<100 MB · shed=0 · rate-limited=0`

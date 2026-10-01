@@ -1,0 +1,297 @@
+{
+  "scope": "single machine (loopback), in-process nodes — mrežna particija nije simulirana",
+  "runId": "2026-10-01T11-52-40-626Z",
+  "startedAt": "2026-10-01T11:52:40.629Z",
+  "minutes": 60,
+  "nodes": 3,
+  "targetRate": 5,
+  "runnerDelayMs": 120,
+  "durationSec": 3600.8,
+  "submitted": 17307,
+  "shedByBackpressure": 0,
+  "failedSubmit": 6,
+  "completed": 17307,
+  "lost": 0,
+  "duplicated": 14,
+  "extraExecutions": 14,
+  "dupCrossNode": 14,
+  "duplicateSameAttempt": 6,
+  "retryAfterKill": 8,
+  "duplicateSameAttemptDetail": [
+    {
+      "taskId": "soak-task-3171",
+      "nodes": [
+        "soak-9222",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3174",
+      "nodes": [
+        "soak-9221",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3177",
+      "nodes": [
+        "soak-9222",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3180",
+      "nodes": [
+        "soak-9223",
+        "soak-9221"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3183",
+      "nodes": [
+        "soak-9222",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3195",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    }
+  ],
+  "dupSameNode": 0,
+  "dupDetail": [
+    {
+      "taskId": "soak-task-2898",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        306
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-2900",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3171",
+      "nodes": [
+        "soak-9222",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3174",
+      "nodes": [
+        "soak-9221",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3177",
+      "nodes": [
+        "soak-9222",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3180",
+      "nodes": [
+        "soak-9223",
+        "soak-9221"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3183",
+      "nodes": [
+        "soak-9222",
+        "soak-9223"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-3195",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-8673",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-8675",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-11551",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-11553",
+      "nodes": [
+        "soak-9223",
+        "soak-9222"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    }
+  ],
+  "completedSubmitted": 17307,
+  "executedNotSubmitted": 0,
+  "executedNotSubmittedIds": [],
+  "throughputPerSec": 4.81,
+  "latencyMs": {
+    "p50": 753,
+    "p95": 782,
+    "p99": 801,
+    "max": 30065,
+    "samples": 17318
+  },
+  "memoryMb": {
+    "start": 12.5,
+    "end": 64.4,
+    "peak": 105.3,
+    "samples": 119
+  },
+  "crdtSizePerNode": [
+    8643,
+    8642,
+    3
+  ],
+  "pheromonesActive": 228,
+  "restarts": 6,
+  "gossip": {
+    "sent": 273005,
+    "received": 264601,
+    "rejected": 0,
+    "duplicates": 0,
+    "rateLimited": 0
+  },
+  "p95BudgetMs": 1500,
+  "verdict": {
+    "lostOk": true,
+    "duplicatedOk": false,
+    "p95Ok": true,
+    "memoryStable": true
+  }
+}
