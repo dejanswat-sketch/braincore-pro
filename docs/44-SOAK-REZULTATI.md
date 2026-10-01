@@ -894,3 +894,45 @@ reclaim_storm u satu: 812         (u #11: 790 u TRI MINUTA -> ~15 800/h; sada ~2
 
 ### Kriterij za #13 (nepromijenjen) — ali sada sa mjerenjem na promasajima
 `duplicateSameAttempt=0 · lost=0 · p95<=1,5 s · heap<100 MB · shed=0 · rate-limited=0`
+
+---
+
+## 27. SUD SOAK-a #13 — storm 812 -> 34, `lost=1`, `duplicateSameAttempt=2`, i MISS TRAG OPET 0
+
+```
+trajanje:      3601 s (60 min) · 6 restarta
+poslano:       17 291 / izvrseno 17 291
+shed: 0 ✔    rate-limited: 0 ✔
+p50 755 · p95 785 ms ✔ · p99 811 ms ✔ · max 12 560 ms
+heap vrh 102,7 MB ~ granicno · CRDT 8 661 ✔
+lost = 1 ✖ · duplicateSameAttempt = 2 ✖ · dupSameNode = 1 (!) · retryAfterKill = 7 · extraExecutions = 9
+reclaim_storm u satu: 34      (soak #12: 812 · #11: ~15 800/h)  -> 24x manje nego u #12
+miss trag (duplicate_result_write): 0 redova  <- OPET nista
+```
+
+### Napredak (mjereno)
+* **`reclaim_storm` 812 -> 34** (a prije popravke ~15 800/h) — `withdrawOwnClaim` + normalna stopa,
+* `shed = 0`, `rate-limited = 0`, `p95 785 / p99 811 ms`, `CRDT` ogranicen.
+
+### Zasto MISS TRAG opet nije nista uhvatio (treci put u ovom dijelu)
+Uslov je `priorResult.nodeId !== id` — ali kod **istovremenog** izvrsavanja oba cvora pisu `result:` u istoj ms,
+pa LWW **jedan zapis prepise**; onaj koji cita prije nego sto je tudji zapis stigao **ne vidi prethodni
+rezultat** → uslov ne prolazi → nema loga. Dakle: `result:` je **jedan kljuc** (kao i `claim:`) i **ne cuva
+istoriju** — pa se iz njega ne moze rekonstruisati „ko je bio prvi".
+
+### NOVI, OBJASNJIV NALAZ: `dupSameNode = 1`
+Isti `nodeId` je izvrsio isti task dvaput (isti `attempt`). To je **restart slucaj**: `attemptFloor` je
+**per-process** mapa, pa poslije restarta novi proces krece od 0 i moze ponovo izracunati `attempt = 1`
+(tudji claim je u medjuvremenu nestao/istekao). Zato `attemptFloor` stiti od LWW-vracanja STAROG zapisa
+unutar istog procesa, ali **ne preko restarta**.
+
+**Popravka (sljedeca):** `attempt` floor izvesti iz **roja**, ne samo iz procesa — npr. iz `task:` zapisa
+(`task.attempt`) ili iz `instanceId`-a u claim-u; tada restartovani cvor nastavlja od najviseg VIDJENOG
+`attempt`-a za taj task, a ne od 1.
+
+### Sljedeci korak (mjeriti, ne pogadjati)
+1. Za `dupSameNode` slucaj: potvrditi restart hipotezu iz traga (`instanceId` razlicit, `nodeId` isti) —
+   podaci su u `claimTrace`/`attempts` listi harness-a.
+2. Za cross-node `1,1`: mjeriti na **claim** nivou, ne na `result:` — jer `result:` ne cuva istoriju:
+   brojati **claim_set po (taskId, attempt)** sa razlicitim `nodeId` (to je direktan dokaz dvostrukog claim-a).
+3. Tek iz toga: prozor ili mjesto provjere.
