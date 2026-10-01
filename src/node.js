@@ -124,6 +124,7 @@ export async function createSwarmNode({
    */
   const CLAIM_TRACE_MAX = 1000;
   const claimEvents = new Map(); // taskId -> [događaji] — samo za NEDOVRŠENE zadatke
+  const executing = new Set(); // taskovi koje OVAJ cvor TRENUTNO izvrsava (guard; inFlight drzi tryClaim)
   const attemptFloor = new Map(); // taskId -> najvisi attempt koji je OVAJ cvor koristio (monotoni token)
   function noteClaimEvent(kind, task, extra = {}) {
     const taskId = task?.id ?? null;
@@ -447,6 +448,14 @@ export async function createSwarmNode({
   }
 
   async function runTask(task, { attempt = 1 } = {}) {
+    // GUARD protiv dvostrukog ulaska u izvrsavanje ISTOG taska na ovom cvoru.
+    // NAMJERNO odvojen set od `inFlight`: `inFlight` vec postavlja `tryClaim`, pa bi provjera nad njim
+    // preskocila i LEGITIMNO prvo izvrsenje (task se nikad ne zavrsi -> set visi 10+ min; dvaput potvrdjeno).
+    if (executing.has(task.id)) {
+      logger?.warn?.('node.run_skipped_inflight', { taskId: task.id, nodeId: id, attempt });
+      return { taskId: task.id, nodeId: id, skipped: true, reason: 'vec_u_izvrsavanju' };
+    }
+    executing.add(task.id);
     const started = Date.now();
     // Ako rezultat VEĆ postoji, ovaj čvor izvršava isti zadatak drugi put → trag u log odmah.
     if (crdt.get(`result:${task.id}`)) {
@@ -465,7 +474,8 @@ export async function createSwarmNode({
       try {
         const cur = crdt.get(`claim:${task.id}`);
         if (cur && (cur.nodeId !== id || (cur.instanceId && cur.instanceId !== instanceId))) {
-          clearInterval(renew); // izgubili smo claim — ne obnavljamo tuđi zapis
+          clearInterval(renew);
+      executing.delete(task.id); // izgubili smo claim — ne obnavljamo tuđi zapis
           metrics?.inc('node_claim_renew_stopped_total', { node: id });
           return;
         }
@@ -545,6 +555,7 @@ export async function createSwarmNode({
       return record;
     } finally {
       clearInterval(renew);
+      executing.delete(task.id);
       inFlight.delete(task.id);
       await queue.discard?.(task.id).catch?.(() => {}); // red ostaje tačan (queued = stvarno čeka)
     }

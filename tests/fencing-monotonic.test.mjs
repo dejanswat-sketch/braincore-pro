@@ -43,3 +43,30 @@ test('attemptFloor: claim poslije STAROG zapisa ne ponavlja isti attempt', async
     await node.close();
   }
 });
+test('executing guard: drugi ulazak u isti task se preskace (runner pozvan TACNO jednom)', async () => {
+  let runs = 0;
+  const node = await createSwarmNode({
+    nodeId: 'mono-2',
+    port: 0,
+    host: '127.0.0.1',
+    secret: SECRET,
+    config: { httpAdmin: false, autoLoop: false, durableSubmit: false },
+    runner: async () => {
+      runs += 1;
+      await wait(120);
+      return { output: 'ok' };
+    },
+  });
+  try {
+    await node.start();
+    const t = await node.submitTask({ type: 'mono.test', payload: {}, ttl: 60_000 });
+    const first = node.runTask({ ...t }, { attempt: 1 });
+    await wait(20);
+    const second = await node.runTask({ ...t }, { attempt: 1 });
+    assert.equal(second.skipped, true, 'drugi ulazak je preskocen');
+    await first;
+    assert.equal(runs, 1, `runner je pozvan TACNO jednom (bilo ${runs})`);
+  } finally {
+    await node.close();
+  }
+});
