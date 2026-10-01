@@ -57,9 +57,13 @@ const memory = [];
 let restarts = 0;
 const restartStats = [];
 
-const runner = async (task) => {
+const executorByTask = new Map(); // taskId -> [{ nodeId, attempt }] — KO je izvrsio (cross-node vs same-node)
+const runner = async (task, ctx = {}) => {
   await wait(DELAY);
   executions.set(task.id, (executions.get(task.id) ?? 0) + 1);
+  const arr = executorByTask.get(task.id) ?? [];
+  arr.push({ nodeId: ctx.nodeId ?? 'nepoznat', attempt: ctx.attempt ?? null });
+  executorByTask.set(task.id, arr);
   return { output: `soak ${task.id}` };
 };
 
@@ -195,6 +199,20 @@ for (const id of dupIds) {
   console.error(`[dup-trace] ${id} ${JSON.stringify(traces)}`);
 }
 const extraExecutions = [...executions.values()].reduce((s, n) => s + Math.max(0, n - 1), 0);
+// KLASIFIKACIJA DUPLIH: cross-node (dva razlicita cvora) vs same-node (isti cvor dvaput).
+// Ovo razdvaja dve razlicite popravke: cross-node => `confirm`/LWW; same-node => self-reclaim/retry
+// (gde `confirm` prozor nije ni u igri). Bez ovoga je svaka odluka poganjanje.
+const dupDetail = [...executorByTask.entries()]
+  .filter(([, arr]) => arr.length > 1)
+  .map(([taskId, arr]) => ({
+    taskId,
+    nodes: arr.map((a) => a.nodeId),
+    attempts: arr.map((a) => a.attempt),
+    uniqueNodes: new Set(arr.map((a) => a.nodeId)).size,
+    sameNode: new Set(arr.map((a) => a.nodeId)).size === 1,
+  }));
+const dupCrossNode = dupDetail.filter((d) => !d.sameNode).length;
+const dupSameNode = dupDetail.filter((d) => d.sameNode).length;
 const durationSec = (Date.now() - t0) / 1000;
 const sorted = [...latencies].sort((a, b) => a - b);
 const pct = (p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))] : null);
@@ -219,6 +237,9 @@ const result = {
   lost,
   duplicated,
   extraExecutions,
+  dupCrossNode,
+  dupSameNode,
+  dupDetail: dupDetail.slice(0, 12),
   completedSubmitted,
   executedNotSubmitted: executedNotSubmitted.length,
   executedNotSubmittedIds: executedNotSubmitted.slice(0, 10),

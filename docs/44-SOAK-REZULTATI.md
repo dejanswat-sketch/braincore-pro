@@ -527,3 +527,44 @@ Dva signala koja hvataju SAM dogadjaj, a ne posljedicu:
 * **`lost` i `duplo` variraju**: #7 = 1 lost / 4 dup · #8 = 5 lost / 6 dup. Mali brojevi, ali **varijacija**
   znaci da je pojava uslovljena **vremenskim preklapanjem** (restart + istovremeni claim), a ne stalnim
   stanjem. Zato je i mjerenje po dogadjaju (a ne po posljedici) jedini put do `duplo = 0`.
+
+---
+
+## 18. KLASIFIKACIJA DUPLIH — cross-node 4 · same-node 0 (i šta to ZNAČI ZA KRITERIJ)
+
+Kratki run (3 min, restart svakog čvora svakih **45 s** — namjerno agresivno) sa brojačem **ko je izvršio**:
+
+```
+dupCrossNode = 4   dupSameNode = 0   duplicated = 4   extraExecutions = 8   lost = 2
+soak-task-214  nodes=9043,9042            attempts=1,2
+soak-task-216  nodes=9043,9042,9042       attempts=1,2,2
+soak-task-436  nodes=9043,9041,9041       attempts=1,2,2
+soak-task-438  nodes=9043,9041,9041,9041  attempts=1,2,2,2
+```
+
+### NALAZ 1: duplikati su CROSS-NODE sa `attempt` 1 → 2
+Prvo izvršenje je na jednom čvoru (`9043`), pa **peer** preuzme sa **`attempt: 2`**. To je **reclaim put**:
+čvor je ubijen (restart svakih 45 s) dok je zadatak bio „u letu", peer ga preuzme i izvrši ponovo.
+**To je očekivano `at-least-once` ponašanje, ne greška** — zadatak je stvarno ostao bez vlasnika.
+
+### NALAZ 2 (pravi bug): `attempt: 2` se ponavlja na ISTOM čvoru
+`attempts=1,2,2` i `1,2,2,2` — isti čvor izvršava **isti `attempt` više puta**. Vlasništvo se mijenja, a
+`attempt` (fencing token) **se ne inkrementira** pri ponovnom preuzimanju istog claim-a. Zato ovaj dio
+JESTE pravi duplikat i tu je popravka (fencing token mora rasti pri svakom preuzimanju).
+
+### POSLJEDICA ZA KRITERIJ PRIHVATANJA (`duplo = 0`)
+Moj harness broji **svaki poziv runner-a**, pa u runu sa 6 ubijanja čvorova broji i **legitimne retry-je**.
+Zato je `duplo` miješao dvije različite stvari:
+* **re-izvršenje poslije smrti vlasnika** (novi `attempt`) → **očekivano** (`at-least-once`),
+* **ponovno izvršenje istog `attempt`-a** → **pravi duplikat** (bug).
+
+**Ispravan kriterij** (i ono što ide na sajt/video):
+* `duplicateSameAttempt = 0` — nula ponovnih izvršenja **istog** `attempt`-a (pravi duplikat),
+* `retryAfterKill` — prijaviti **odvojeno** kao očekivano ponašanje, sa brojem,
+* `lost = 0`, `p95 <= 1,5 s`, heap < 100 MB, `shed = 0`.
+
+### Sljedeći korak (soak #10)
+1. U harness-u razdvojiti `duplicateSameAttempt` (isti nodeId+attempt) od `retryAfterKill` (novi attempt).
+2. U `src/node.js` popraviti **inkrement `attempt`-a pri ponovnom preuzimanju** (fencing) — to je jedini
+   pravi duplikat koji je ostao.
+3. Pustiti soak #10 i tražiti `duplicateSameAttempt = 0`.

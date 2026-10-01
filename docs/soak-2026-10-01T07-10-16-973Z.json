@@ -1,0 +1,160 @@
+{
+  "scope": "single machine (loopback), in-process nodes — mrežna particija nije simulirana",
+  "runId": "2026-10-01T07-10-16-973Z",
+  "startedAt": "2026-10-01T07:10:16.976Z",
+  "minutes": 5,
+  "nodes": 3,
+  "targetRate": 5,
+  "runnerDelayMs": 120,
+  "durationSec": 301.2,
+  "submitted": 1455,
+  "shedByBackpressure": 0,
+  "failedSubmit": 4,
+  "completed": 1455,
+  "lost": 0,
+  "duplicated": 7,
+  "extraExecutions": 12,
+  "dupCrossNode": 6,
+  "dupSameNode": 1,
+  "dupDetail": [
+    {
+      "taskId": "soak-task-289",
+      "nodes": [
+        "soak-9033",
+        "soak-9032"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-579",
+      "nodes": [
+        "soak-9033",
+        "soak-9031",
+        "soak-9031"
+      ],
+      "attempts": [
+        1,
+        2,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-872",
+      "nodes": [
+        "soak-9033",
+        "soak-9031",
+        "soak-9031"
+      ],
+      "attempts": [
+        1,
+        2,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-873",
+      "nodes": [
+        "soak-9033",
+        "soak-9031"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-874",
+      "nodes": [
+        "soak-9033",
+        "soak-9031",
+        "soak-9031",
+        "soak-9031"
+      ],
+      "attempts": [
+        1,
+        2,
+        2,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-1165",
+      "nodes": [
+        "soak-9033",
+        "soak-9032",
+        "soak-9032"
+      ],
+      "attempts": [
+        1,
+        2,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-1166",
+      "nodes": [
+        "soak-9033",
+        "soak-9033"
+      ],
+      "attempts": [
+        1,
+        1
+      ],
+      "uniqueNodes": 1,
+      "sameNode": true
+    }
+  ],
+  "completedSubmitted": 1455,
+  "executedNotSubmitted": 0,
+  "executedNotSubmittedIds": [],
+  "throughputPerSec": 4.83,
+  "latencyMs": {
+    "p50": 757,
+    "p95": 781,
+    "p99": 794,
+    "max": 11599,
+    "samples": 1466
+  },
+  "memoryMb": {
+    "start": 9.5,
+    "end": 25,
+    "peak": 32,
+    "samples": 19
+  },
+  "crdtSizePerNode": [
+    4361,
+    4361,
+    0
+  ],
+  "pheromonesActive": 0,
+  "restarts": 5,
+  "gossip": {
+    "sent": 22473,
+    "received": 23415,
+    "rejected": 0,
+    "duplicates": 0,
+    "rateLimited": 0
+  },
+  "p95BudgetMs": 1500,
+  "verdict": {
+    "lostOk": true,
+    "duplicatedOk": false,
+    "p95Ok": true,
+    "memoryStable": true
+  }
+}

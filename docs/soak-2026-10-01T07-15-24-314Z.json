@@ -1,0 +1,119 @@
+{
+  "scope": "single machine (loopback), in-process nodes — mrežna particija nije simulirana",
+  "runId": "2026-10-01T07-15-24-314Z",
+  "startedAt": "2026-10-01T07:15:24.317Z",
+  "minutes": 3,
+  "nodes": 3,
+  "targetRate": 5,
+  "runnerDelayMs": 120,
+  "durationSec": 190.6,
+  "submitted": 875,
+  "shedByBackpressure": 0,
+  "failedSubmit": 2,
+  "completed": 873,
+  "lost": 2,
+  "duplicated": 4,
+  "extraExecutions": 8,
+  "dupCrossNode": 4,
+  "dupSameNode": 0,
+  "dupDetail": [
+    {
+      "taskId": "soak-task-214",
+      "nodes": [
+        "soak-9043",
+        "soak-9042"
+      ],
+      "attempts": [
+        1,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-216",
+      "nodes": [
+        "soak-9043",
+        "soak-9042",
+        "soak-9042"
+      ],
+      "attempts": [
+        1,
+        2,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-436",
+      "nodes": [
+        "soak-9043",
+        "soak-9041",
+        "soak-9041"
+      ],
+      "attempts": [
+        1,
+        2,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    },
+    {
+      "taskId": "soak-task-438",
+      "nodes": [
+        "soak-9043",
+        "soak-9041",
+        "soak-9041",
+        "soak-9041"
+      ],
+      "attempts": [
+        1,
+        2,
+        2,
+        2
+      ],
+      "uniqueNodes": 2,
+      "sameNode": false
+    }
+  ],
+  "completedSubmitted": 873,
+  "executedNotSubmitted": 0,
+  "executedNotSubmittedIds": [],
+  "throughputPerSec": 4.58,
+  "latencyMs": {
+    "p50": 757,
+    "p95": 783,
+    "p99": 1144,
+    "max": 11688,
+    "samples": 881
+  },
+  "memoryMb": {
+    "start": 9.6,
+    "end": 18.4,
+    "peak": 20.4,
+    "samples": 12
+  },
+  "crdtSizePerNode": [
+    2613,
+    2613,
+    3
+  ],
+  "pheromonesActive": 2,
+  "restarts": 4,
+  "gossip": {
+    "sent": 14055,
+    "received": 14497,
+    "rejected": 0,
+    "duplicates": 0,
+    "rateLimited": 0
+  },
+  "p95BudgetMs": 1500,
+  "verdict": {
+    "lostOk": false,
+    "duplicatedOk": false,
+    "p95Ok": true,
+    "memoryStable": true
+  }
+}
