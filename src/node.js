@@ -66,7 +66,7 @@ export const NODE_DEFAULTS = {
   compactionIntervalMs: 300_000,
   compactionAgeMs: 600_000,
   /** GC cijelih task:/result:/claim: zapisa (ne samo tombstone-a) — 1h soak je pokazao da tabla raste vječno. */
-  gcAgeMs: 600_000, // 10 min: drži heap ispod 100 MB (15 min je davalo 124 MB pri 4,8 t/s)
+  gcAgeMs: 420_000, // 7 min: heap vrh pod 100 MB (10 min je davalo 111 MB, 15 min 124 MB pri ~4,8 t/s)
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
