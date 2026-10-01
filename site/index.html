@@ -173,10 +173,13 @@
 
     <div class="brain-stage relative reveal" id="brain-stage">
       <div class="absolute inset-0 -z-10 blur-3xl" style="background: radial-gradient(circle at 50% 45%, rgba(255,190,90,.30), transparent 62%)"></div>
-      <img id="brain" class="brain-img mx-auto w-full max-w-[680px]" src="assets/brain-hero.png"
-           width="1400" height="980" fetchpriority="high" decoding="async"
-           alt="Genesis Brain v2.0 — crystal glass brain with a golden core, the Braincore Pro swarm surface" />
-      <p class="mt-1 text-center text-[11px] uppercase tracking-[0.3em] text-slate-500">Genesis Brain v2.0 · move your cursor</p>
+      <div class="relative mx-auto w-full max-w-[680px]">
+        <canvas id="exo" class="absolute inset-0 h-full w-full" aria-hidden="true"></canvas>
+        <img id="brain" class="brain-img relative z-10 mx-auto w-full" src="assets/brain-hero.png"
+             width="1400" height="980" fetchpriority="high" decoding="async"
+             alt="Genesis Brain v2.0 — crystal glass brain with a golden core, the Braincore Pro swarm surface" />
+      </div>
+      <p class="mt-1 text-center text-[11px] uppercase tracking-[0.3em] text-slate-500">Genesis Brain v2.0 · robotic exoskeleton</p>
     </div>
   </div>
 </section>
@@ -714,6 +717,62 @@ node src/index.js --port=8003 --peers=127.0.0.1:8001,127.0.0.1:8002
       ctx.strokeStyle = n.c; ctx.lineWidth = 1.7; ctx.shadowColor = n.c; ctx.shadowBlur = 16; ctx.stroke();
       ctx.fillStyle = n.c + '30'; ctx.fill(); ctx.shadowBlur = 0;
       hex(n.x, n.y, n.r * 0.42); ctx.fillStyle = n.c; ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  };
+  draw();
+})();
+<script>
+/* Robotic exoskeleton — heksagonalni kavez + rotirajući prstenovi + zglobovi oko staklenog mozga. */
+(() => {
+  const cv = document.getElementById('exo');
+  if (!cv || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const ctx = cv.getContext('2d');
+  const box = () => cv.parentElement.getBoundingClientRect();
+  const hexPath = (x, y, r, rot) => {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) { const a = rot + Math.PI / 3 * i - Math.PI / 6; const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.closePath();
+  };
+  let t = 0;
+  const draw = () => {
+    t += 0.016;
+    const r = box(); if (!r.width) { requestAnimationFrame(draw); return; }
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    if (cv.width !== r.width * dpr) { cv.width = r.width * dpr; cv.height = r.height * dpr; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, r.width, r.height);
+    const cx = r.width / 2, cy = r.height / 2;
+    const R = Math.min(r.width, r.height) * 0.46;
+    const gold = 'rgba(255,196,96,.85)', cyan = 'rgba(120,225,255,.75)', steel = 'rgba(170,200,240,.5)';
+    // 1) vanjski heksagon kavez (rotira sporo)
+    hexPath(cx, cy, R, t * 0.12);
+    ctx.strokeStyle = steel; ctx.lineWidth = 2.5; ctx.stroke();
+    // 2) srednji prsten (kontra-rotacija) — sa zglobovima
+    hexPath(cx, cy, R * 0.72, -t * 0.2);
+    ctx.strokeStyle = cyan; ctx.lineWidth = 1.6; ctx.stroke();
+    // 3) unutrašnji prsten (brži, zlatni)
+    hexPath(cx, cy, R * 0.46, t * 0.3);
+    ctx.strokeStyle = gold; ctx.lineWidth = 1.4; ctx.stroke();
+    // 4) radijalne rebra (6 krakova)
+    for (let i = 0; i < 6; i++) {
+      const a = t * 0.08 + Math.PI / 3 * i;
+      const x1 = cx + Math.cos(a) * R, y1 = cy + Math.sin(a) * R;
+      const x2 = cx + Math.cos(a) * R * 0.34, y2 = cy + Math.sin(a) * R * 0.34;
+      ctx.strokeStyle = 'rgba(170,200,240,.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+      // zglob na kraku (svetli)
+      ctx.beginPath(); ctx.arc(x1, y1, 3.4, 0, Math.PI * 2); ctx.fillStyle = gold; ctx.shadowColor = gold; ctx.shadowBlur = 10; ctx.fill(); ctx.shadowBlur = 0;
+    }
+    // 5) zglobovi na vrhovima heksagona
+    for (let ring = 0; ring < 3; ring++) {
+      const rr = [R, R * 0.72, R * 0.46][ring], rot = [t * 0.12, -t * 0.2, t * 0.3][ring];
+      for (let i = 0; i < 6; i++) {
+        const a = rot + Math.PI / 3 * i - Math.PI / 6;
+        const px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr;
+        ctx.beginPath(); ctx.arc(px, py, ring === 2 ? 2.6 : 2, 0, Math.PI * 2);
+        ctx.fillStyle = ring === 2 ? gold : cyan; ctx.fill();
+      }
     }
     requestAnimationFrame(draw);
   };
