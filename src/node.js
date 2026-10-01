@@ -430,6 +430,18 @@ export async function createSwarmNode({
       gossip.broadcast({ kind: 'crdt', entries: fresh });
     }
     await new Promise((r) => setTimeout(r, cfg.claimConfirmMs));
+    // ZAVRSNI BUG (soak #10): `attempts=1,1` sa DVA cvora. Oba su istovremeno procitala claim kao slobodan
+    // i oba izracunala `attempt = 1` (lokalni `attemptFloor` ne vidi tudji inkrement). LWW na kraju zadrzi
+    // jednog vlasnika — ali je gubitnik VEC izvrsio posao (dupli rad). Zato se provjera vlasnistva radi
+    // OVDJE, poslije verifikacije a PRIJE izvrsavanja: gubitnik izlazi bez posla.
+    const ownerAfterConfirm = crdt.get(claimKey);
+    if (ownerAfterConfirm && ownerAfterConfirm.nodeId !== id) {
+      logger?.warn?.('node.claim_lost_before_execute', {
+        taskId: task.id, nodeId: id, instanceId, attempt,
+        ownerNow: ownerAfterConfirm.nodeId, ownerInstance: ownerAfterConfirm.instanceId ?? null,
+      });
+      return { taskId: task.id, nodeId: id, skipped: true, reason: 'izgubio_trku_prije_izvrsavanja' };
+    }
     noteClaimEvent('confirm_passed', task, { attempt, stillOwner: crdt.get(claimKey)?.instanceId === instanceId, ownerNow: crdt.get(claimKey)?.nodeId ?? null });
     const winner = crdt.get(claimKey);
     if (!winner || winner.nodeId !== id) {
