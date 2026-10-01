@@ -568,3 +568,45 @@ Zato je `duplo` miješao dvije različite stvari:
 2. U `src/node.js` popraviti **inkrement `attempt`-a pri ponovnom preuzimanju** (fencing) — to je jedini
    pravi duplikat koji je ostao.
 3. Pustiti soak #10 i tražiti `duplicateSameAttempt = 0`.
+
+---
+
+## 19. SOAK #10 = `lost=0` (milestone) i zadnji duplikat: trka UNUTAR jednog gossip kruga
+
+```
+#10 (60 min, 5 t/s, 6 restarta): poslano 17 342 / izvrseno 17 342 · lost = 0 ✔ · p95 783 ms ✔
+                                 heap vrh 103,2 MB · CRDT 8 640 · shed 0 ✔ · rate-limited 0 ✔
+                                 duplicateSameAttempt = 1 ✖ · retryAfterKill = 2 (ocekivano)
+   PRAVI DUP: soak-task-11579  nodes=9081,9083  attempts=1,1   <- DVA cvora, OBA attempt=1
+```
+
+### Popravka koja je uslijedila (`61639fd`) i zasto NIJE dovoljna
+Dodao sam provjeru vlasnistva **prije** runner-a (`ownerAfterConfirm.nodeId !== id` → izlaz). Kratki run
+poslije toga: **`duplicateSameAttempt = 3`**, isti uzorak:
+```
+soak-task-220  nodes=9102,9103  attempts=1,1
+soak-task-221  nodes=9102,9103  attempts=1,1
+```
+
+**Zasto:** provjera gleda **lokalni** CRDT. Oba cvora upisu svoj claim i, u svom lokalnom pogledu, **jesu
+vlasnici** — tuđi claim im nije stigao (gossip ~300 ms po smjeru, `claimConfirmMs` 600 ms). LWW na kraju
+izabere jednog, a gubitnik je **vec izvršio** posao. Dakle: to nije bug u logici provjere, nego
+**nedovoljan prozor verifikacije za jedan gossip krug**.
+
+### Dvije opcije (mjerene, ne teoretske)
+1. **`claimConfirmMs` >= jedan gossip krug** (mjeriti: 600 ms nije dovoljno; predlazem 1200-1600 ms).
+   Cijena: svaki zadatak ceka duze preko mreze; i **mijenja semantiku `tick()`-a** (dokazano u Diou 3:
+   `Live feed`/`webhook` padaju dok se testovi ne vezu za izracunati prozor — Dio 2 je to vec uradio za
+   `chaos` i `3-nodes`, ostaje `Live feed` petlja + `webhook` rok).
+2. **Prihvatiti povremeni dupli RAD uz ispravno stanje** (`superseded` odbacuje gubitnikov rezultat) i
+   prijaviti ga kao mjerenu cijenu `at-least-once` isporuke.
+
+**Odluka nije donesena** — i ne treba je donositi bez mjerenja: sljedeci korak je izmjeriti **koliko
+gossip krugova** treba (log `claim_lost_before_execute` sa vremenom izmedju tudjeg claim-a i naseg), pa
+postaviti prozor na **izmjereno**, ne na pogodjeno.
+
+### Sto je #10 dokazao (i ostaje)
+* **`lost = 0` u punom satu sa 6 restarta** — prvi put (lease renewal + GC + grace),
+* `p95 783 ms` (9 sati stabilno), `shed 0`, `rate-limited 0`, CRDT ogranicen,
+* duplikati su svedeni na **iskljucivo cross-node trku** (`dupSameNode = 0` u svim runovima poslije
+  `attemptFloor` + `executing` guard → ti fiksevi rade).
