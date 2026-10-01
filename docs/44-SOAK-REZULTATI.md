@@ -734,3 +734,36 @@ Dva cvora, isti `(taskId, attempt)`, razlicit `nodeId`, upisi u istoj ms:
 `wins()` je **temelj cijele table** (svi kljucevi, svi cvorovi, tombstone-i, kompakcija). Promjena zahtijeva
 puni set (276/277) + kratki run + soak, i to je posao koji se radi svjesno — ne u zadnjim minutama sesije.
 Ostavljam ga kao **jedini otvoreni korak**, sa tacnim kodom i testom iznad.
+
+---
+
+## 23. ISPRAVKA §22: `wins()` JE simetrican i konvergira — moja hipoteza je OBORENA mjerenjem
+
+Probe (dva CRDT-a, isti kljuc, pa razmjena u oba smjera):
+
+```
+[A pise mnogo]  A vidi: A · B vidi: A · KONVERGIRA: true
+[D pise mnogo]  C vidi: D · D vidi: D · KONVERGIRA: true
+[entry] counter=21 nodeId=A clock={"A":21,"B":1}      <- vektorski sat se ISPRAVNO spaja
+```
+
+**Zakljucak: `wins()` je deterministicki i simetrican.** Poredjenje po `counter`-u daje isti pobjednik na
+obje strane (ko je vise pisao, njegov zapis je noviji — a to je upravo LWW), a `clock` se spaja tacno.
+Dakle **nema LWW asimetrije** i `wins()` **nije** korijen `attempts=1,1`.
+
+### Zasto sam pogrijesio u §22
+Uzeo sam uzorak `deltaMs` koji je sadrzao **samo trke koje su IZbjegnute** (bails) — one u kojima je tudji
+claim **stigao** prije provjere. Za **promasaje** (oba izvrse) nisam imao nijedno mjerenje. To je ista greska
+kao u #7/#8: mjerio sam pogresan skup. Zato je §22 bio zakljucak iz **pristrasnog uzorka**, ne iz podatka.
+
+### Sta je onda preostalo (i sta treba izmjeriti)
+Duplikat `1,1` postoji samo ako **tudji claim nije stigao** u lokalni pogled do trenutka provjere. To je
+**latencija dolaska zapisa**, ne semantika `wins()`. Zato sljedece mjerenje mora biti na **promasajima**:
+* u trenutku kada je rezultat `superseded` (oba su izvrsila) zapisati: `ourClaimAt`, `runnerStartAt`,
+  `firstSawPeerClaimAt`, `deltaMs = firstSawPeerClaimAt - ourClaimAt`, `confirmMs`;
+* iz toga se vidi da li je tudji zapis stigao **poslije** prozora (tada je rijec o latenciji gossip-a i o
+  izboru prozora) ili **prije** (tada je rijec o necenu trecem — npr. provjera se desila prerano).
+
+### Sto ostaje nepromijenjeno
+`wins()` se **ne dira** (dokazano ispravan), `confirm` 600 ms se **ne dira**, `claim_lost_before_execute`
+mjerenje ostaje (radi i korisno je). Otvoren je **jedan mjerni korak**, ne prepisivanje CRDT-a.
