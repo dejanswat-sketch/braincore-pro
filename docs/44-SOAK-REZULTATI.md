@@ -767,3 +767,43 @@ Duplikat `1,1` postoji samo ako **tudji claim nije stigao** u lokalni pogled do 
 ### Sto ostaje nepromijenjeno
 `wins()` se **ne dira** (dokazano ispravan), `confirm` 600 ms se **ne dira**, `claim_lost_before_execute`
 mjerenje ostaje (radi i korisno je). Otvoren je **jedan mjerni korak**, ne prepisivanje CRDT-a.
+
+---
+
+## 24. SUD SOAK-a #11 — `duplicateSameAttempt = 1`, ali `attemptFloor` je OTKRIO RECLAIM-STORM
+
+```
+trajanje:      3610 s (60 min) · 6 restarta
+poslano:       17 286 / izvrseno 17 283
+shed:          123  ⚠ NOVO        rate-limited: 203  ⚠ NOVO
+p50 759 · p95 806 ms ✔   ·  p99 334 061 ms ✖  ·  max 1 006 674 ms (16,8 min) ✖
+izgubljeno:    3   ✖
+duplicateSameAttempt = 1  ✖ (cilj 0)     retryAfterKill = 8
+dupCrossNode=9 · dupSameNode=0 · extraExecutions=9
+heap vrh 102,2 MB · CRDT 8 730 / 8 745 / 0
+```
+
+### NALAZ KOJI JE VAZNIJI OD DUPLIKATA: `attempts=1,105`
+```
+retry: soak-task-2899  nodes=9163,9162  attempts=1,105   <- STO PET preuzimanja istog taska!
+retry: soak-task-2900  nodes=9163,9162  attempts=1,2
+```
+`attemptFloor` (monotoni token) je ucinio upravo ono sto treba: **ucinio je storm VIDLJIVIM**. Task 2899 je
+preuziman ~105 puta, sto objasnjava i **p99 5,6 min / max 16,8 min** (task nikad ne zavrsi, preuzima se
+iznova) i velik dio `lost = 3`, i `shed = 123` + `rate-limited = 203` (red i gossip se pune pod stormom).
+
+### Sta je POTVRDJENO (ostaje)
+* `dupSameNode = 0` — `attemptFloor` + `executing` guard i dalje drze (nema ponovljenog istog attempt-a
+  na istom cvoru),
+* `duplicateSameAttempt = 1` u punom satu — **jedan** pravi duplikat, cross-node `1,1` (poznata rezidualna
+  trka iz §19-§23, mjerenje na promasajima jos fali),
+* `p95 806 ms`, `heap < 105 MB`, CRDT ogranicen.
+
+### Sljedeci korak (mjeriti, ne pogadjati)
+1. **Reclaim-storm**: brojati preuzimanja po tasku i logovati kada `attempt` predje prag (npr. 5) — sa
+   `nodeId`, `instanceId`, razlogom (`lease istekao` / `LWW` / `result-query bez odgovora`).
+2. Tek iz tog traga: zastita od ponovnog preuzimanja (npr. **backoff** po tasku — ako je task preuzet N
+   puta bez rezultata, sacekaj prije sljedeceg preuzimanja).
+3. Mjerenje na **promasajima** (`duplicate_result_write`, anchor treba procitati) za onaj `1,1`.
+4. **Soak #12** tek poslije toga — kriterij nepromijenjen (`duplicateSameAttempt=0 · lost=0 · p95<=1,5 s ·
+   heap<100 MB · shed=0 · rate-limited=0`).
