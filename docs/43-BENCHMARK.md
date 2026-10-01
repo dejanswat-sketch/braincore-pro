@@ -55,3 +55,18 @@ napuhan (bench na 40 t/s mjeri PREKO kapaciteta, što je gore dokazano).
 ### Broj za sajt (iskren)
 > **„Jedan host: 3 čvora, ~8 taskova/s, p95 < 1 s, 0 izgubljenih, 0 duplih. Skaliranje je horizontalno —
 > svaki dodatni host dodaje ~8 taskova/s sa istim garancijama."**
+
+### Graf (case study): dupli izvršeni u JEDNOM procesu po broju čvorova
+
+```
+dupli  │
+  97 ─ │                                    ████████████████████████ (25 čvorova)
+  39 ─ │              ████████████           (10 čvorova)
+   0 ─ │  █  █                              (1 i 3 čvora)
+       └────────────────────────────────────
+            1    3          10          25 čvorova
+```
+
+Jedan proces, 1/3/10/25 čvorova → **0 / 0 / 39 / 97 duplih**. Linija je čista: do 3 čvora nema trke;
+preko toga broj istovremenih preuzimanja istog taska raste eksponencijalno — dokaz da je skaliranje
+**horizontalno (više hostova), a ne više čvorova u jednom event loop-u**.
