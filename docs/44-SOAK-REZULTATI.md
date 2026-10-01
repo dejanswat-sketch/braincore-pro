@@ -1049,3 +1049,31 @@ Pri 17 000 zadataka/h to su ~**17 000 unosa × 5 mapa + 17 000 `done` zapisa** �
    **aktivne** zadatke (to je i bio cilj trace-a),
 3. **`done[]`**: ring ili GC po starosti (za statistiku dovoljno zadnjih N),
 4. ponoviti mjerenje (`[mem-by-structure]`) → tek onda **soak #16** sa svih sest kriterija.
+
+---
+
+## 31. SOAK #16 — SVIH ŠEST KRITERIJA ZELENO (finalna potvrda)
+
+```
+trajanje:      3602 s (60 min) · 6 restarta
+poslano:       17 378 / izvršeno 17 378     lost = 0 ✔
+shed: 0 ✔        rate-limited: 0 ✔
+p50 756 · p95 783 ms ✔ · p99 788 ms ✔ · max 11 668 ms
+heap: 15,8 -> 80,1 MB (vrh 99,6) ✔          CRDT: 8 704 / 8 702 / 15 ✔
+duplicateSameAttempt = 0 ✔✔✔                dupSameNode = 0 ✔
+retryAfterKill = 4 (at-least-once, ocekivano) · reclaim_storm = 45/h · claim_double_attempt = 0
+```
+
+| Kriterij | Cilj | Sud |
+|---|---|---|
+| `duplicateSameAttempt` | 0 | ✔ 0 |
+| `lost` | 0 | ✔ 0 |
+| `p95` | <= 1,5 s | ✔ 783 ms |
+| heap vrh | < 100 MB | ✔ 99,6 MB |
+| `shed` | 0 | ✔ 0 |
+| `rate-limited` | 0 | ✔ 0 |
+
+Ovo je PRVI run u kojem je svih sest zeleno u jednom satu, poslije zatvaranja sva tri mehanizma:
+restart-token (`attempt` u `task:` pri claim-u), reclaim-storm (`withdrawOwnClaim`), i cross-node trka
+(`attemptFloor` + `executing` guard). Heap je zatvoren tek kad je `[mem-by-structure]` pokazao da memoriju
+drze `tasks` Map + dijagnosticke mape (ne CRDT), pa je popravljen interval GC-a na 30 s i brisanje po starosti.
