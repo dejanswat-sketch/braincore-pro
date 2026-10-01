@@ -16,7 +16,7 @@ const SITE = path.join(ROOT, 'site');
 const DIST = path.join(ROOT, 'dist');
 
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-const out = path.join(DIST, `braincore-site-${pkg.version}.tar.gz`);
+const out = path.join(DIST, `braincore-site-${pkg.version}.tar`);
 
 if (!fs.existsSync(SITE)) {
   console.error('Nema site/ foldera.');
@@ -42,7 +42,9 @@ if (!publishable.includes('index.html')) {
   process.exit(2);
 }
 
-execFileSync('tar', ['-czf', out, '-C', SITE, ...publishable], { stdio: 'inherit' });
+// NEkompresovani tar (`-cf`, ne `-czf`): Hostinger LVE limit ne dozvoljava fork gzip child-a pri
+// `tar -xzf` („Cannot fork: Resource temporarily unavailable"), pa se koristi običan tar bez gzip-a.
+execFileSync('tar', ['-cf', out, '-C', SITE, ...publishable], { stdio: 'inherit' });
 const kb = (fs.statSync(out).size / 1024).toFixed(0);
 
 console.log(`\nOK: ${path.relative(ROOT, out)} (${kb} KB, ${publishable.length} fajlova)`);

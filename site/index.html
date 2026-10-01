@@ -377,6 +377,15 @@
           <li>• memory stable, CRDT board and pheromones decay as designed</li>
         </ul>
       </div>
+      <div class="glass reveal rounded-2xl p-6">
+        <h3 class="text-[15px] font-bold">Scale: measured on one host</h3>
+        <p class="mt-2 text-[13px] text-slate-400">One Hetzner host, 3 nodes, benchmarked at a sustainable 8 tasks/s (not a burst, not a projection).</p>
+        <ul class="mt-3 space-y-1.5 text-[13px] text-slate-300">
+          <li>• <b class="text-white">7.9</b> tasks/s sustained (<span class="font-mono">p95 698 ms</span>)</li>
+          <li>• <b class="text-emerald-300">0</b> lost, <b class="text-emerald-300">0</b> duplicated</li>
+          <li>• each additional host adds <b class="text-white">~8 tasks/s</b> with the same guarantees — scaling is horizontal</li>
+        </ul>
+      </div>
       <div class="glass-hi reveal rounded-2xl p-6">
         <h3 class="text-[15px] font-bold text-gold">Declare a schema, get exactly that</h3>
         <p class="mt-2 text-[13px] text-slate-300">Send <span class="font-mono">outputSchema</span> with a task and the system enforces it: extra fields dropped, prose stripped, types coerced, enums checked — with one corrective retry if the model drifts.</p>

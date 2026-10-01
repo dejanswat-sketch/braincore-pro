@@ -49,7 +49,7 @@ let failed = false;
 step('0. Pakujem site/');
 execFileSync(process.execPath, [path.join(ROOT, 'scripts/site-pack.mjs')], { cwd: ROOT, stdio: 'inherit' });
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-const tarball = path.join(ROOT, 'dist', `braincore-site-${pkg.version}.tar.gz`);
+const tarball = path.join(ROOT, 'dist', `braincore-site-${pkg.version}.tar`);
 if (!fs.existsSync(tarball)) {
   bad('paket nije napravljen');
   process.exit(1);
@@ -115,10 +115,10 @@ if (DRY) {
 
 // ── 3. Upload ───────────────────────────────────────────────────────────────
 step('3. Upload (tar preko SSH, bez npm-a)');
-const remoteTar = `~/braincore-site-${pkg.version}.tar.gz`;
+const remoteTar = `~/braincore-site-${pkg.version}.tar`;
 execFileSync('scp', ['-i', SSH_KEY, '-P', SSH_PORT, '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=accept-new', tarball, `${SSH_HOST}:${remoteTar}`], { stdio: 'inherit' });
 ok(`prebačen ${path.basename(tarball)}`);
-ssh(`cd ~/${REMOTE_DIR} && tar -xzf ${remoteTar} && rm -f ${remoteTar} && ls -1 | head -20`, { inherit: true });
+ssh(`cd ~/${REMOTE_DIR} && tar -xf ${remoteTar} && rm -f ${remoteTar} && ls -1 | head -20`, { inherit: true });
 ok('raspakovan u public_html');
 
 // ── 4. Provjera živog sajta ─────────────────────────────────────────────────
