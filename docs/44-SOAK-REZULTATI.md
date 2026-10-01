@@ -1013,3 +1013,39 @@ raste linearno sa 17 000 zadataka. Tek onda brisanje/ogranicavanje te strukture.
 Kraci GC prozor moze da ucini da `result:`/`task:` zapis istekne dok ga neki cvor jos nije vidio — pa se
 task **preuzme ponovo** (isti mehanizam kao „resurrect" tombstone-a, dokumentovan u `compact()`). To je
 kandidat i za `lost = 1`. Vrijedi izmjeriti: broj preuzimanja taskova **koji su vec imali rezultat**.
+
+---
+
+## 30. NOSILAC MEMORIJE IZMJEREN — nije CRDT, nego `tasks` Map + MOJE DIJAGNOSTICKE MAPE
+
+Run 5 min (1 468 zadataka), log po strukturi (`[mem-by-structure]`, svakih 30 s):
+
+| struktura | start | kraj (1 468 zadataka) | rast | sud |
+|---|---|---|---|---|
+| `tasks` (Map) | 147 | **1 468** | **+1 321** | ✖ raste 1:1 sa zadacima, NIKAD se ne cisti |
+| `attemptFloor` | 99 | **1 048** | +949 | ✖ moja dijagnosticka mapa, ne cisti se |
+| `reclaimCount` | 99 | **1 048** | +949 | ✖ isto |
+| `claimSetByAttempt` | 99 | **1 048** | +949 | ✖ isto |
+| `myClaimAt` | 99 | **1 048** | +949 | ✖ isto |
+| `claimEvents` | 74 | 562 | +488 | ~ ogranicen (poslije trace po zadatku) |
+| `done[]` | 25–82 | 486–830 | +500–750 | ✖ raste sa svakim izvrsenjem |
+| `crdt` | 437 | 4 400 | +3 963 | ✔ **ogranicen** (GC prozor 10 min) |
+| heapUsed | 11,5 MB | **38 MB** | +26,5 | — |
+| rss | 63 MB | 125 MB | +62 | — |
+
+### Zakljucak (mjerena, ne pogodjena)
+Heap **ne drzi CRDT** (on je ogranicen GC-om: 4 400 zapisa za 10-min prozor). Drze ga:
+1. **`tasks` Map** — svaki zadatak koji je cvor vidio ostaje u mapi **zauvijek** (1 468 = tacno broj zadataka),
+2. **cetiri dijagnosticke mape** koje sam ja dodao (`attemptFloor`, `reclaimCount`, `claimSetByAttempt`,
+   `myClaimAt`) — svaka po ~1 048 unosa (zadaci koje je taj cvor dotakao), nikad se ne ciste,
+3. `done[]` — po jednom zapisu za svako izvrsavanje.
+
+Pri 17 000 zadataka/h to su ~**17 000 unosa × 5 mapa + 17 000 `done` zapisa** — i to je onih 110 MB.
+**Zato `gcAgeMs` 10 -> 7 nije pomogao**: smanjio je tabelu, a ne nosioce.
+
+### Popravka (sljedeca, jedna po jedna, sa mjerenjem)
+1. **`tasks`**: u GC petlji brisati zapise za **zavrsene** zadatke starije od `gcAgeMs` (isti princip kao CRDT),
+2. **dijagnosticke mape**: cistiti ih zajedno sa `tasks` (isti kljuc/taskId) — one smiju da postoje samo za
+   **aktivne** zadatke (to je i bio cilj trace-a),
+3. **`done[]`**: ring ili GC po starosti (za statistiku dovoljno zadnjih N),
+4. ponoviti mjerenje (`[mem-by-structure]`) → tek onda **soak #16** sa svih sest kriterija.

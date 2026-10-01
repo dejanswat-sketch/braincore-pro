@@ -66,7 +66,7 @@ export const NODE_DEFAULTS = {
   compactionIntervalMs: 300_000,
   compactionAgeMs: 600_000,
   /** GC cijelih task:/result:/claim: zapisa (ne samo tombstone-a) — 1h soak je pokazao da tabla raste vječno. */
-  gcAgeMs: 420_000, // 7 min: heap vrh pod 100 MB (10 min je davalo 111 MB, 15 min 124 MB pri ~4,8 t/s)
+  gcAgeMs: 600_000, // 10 min (7 min je pogorsao reclaim_storm 82->246 i dao lost=1, a heap NIJE smanjio)
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -922,6 +922,23 @@ export async function createSwarmNode({
     /** Trag claim-ova za dati task (dijagnostika duplih izvršenja). Bez argumenta vraća zadnjih N. */
     tryClaim, // za testove (monotoni fencing token)
     claimTrace: (taskId = null) => (taskId ? (claimEvents.get(taskId) ?? []) : [...claimEvents.values()].slice(-5).flat()),
+
+    /** Velicine po strukturi — mjeri NOSIOCA memorije (CRDT je oboren kao hipoteza u §29). */
+    memoryByStructure: () => ({
+      done: done.length,
+      tasks: tasks.size,
+      inFlight: inFlight.size,
+      attemptFloor: attemptFloor.size,
+      reclaimCount: reclaimCount.size,
+      claimSetByAttempt: claimSetByAttempt.size,
+      claimEvents: claimEvents.size,
+      myClaimAt: myClaimAt.size,
+      executing: executing.size,
+      crdt: crdt.size,
+      pheromone: pheromone.stats?.().active ?? null,
+      heapUsedMb: Number((process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1)),
+      rssMb: Number((process.memoryUsage().rss / 1024 / 1024).toFixed(1)),
+    }),
 
     claimWindows: () => {
       const derived = derivedWindows();

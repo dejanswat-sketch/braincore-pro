@@ -107,6 +107,7 @@ let seq = 0;
 let stop = false;
 let lastRestart = Date.now();
 const intervalMs = Math.max(1, Math.round(1000 / RATE));
+
 const loadTimer = setInterval(async () => {
   if (stop) return;
   const node = nodes[seq % nodes.length];
@@ -129,6 +130,14 @@ const loadTimer = setInterval(async () => {
 const memTimer = setInterval(() => {
   const m = process.memoryUsage();
   memory.push({ at: Date.now(), heapUsedMb: Number((m.heapUsed / 1024 / 1024).toFixed(1)), rssMb: Number((m.rss / 1024 / 1024).toFixed(1)) });
+  // NOSIOC MEMORIJE (docs/44 §29): CRDT je oboren kao hipoteza (tabela -29 %, heap isti), pa na svakom
+  // intervalu logujemo velicine SVIH struktura — da se vidi koja prati broj zadataka.
+  try {
+    const snap = nodes.map((n) => ({ node: n.nodeId, ...(typeof n.memoryByStructure === 'function' ? n.memoryByStructure() : {}) }));
+    console.error(`[mem-by-structure] ${JSON.stringify(snap)}`);
+  } catch (err) {
+    console.error(`[mem-by-structure] greska: ${err.message}`);
+  }
 }, MEM_EVERY * 1000);
 
 // ── opcioni restart čvora pod opterećenjem ──────────────────────────────────
