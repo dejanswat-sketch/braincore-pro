@@ -30,6 +30,17 @@ const FPS = 20;
 // TRAFFIC=n → šalje ~n taskova/s na API tokom snimanja (da roj bude ŽIV u kadru)
 const TRAFFIC = Number(process.env.TRAFFIC ?? 0);
 const API = (process.env.BRAINCORE_API ?? 'https://api.braincore.pro').replace(/\/$/, '');
+// SCENES="0:https://braincore.pro,18:https://live.braincore.pro/live" — navigacija u toku snimanja
+const SCENES = String(process.env.SCENES ?? '').split(',').filter(Boolean).map((s) => {
+  const i = s.indexOf(':');
+  return { t: Number(s.slice(0, i)), url: s.slice(i + 1), done: false };
+});
+// CAPTIONS="2:tekst|18:drugi tekst" — titl na dnu kadra (voiceover nije moguć, titl jeste)
+const CAPTIONS = String(process.env.CAPTIONS ?? '').split('|').filter(Boolean).map((s) => {
+  const i = s.indexOf(':');
+  return { t: Number(s.slice(0, i)), text: s.slice(i + 1), done: false };
+});
+let curCaption = '';
 
 const CANDIDATES = [
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -112,9 +123,43 @@ console.log(`snimam ${SECONDS}s (kill na ${KILL_AT}s)...`);
 
 let killed = false;
 let sent = 0, ok = 0;
+
+const captionJs = (text) => `(() => {
+  let el = document.getElementById('__cap');
+  if (!el) {
+    el = document.createElement('div'); el.id = '__cap';
+    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;padding:18px 26px;z-index:2147483647;'
+      + 'background:linear-gradient(180deg,rgba(2,6,12,0),rgba(2,6,12,.92));color:#eaf4ff;'
+      + 'font:600 26px/1.35 Inter,"Space Grotesk",system-ui,sans-serif;text-align:center;letter-spacing:.2px;'
+      + 'text-shadow:0 2px 18px rgba(0,0,0,.9);pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = ${JSON.stringify(text)};
+})()`;
+
+async function injectCaption(text) {
+  if (!text) return;
+  curCaption = text;
+  try { await send('Runtime.evaluate', { expression: captionJs(text) }); } catch { }
+}
+
 const t0 = Date.now();
 while ((Date.now() - t0) / 1000 < SECONDS) {
   const el = (Date.now() - t0) / 1000;
+  // scene: navigacija u toku snimanja (npr. sajt → live dashboard)
+  for (const sc of SCENES) {
+    if (!sc.done && el >= sc.t) {
+      sc.done = true;
+      console.log(`  t+${el.toFixed(1)}s → scena ${sc.url}`);
+      await send('Page.navigate', { url: sc.url });
+      await sleep(3000);
+      if (curCaption) await injectCaption(curCaption); // titl se izgubio navigacijom — vrati ga
+    }
+  }
+  // titlovi
+  for (const c of CAPTIONS) {
+    if (!c.done && el >= c.t) { c.done = true; console.log(`  t+${el.toFixed(1)}s titl: ${c.text.slice(0, 48)}`); await injectCaption(c.text); }
+  }
   if (TRAFFIC > 0) {
     const want = Math.round(TRAFFIC * el) - sent;
     for (let i = 0; i < want; i++) {
@@ -173,13 +218,23 @@ for (let i = 0; i < sampled.length; i += CHUNK) {
 
 const fps = Math.max(8, Math.min(30, Math.round(sampled.length / SECONDS)));
 console.log('fps za enkodiranje:', fps);
+
+// Video ide DIREKTNO na disk kroz browser download (base64 kroz CDP je prevelik za duge snimke)
+const dlDir = path.resolve(path.dirname(path.resolve(outFile)), '.recdl');
+fs.mkdirSync(dlDir, { recursive: true });
+for (const f of fs.readdirSync(dlDir)) { try { fs.unlinkSync(path.join(dlDir, f)); } catch { } }
+try {
+  await send('Browser.setDownloadBehavior', { behavior: 'allow', downloadPath: dlDir, eventsEnabled: true });
+} catch {
+  await send('Page.setDownloadBehavior', { behavior: 'allow', downloadPath: dlDir });
+}
 const expr = `(async () => {
   const cv = document.getElementById('c'); const ctx = cv.getContext('2d');
   const fps = ${fps};
   const MIMES = ['video/mp4;codecs=avc1.42E01E', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
   const mime = MIMES.find((t) => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } }) || 'video/webm';
   const stream = cv.captureStream(fps);
-  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+  const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 3000000 });
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
   const done = new Promise((res) => { rec.onstop = () => res(new Blob(chunks, { type: mime })); });
@@ -191,22 +246,34 @@ const expr = `(async () => {
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     await new Promise((r) => setTimeout(r, 1000 / fps));
   }
-  await new Promise((r) => setTimeout(r, 400));
+  await new Promise((r) => setTimeout(r, 500));
   rec.stop();
   const blob = await done;
   const bytes = new Uint8Array(await blob.arrayBuffer());
-  const head = String.fromCharCode(...bytes.subarray(0, 12));
-  let s = ''; const CH = 8192;
-  for (let i = 0; i < bytes.length; i += CH) s += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
-  return JSON.stringify({ mime, head, b64: btoa(s) });
+  // snimi kroz <a download> → CDP download dir (bez ogromnog base64 kroz WebSocket)
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = ${JSON.stringify(path.basename(outFile))};
+  document.body.appendChild(a); a.click();
+  await new Promise((r) => setTimeout(r, 1200));
+  return JSON.stringify({ mime, size: bytes.length, head: String.fromCharCode(...bytes.subarray(0, 8)) });
 })()`;
 const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true, timeout: 300000 });
 if (r.exceptionDetails) { console.error('enkodiranje palo:', JSON.stringify(r.exceptionDetails).slice(0, 400)); process.exit(1); }
 const parsed = JSON.parse(r.result.value);
-const buf = Buffer.from(parsed.b64, 'base64');
+// sačekaj da download stigne na disk
+let got = null;
+for (let i = 0; i < 60; i++) {
+  const cand = fs.readdirSync(dlDir).filter((f) => !f.endsWith('.crdownload'));
+  if (cand.length) { got = path.join(dlDir, cand[0]); break; }
+  await sleep(500);
+}
+if (!got) { console.error('download nije stigao u', dlDir); process.exit(1); }
 const outPath = parsed.mime.startsWith('video/mp4') ? outFile.replace(/\.webm$/i, '.mp4') : outFile;
 fs.mkdirSync(path.dirname(path.resolve(outPath)), { recursive: true });
-fs.writeFileSync(outPath, buf);
+fs.copyFileSync(got, outPath);
+const buf = fs.readFileSync(outPath);
+fs.rmSync(dlDir, { recursive: true, force: true });
 console.log(`OK: ${outPath} (${(buf.length / 1048576).toFixed(2)} MB, ${sampled.length} frejmova, ~${fps} fps, ${parsed.mime})`);
 
 try { proc.kill(); } catch { }

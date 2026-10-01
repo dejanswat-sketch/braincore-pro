@@ -1,85 +1,295 @@
 {
-  "__comment": "Grafana dashboard za Braincore Pro. Uvezi preko Dashboards → Import → Upload JSON. Metrics dolaze sa /metrics?format=prom (bez npm klijenta, Prometheus text format).",
   "title": "Braincore Pro — Swarm",
   "uid": "braincore-swarm",
-  "tags": ["braincore", "swarm"],
+  "tags": [
+    "braincore",
+    "swarm"
+  ],
   "timezone": "browser",
   "refresh": "10s",
-  "time": { "from": "now-1h", "to": "now" },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "panels": [
     {
       "type": "stat",
       "title": "Nodes (peers + 1)",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
-      "targets": [{ "expr": "braincore_nodes", "legendFormat": "nodes", "datasource": { "type": "prometheus", "uid": "${DS}" } }],
-      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 3 }] } }, "overrides": [] }
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "braincore_nodes",
+          "legendFormat": "nodes",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 3
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
     },
     {
       "type": "stat",
       "title": "Peers alive",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
-      "targets": [{ "expr": "braincore_peers_alive", "legendFormat": "{{instance}}" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "braincore_peers_alive",
+          "legendFormat": "{{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Tasks done (swarm)",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
-      "targets": [{ "expr": "braincore_tasks_done_total", "legendFormat": "{{instance}}" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "braincore_tasks_done_total",
+          "legendFormat": "{{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
+      ]
     },
     {
       "type": "stat",
       "title": "Queue depth",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
-      "targets": [{ "expr": "braincore_queue_depth", "legendFormat": "{{instance}}" }],
-      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 200 }, { "color": "red", "value": 450 }] } }, "overrides": [] }
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "braincore_queue_depth",
+          "legendFormat": "{{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 200
+              },
+              {
+                "color": "red",
+                "value": 450
+              }
+            ]
+          }
+        },
+        "overrides": []
+      }
     },
     {
       "type": "stat",
       "title": "Live viewers",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
-      "targets": [{ "expr": "braincore_live_clients", "legendFormat": "clients" }]
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "targets": [
+        {
+          "expr": "braincore_live_clients",
+          "legendFormat": "clients",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
+      ]
     },
     {
       "type": "timeseries",
       "title": "Throughput (tasks/s) po čvoru",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-      "targets": [{ "expr": "rate(braincore_tasks_done_local[1m])", "legendFormat": "{{instance}}" }]
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 4
+      },
+      "targets": [
+        {
+          "expr": "rate(braincore_tasks_done_local[1m])",
+          "legendFormat": "{{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
+      ]
     },
     {
       "type": "timeseries",
       "title": "Gossip — odbijeno i rate-limited",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 4
+      },
       "targets": [
-        { "expr": "rate(braincore_gossip_rejected_total[5m])", "legendFormat": "rejected {{instance}}" },
-        { "expr": "rate(braincore_gossip_rate_limited_total[5m])", "legendFormat": "rate-limited {{instance}}" },
-        { "expr": "rate(braincore_gossip_prev_key_total[5m])", "legendFormat": "old-key accepted {{instance}}" }
+        {
+          "expr": "rate(braincore_gossip_rejected_total[5m])",
+          "legendFormat": "rejected {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        },
+        {
+          "expr": "rate(braincore_gossip_rate_limited_total[5m])",
+          "legendFormat": "rate-limited {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        },
+        {
+          "expr": "rate(braincore_gossip_prev_key_total[5m])",
+          "legendFormat": "old-key accepted {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "CRDT tabla — zapisi i tombstone-i",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 12
+      },
       "targets": [
-        { "expr": "braincore_crdt_entries", "legendFormat": "entries {{instance}}" },
-        { "expr": "braincore_crdt_tombstones", "legendFormat": "tombstones {{instance}}" }
+        {
+          "expr": "braincore_crdt_entries",
+          "legendFormat": "entries {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        },
+        {
+          "expr": "braincore_crdt_tombstones",
+          "legendFormat": "tombstones {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "Feromoni i opterećenje",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 12
+      },
       "targets": [
-        { "expr": "braincore_pheromones_active", "legendFormat": "pheromones {{instance}}" },
-        { "expr": "braincore_load", "legendFormat": "load {{instance}}" }
+        {
+          "expr": "braincore_pheromones_active",
+          "legendFormat": "pheromones {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        },
+        {
+          "expr": "braincore_load",
+          "legendFormat": "load {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
       ]
     },
     {
       "type": "timeseries",
       "title": "Gossip protok (poruka/s)",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 20
+      },
       "targets": [
-        { "expr": "rate(braincore_gossip_sent_total[1m])", "legendFormat": "sent {{instance}}" },
-        { "expr": "rate(braincore_gossip_received_total[1m])", "legendFormat": "received {{instance}}" }
+        {
+          "expr": "rate(braincore_gossip_sent_total[1m])",
+          "legendFormat": "sent {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        },
+        {
+          "expr": "rate(braincore_gossip_received_total[1m])",
+          "legendFormat": "received {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS}"
+          }
+        }
       ]
     }
   ],
@@ -88,5 +298,19 @@
     "rate(braincore_gossip_rejected_total[5m]) > 1 → neko potpisuje pogrešnim ključem (provjeri NMQ_CLUSTER_SECRET/+_PREV)",
     "braincore_queue_depth > 450 → red je pred odbacivanjem (429); dodaj čvor ili smanji opterećenje",
     "braincore_crdt_tombstones raste bez pada → kompakcija ne radi (provjeri compactionIntervalMs)"
-  ]
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "DS",
+        "label": "Data source",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {},
+        "hide": 0,
+        "refresh": 1,
+        "includeAll": false
+      }
+    ]
+  }
 }
