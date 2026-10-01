@@ -1,0 +1,11 @@
+# Braincore Pro — Prometheus scrape config (dodatak za /etc/prometheus/prometheus.yml)
+# Prometheus scrape-a /metrics?format=prom sa API node-a (bez npm klijenta).
+# Grafana data source "Braincore" (prometheus) cita http://127.0.0.1:9090.
+scrape_configs:
+  - job_name: "braincore"
+    scrape_interval: 15s
+    metrics_path: /metrics
+    params:
+      format: [prom]
+    static_configs:
+      - targets: ["127.0.0.1:8081"]
