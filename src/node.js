@@ -404,6 +404,21 @@ export async function createSwarmNode({
     const attempt = Number(existing?.attempt ?? 0) + 1;
     crdt.set(claimKey, { nodeId: id, instanceId, at: Date.now(), load: load(), leaseMs: cfg.claimLeaseMs, attempt });
     noteClaimEvent('claim_set', task, { attempt, existingNode: existing?.nodeId ?? null, existingInstance: existing?.instanceId ?? null, existingAttempt: existing?.attempt ?? null });
+    // SIGNAL 1: preuzimanje claim-a koji pripada DRUGOM, JOŠ ŽIVOM čvoru — direktan dokaz dvostrukog
+    // preuzimanja (domen `confirm` prozora i LWW verifikacije). Ovo je SAM događaj, ne posljedica.
+    if (existing?.nodeId && existing.nodeId !== id && gossip.isAlive(existing.nodeId) && Date.now() - Number(existing.at ?? 0) < cfg.claimLeaseMs) {
+      logger?.warn?.('node.live_claim_overwrite', {
+        taskId: task.id,
+        existingNode: existing.nodeId,
+        existingInstance: existing.instanceId ?? null,
+        existingAt: existing.at ?? null,
+        leaseAgeMs: Date.now() - Number(existing.at ?? 0),
+        leaseMs: cfg.claimLeaseMs,
+        newNode: id,
+        newInstance: instanceId,
+        attempt,
+      });
+    }
     // Šaljemo SAMO novi claim zapis (ne cijeli snapshot) — ostatak širi periodični CRDT sync
     const fresh = crdt.delta({ [id]: lastBroadcast }).filter((e) => e.nodeId === id);
     if (fresh.length) {
@@ -480,6 +495,21 @@ export async function createSwarmNode({
         logger?.warn?.('node.duplicate_execution_detected', { taskId: task.id, nodeId: id, instanceId, attempt, trace: claimTrace(task.id) });
       }
       dropClaimTrace(task.id); // zadatak je završen — trag se oslobađa
+      // SIGNAL 2: upis rezultata kada rezultat VEĆ postoji sa DRUGOG čvora — trenutak kada je duplo
+      // izvršenje postalo činjenica (dva čvora su izvršila isti zadatak). Ovo hvata SAM događaj, dok
+      // `pre_execute` ne može: kod istovremenog rada rezultata još nema ni kod jednog.
+      const priorResult = crdt.get(`result:${task.id}`);
+      if (priorResult && priorResult.nodeId && priorResult.nodeId !== id) {
+        logger?.warn?.('node.duplicate_result_write', {
+          taskId: task.id,
+          firstNode: priorResult.nodeId,
+          firstAt: priorResult.at ?? null,
+          secondNode: id,
+          secondInstance: instanceId,
+          secondAt: record.at,
+          attempt,
+        });
+      }
       crdt.set(`result:${task.id}`, { nodeId: id, attempt, ok: true, superseded: !stillOwner, ms: record.ms, at: record.at });
       if (stillOwner) {
         crdt.set(`task:${task.id}`, { ...task, state: 'done', doneBy: id, attempt });
