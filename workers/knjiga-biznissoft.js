@@ -17,6 +17,8 @@
  *   ONCE            (ako je 1 — obradi dostupno pa izađi; za testove)
  */
 import { randomUUID } from 'node:crypto';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 const API = (process.env.BRAINCORE_API ?? 'https://api.braincore.pro').replace(/\/$/, '');
 const BRIDGE = (process.env.BRIDGE_URL ?? 'http://127.0.0.1:5055').replace(/\/$/, '');
@@ -50,7 +52,24 @@ const bridge = {
   updateInvoice: (id, data) => jsonFetch(`${BRIDGE}/api/v1/invoices/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
   outboxWrite: (data) => jsonFetch(`${BRIDGE}/api/v1/outbox/write`, { method: 'POST', body: JSON.stringify(data) }),
   sefSync: (data = {}) => jsonFetch(`${BRIDGE}/api/v1/sef/sync`, { method: 'POST', body: JSON.stringify(data) }),
+  // `knjizi(payload)` u programu = predict_konto → (konto, confidence)
+  kontoPredict: (data) => jsonFetch(`${BRIDGE}/api/v1/konto/predict`, { method: 'POST', body: JSON.stringify(data) }),
 };
+
+// ── Maja-veza: granice i folderi ────────────────────────────────────────────
+const CONFIDENCE_MIN = Number(process.env.KNJIGA_CONFIDENCE_MIN ?? 0.92);
+const ULAZ_DIR = process.env.KNJIGA_ULAZ_DIR ?? 'E:\\knjige\\ulaz';
+const ZAPROVERU_DIR = process.env.KNJIGA_ZAPROVERU_DIR ?? 'E:\\knjige\\za-proveru';
+const VALID_PDV = [20, 10, 0];
+mkdirSync(ULAZ_DIR, { recursive: true });
+mkdirSync(ZAPROVERU_DIR, { recursive: true });
+
+// Faktura koju robot NE smije sam da knjiži → ide Maji na ručnu provjeru.
+function naProveru(p, razlog, extra = {}) {
+  const f = join(ZAPROVERU_DIR, `${p.broj ?? p.invoiceNumber ?? Date.now()}.json`);
+  writeFileSync(f, JSON.stringify({ ts: new Date().toISOString(), razlog, payload: p, ...extra }, null, 2), 'utf8');
+  return f;
+}
 
 // ── obrađivači po tipu taska ────────────────────────────────────────────────
 /**
@@ -86,29 +105,54 @@ const HANDLERS = {
     return { ok: true, result: { broj, pib, iznos, stage: 'ocr', chars: tekst.length } };
   },
 
-  // 3) Predlog konta (konto learning radi u programu)
+  // 3) Predlog konta — POZIV PROGRAMU: predict_konto(pib, opis, iznos) → (konto, confidence)
   'knjiga-konto': async (p) => {
-    // PREDLOG KONTA je proizvod rada; upis u bazu je best-effort (soak šalje load bez fakturaId).
-    const konto = p.konto ?? p.predlog ?? '4700'; // ulazne fakture — dobavljači (fallback)
-    let upisano = false;
-    if (p.fakturaId) {
-      const r = await bridge.updateInvoice(p.fakturaId, { konto, status: 'pripremljeno' });
-      upisano = Boolean(r.ok);
+    const supplierPib = p.dobavljac_pib ?? p.partnerPib ?? '';
+    const clientPib = p.pib ?? '999888777'; // KLijent (cije knjige vodimo) — mora postojati u bazi
+    const pred = await bridge.kontoPredict({ dobavljac_pib: supplierPib, opis: p.opis ?? p.description ?? '', iznos: p.iznos ?? p.neto ?? p.amount ?? 0 });
+    const konto = pred.body?.data?.konto ?? '4700';
+    const confidence = Number(pred.body?.data?.confidence ?? 0);
+
+    // NISKA pouzdanost → NE knjiži automatski; ide Maji na ručnu provjeru.
+    if (confidence < CONFIDENCE_MIN) {
+      const f = naProveru(p, `confidence ${confidence} < ${CONFIDENCE_MIN}`, { konto });
+      return { ok: true, result: { konto, confidence, zaProveru: f, stage: 'konto-na-proveru' } };
     }
-    return { ok: true, result: { fakturaId: p.fakturaId ?? null, konto, upisano, stage: 'konto' } };
+
+    // VISOKA pouzdanost → ulazna kalkulacija u statusu „spremno za BizniSoft" (= „U obradi" u BS).
+    let fid = p.fakturaId ?? null;
+    if (!fid) {
+      const inv = await bridge.createInvoice({
+        pib: clientPib,
+        broj: p.broj ?? p.invoiceNumber ?? `F-${Date.now().toString().slice(-6)}`,
+        dobavljac: p.dobavljac ?? p.partner ?? '',
+        neto: p.neto ?? p.iznos ?? 0,
+        pdv: p.pdv ?? 0,
+        bruto: p.bruto,
+        datum: p.datum,
+        tip: 'ulazna',
+        status: 'spremno_za_biznisoft',
+        izvor: `braincore:${WORKER_ID}`,
+      });
+      if (!inv.ok) return { ok: false, error: `bridge invoices: ${inv.status} ${JSON.stringify(inv.body).slice(0, 120)}` };
+      fid = inv.body?.data?.id;
+    }
+    let upisano = false;
+    if (fid) { const r = await bridge.updateInvoice(fid, { konto, status: 'spremno_za_biznisoft' }); upisano = Boolean(r.ok); }
+    return { ok: true, result: { fakturaId: fid, konto, confidence, upisano, status: 'spremno_za_biznisoft', stage: 'konto' } };
   },
 
-  // 4) PDV kontrola
+  // 4) PDV kontrola — neobična stopa ide Maji
   'knjiga-pdv': async (p) => {
     const neto = Number(p.neto ?? 0);
     const pdv = Number(p.pdv ?? 0);
     const stopa = neto > 0 ? Math.round((pdv / neto) * 100) : null;
-    const ok = stopa === 20 || stopa === 10 || stopa === 0;
-    return {
-      ok: true,
-      result: { neto, pdv, stopa, stopaValidna: ok, ocekivano: [20, 10, 0], stage: 'pdv' },
-      warning: ok ? undefined : `PDV stopa ${stopa}% nije standardna (20/10/0)`,
-    };
+    const validna = VALID_PDV.includes(stopa);
+    if (!validna) {
+      const f = naProveru(p, `PDV stopa ${stopa}% nije standardna (${VALID_PDV.join('/')})`, { neto, pdv, stopa });
+      return { ok: true, result: { neto, pdv, stopa, stopaValidna: false, zaProveru: f, stage: 'pdv-na-proveru' } };
+    }
+    return { ok: true, result: { neto, pdv, stopa, stopaValidna: true, stage: 'pdv' } };
   },
 
   // 5) Uparivanje sa izvodom banke
