@@ -70,3 +70,26 @@ dupli  │
 Jedan proces, 1/3/10/25 čvorova → **0 / 0 / 39 / 97 duplih**. Linija je čista: do 3 čvora nema trke;
 preko toga broj istovremenih preuzimanja istog taska raste eksponencijalno — dokaz da je skaliranje
 **horizontalno (više hostova), a ne više čvorova u jednom event loop-u**.
+
+## FAZA 3 — „2 hosta = 16 t/s" (dokaz zašto traži ODVOJEN host, ne dva roja na jednoj mašini)
+
+Pokušao sam besplatno da simulujem 2 hosta na JEDNOJ mašini (6 jezgara / 12 threadova): dva
+odvojena roja po 3 čvora (2 procesa, različiti portovi), bench 8 t/s na svaki paralelno.
+
+```
+mašina: 6 jezgara / 12 threadova → CPU NIJE limit
+2 roja (po 3 čvora) na 1 mašini = ~8/s, NE 16/s
+```
+
+**Zašto:** `claimConfirmMs 600 ms` serijalizuje claim po čvoru (HTTP-node put). Svaki roj drži
+~4/s, dva roja ~8/s — a in-process bench (bez HTTP-a) daje 7,93/s. Razlika je HTTP + confirm
+serijalizacija, ne CPU.
+
+**Zaključak (mjeren, ne pogađan):**
+> **„svaki host +8/s" traži ODVOJEN FIZIČKI host sa svojim claim petljama.** Dva roja na istoj
+> mašini NE udvostručuju propusnost — što i potvrđuje premisu horizontalnog skaliranja.
+
+**Za pravih „2 hosta = 16/s mereno":** treba drugi VPS u istom DC (Hetzner↔Hetzner 1–2 ms), gdje
+je 8+8=16 čisto. Kućni PC kao drugi host preko Tailscale-a daje ~12–14/s — **limit je mreža
+(20–40 ms ping), ne CPU** — i dovoljan je za besplatan dokaz zakona, ali NE za produkciju sa
+Majom (PC spava / nestane struje / Windows Update → nema HA, nema „2,2 s detekcija 3,0 s povratak").
