@@ -80,6 +80,24 @@ kontа nesiguran ili je PDV sumnjiv, on to <b>ne dira</b> i ostavlja tebi u fold
 <div class="box warn"><b>Ne zatvaraj crni prozor</b> dok radiš — u njemu živi roj i radnik. Ako ga zatvoriš,
 robot prestaje da priprema. Kad završiš dan, možeš ga zatvoriti (sutra opet dvoklik).</div>
 
+<h3>Prvo pokretanje — unesi KREDENCIJALE (samo jednom)</h3>
+<p>Svako ko radi (ti, Maja, bilo ko) <b>sam upisuje svoje kredencijale jednom</b>, i program ih pamti
+<b>šifrovano</b> — ne moraš da ih daješ nikome, ni agentu. Posle prvog unosa, program ih sam učitava.</p>
+<table>
+  <tr><th>Kredencijal</th><th>Gde ga uneseš</th><th>Šta upišeš</th></tr>
+  <tr><td><b>Gmail (email fakture)</b></td><td>bočni meni → <b>✉ Email</b></td><td>email adresu + <b>app-lozinku</b> (16 znakova) → „Testiraj vezu" → „Sačuvaj"</td></tr>
+  <tr><td><b>SEF (eFakture)</b></td><td>bočni meni → <b>🏛 SEF</b></td><td>API ključ + sertifikat (<code>.p12</code>/<code>.pem</code>) + lozinku sertifikata → „Sačuvaj"</td></tr>
+</table>
+<div class="box info">
+<b>Gmail app-lozinka</b> (ne obična Gmail lozinka): Google nalog → Bezbednost → Verifikacija u 2 koraka →
+<b>Lozinke aplikacija</b> → izaberi „Pošta" → kopiraj 16 znakova → zalepi u <b>✉ Email</b> tab.
+</div>
+<div class="box ok">
+<b>Posle toga se NIŠTA ne upisuje ponovo.</b> Program kredencijale čuva šifrovano
+(<code>.secrets.key</code> + <code>config.json</code>), pa ih svaki sledeći put sam pročita.
+Ako promeniš lozinku — samo opet uđeš u isti tab i prepišeš.
+</div>
+
 <h2>3. Svakodnevni rad — korak po korak</h2>
 <div class="step"><span class="n">1</span><b>Pokreni roj</b> — dvoklik na <code>pokreni-roj.bat</code>.</div>
 <div class="step"><span class="n">2</span>U BizniSoftu otvori: <b>Upravljanje eFakturama → Kreiranje ulaznih kalkulacija na osnovu primljenih eFaktura</b>.</div>
