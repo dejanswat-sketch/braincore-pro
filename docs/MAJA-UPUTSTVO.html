@@ -49,6 +49,7 @@ Ti samo stisneš <span class="kbd">F11</span> i potvrdiš. Ništa novo ne učiš
   <li>Šta je Braincore Pro i šta radi za tebe</li>
   <li>Pokretanje (jedan klik)</li>
   <li>Svakodnevni rad — korak po korak</li>
+  <li>Kako ubacuješ PAPIRNE dokumente (račune u rukama)</li>
   <li>Sve situacije i šta da radiš</li>
   <li>Statusi faktura — šta koji znači</li>
   <li>Folderi: ulaz i za-proveru</li>
@@ -88,7 +89,30 @@ robot prestaje da priprema. Kad završiš dan, možeš ga zatvoriti (sutra opet 
 <div class="box ok"><b>To je ceo posao.</b> Robot je pročitao, predložio konto, proverio PDV i spremio.
 Ti si pregledala i potvrdila. Ništa više.</div>
 
-<h2>4. Sve situacije i šta da radiš</h2>
+<h2>4. Kako ubacuješ PAPIRNE dokumente (račune u rukama)</h2>
+<p>Papirni račun ne kucaš ručno — <b>fotografišeš ga</b>, a program ga sam pročita (OCR) i pusti
+kroz isti tok kao i digitalni. Tri načina, izaberi najbrži:</p>
+
+<h3>Način 1 — Fotka telefonom (najbrže, preporučeno)</h3>
+<div class="step"><span class="n">1</span>U programu otvori <b>QR kod klijenta</b> (štampa se po klijentu, jednom).</div>
+<div class="step"><span class="n">2</span>Skeniraj QR telefonom → otvori se stranica sa <b>kamerom</b>.</div>
+<div class="step"><span class="n">3</span><b>Fotografiši račun</b> → upload je automatski → OCR pročita dobavljača/iznos/PDV.</div>
+<div class="step"><span class="n">4</span>Dalje ide samo: predlog konta → „U obradi" → <span class="kbd">F11</span> (ili u <code>za-proveru</code> ako nije sigurno).</div>
+
+<h3>Način 2 — Skeniranje (kad imaš skener)</h3>
+<p>Skeniraš papir u <b>PDF ili JPG</b> i baciš fajl u folder <code>inbox</code> tog klijenta.
+Program (nadzor inbox-a) ga sam prepozna, pokrene OCR i obradi — ne moraš ništa više.</p>
+
+<h3>Način 3 — Bez papira (email / eFaktura)</h3>
+<p>Faktura stigne <b>emailom</b> ili kao <b>eFaktura (SEF)</b> → ulazi automatski, ti ne radiš ništa.</p>
+
+<div class="box info">
+<b>Šta se dešava posle OCR-a:</b> OCR izvuče dobavljača, iznos i PDV iz slike. Dalje je isti tok:
+robot predloži konto → visoka pouzdanost → „U obradi" → <span class="kbd">F11</span>; nesigurno ili
+sumljiv PDV → <code>E:\knjige\za-proveru\</code>. <b>Ti nikad ne kucaš brojeve sa papira ručno.</b>
+</div>
+
+<h2>5. Sve situacije i šta da radiš</h2>
 
 <h3>Situacija A — normalan tok (robot je siguran)</h3>
 <div class="box ok">Predlog konta je <b>pouzdan (≥ 0.92)</b>, PDV je standardan (20/10/0).
@@ -117,7 +141,7 @@ osveži pogled. Ako i dalje nema: proveri da li crni prozor još radi (poglavlje
 <div class="box info">Otvori <code>E:\knjige\za-proveru\</code> — tamo su sve sumnjive fakture koje čekaju tebe.
 One „U obradi" su u BizniSoftu. Broj proknjiženih vidiš u BizniSoftu kao i obično.</div>
 
-<h2>5. Statusi faktura — šta koji znači</h2>
+<h2>6. Statusi faktura — šta koji znači</h2>
 <table>
   <tr><th>Status</th><th>Šta znači</th><th>Ko ga postavlja</th></tr>
   <tr><td><code>Nova</code></td><td>faktura je stigla, ništa još urađeno</td><td>robot</td></tr>
@@ -127,7 +151,7 @@ One „U obradi" su u BizniSoftu. Broj proknjiženih vidiš u BizniSoftu kao i o
   <tr><td class="status s-proknjizeno"><code>uneto_u_biznisoft</code> / <code>plaćeno</code></td><td>proknjiženo / plaćeno — završeno</td><td>ti (F11) / program</td></tr>
 </table>
 
-<h2>6. Folderi: ulaz i za-proveru</h2>
+<h2>7. Folderi: ulaz i za-proveru</h2>
 <table>
   <tr><th>Folder</th><th>Šta je tu</th></tr>
   <tr><td><code>E:\knjige\ulaz\</code></td><td>spremni dokumenti koje robot čita</td></tr>
@@ -136,7 +160,7 @@ One „U obradi" su u BizniSoftu. Broj proknjiženih vidiš u BizniSoftu kao i o
 <p>U <code>za-proveru</code> svaki fajl je JSON: piše <b>zašto</b> je tu (npr. „confidence 0.60 &lt; 0.92" ili
 „PDV stopa 7% nije standardna") i <b>ceo sadržaj fakture</b> — da imaš sve na jednom mestu.</p>
 
-<h2>7. Kako robot uči od tebe</h2>
+<h2>8. Kako robot uči od tebe</h2>
 <p>Robot uči <b>iz tvojih knjiženja</b>, ni iz čega drugog.</p>
 <div class="box info">
 Kad istog <b>dobavljača + opis + približan iznos</b> proknjižiš <b>3 puta</b> na isto konto, robot to
@@ -146,7 +170,7 @@ Dok nema 3 ponavljanja, predlog je nesiguran i ide u <code>za-proveru</code> —
 <p>Što više knjižiš, robot postaje tačniji. Prvih nedelju-dve će više faktura ići na <code>za-proveru</code>;
 posle će sve više ići direktno u „U obradi". To je normalno i očekivano.</p>
 
-<h2>8. Ako nešto ne radi — brzi popravci</h2>
+<h2>9. Ako nešto ne radi — brzi popravci</h2>
 <table>
   <tr><th>Problem</th><th>Šta da uradiš</th></tr>
   <tr><td>Crni prozor se zatvorio</td><td>ponovo dvoklik <code>pokreni-roj.bat</code></td></tr>
