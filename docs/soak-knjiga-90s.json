@@ -1,0 +1,25 @@
+{
+  "ts": "2026-10-02T01:57:04.189Z",
+  "minutes": 1.5,
+  "rate": 5,
+  "submitted": 438,
+  "accepted": 437,
+  "rejected": 1,
+  "workerDone": 437,
+  "workerFailed": 0,
+  "lost": 0,
+  "p50ms": 0,
+  "p95ms": 0,
+  "p99ms": 0,
+  "maxMs": 1,
+  "shed": 0,
+  "rateLimited": 1,
+  "errors": [
+    "fetch failed"
+  ],
+  "criteria": {
+    "lostZero": true,
+    "rateLimitedZero": false,
+    "p95Under1s": true
+  }
+}

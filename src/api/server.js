@@ -49,6 +49,8 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
     rateLimitPerMin: Number(config?.rateLimitPerMin ?? env.NMQ_RATE_LIMIT_PER_MIN ?? API_DEFAULTS.rateLimitPerMin) || API_DEFAULTS.rateLimitPerMin,
     rateLimitPerKeyPerMin: Number(config?.rateLimitPerKeyPerMin ?? env.NMQ_RATE_LIMIT_PER_KEY_PER_MIN ?? API_DEFAULTS.rateLimitPerKeyPerMin) || API_DEFAULTS.rateLimitPerKeyPerMin,
   };
+  // eslint-disable-next-line no-console
+  console.log(`[api] rate limits: perMin=${cfg.rateLimitPerMin} perKeyPerMin=${cfg.rateLimitPerKeyPerMin} (env NMQ_RATE_LIMIT_PER_MIN=${env.NMQ_RATE_LIMIT_PER_MIN})`);
   const genomeRegistry = registry ?? createGenomeRegistry({ secret: env.NMQ_CLUSTER_SECRET ?? node.gossip?.settings?.secret ?? 'braincore-registry-secret', logger, metrics, audit });
   const issuer = keyIssuer ?? createKeyIssuer({ dataDir: cfg.dataDir ?? null, logger, metrics, audit });
   const feed = createLiveFeed({ node, config: cfg.feed ?? {}, logger, metrics });
@@ -396,9 +398,14 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         const instanceId = String(body.instanceId ?? '');
         const leaseMs = Number(body.leaseMs ?? 30000) || 30000;
         const now = Date.now();
-        const candidates = [...node.tasks.values()]
-          .filter((t) => t && t.id && (!types || types.includes(t.type)))
-          .filter((t) => !node.crdt.get(`result:${t.id}`) && node.crdt.get(`task:${t.id}`)?.state !== 'done')
+        // Skeniraj CRDT (kao roj), NE `node.tasks`: Map zadržava SVE taskove zauvijek, a GC briše
+        // `result:`/`task:` poslije `gcAgeMs` → inače bi worker ponovo uzimao završene taskove
+        // (mjereno: workerDone 120 805 za 13 635 prihvaćenih = ~9× ponovnog rada).
+        const candidates = node.crdt.entries()
+          .filter((e) => e.key.startsWith('task:'))
+          .map((e) => e.value)
+          .filter((t) => t && t.id && t.state !== 'done' && (!types || types.includes(t.type)))
+          .filter((t) => !node.crdt.get(`result:${t.id}`))
           .sort((a, b) => Number(a.createdAt ?? 0) - Number(b.createdAt ?? 0))
           .slice(0, 500);
         for (const t of candidates) {
@@ -408,10 +415,11 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
           if (existing && now - Number(existing.at ?? 0) < leaseMs) continue;
           const attempt = (Number(existing?.attempt ?? 0) || 0) + 1;
           node.crdt.set(claimKey, { nodeId: workerId, instanceId, at: now, leaseMs, attempt, external: true });
-          node.crdt.set(`task:${t.id}`, { ...(node.crdt.get(`task:${t.id}`) ?? {}), id: t.id, state: 'claimed', claimedBy: workerId, attempt });
+          node.crdt.set(`task:${t.id}`, { ...t, id: t.id, state: 'claimed', claimedBy: workerId, attempt });
+          const payload = node.tasks.get(t.id)?.payload ?? null;
           metrics?.inc('worker_claims_total', { type: String(t.type) });
           return send(200, {
-            task: { id: t.id, type: t.type, payload: t.payload ?? null, attempt },
+            task: { id: t.id, type: t.type, payload, attempt },
             claimedBy: workerId,
             leaseMs,
           });

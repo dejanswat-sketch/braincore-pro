@@ -1,0 +1,34 @@
+{
+  "ts": "2026-10-02T01:49:06.900Z",
+  "minutes": 60,
+  "rate": 5,
+  "submitted": 17556,
+  "accepted": 13635,
+  "rejected": 3921,
+  "workerDone": 120805,
+  "workerFailed": 0,
+  "lost": 0,
+  "p50ms": 0,
+  "p95ms": 0,
+  "p99ms": 0,
+  "maxMs": 1,
+  "shed": 0,
+  "rateLimited": 3921,
+  "errors": [
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}",
+    "429:{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"Previše zahtjeva; pokušaj ponovo za minut.\"}}"
+  ],
+  "criteria": {
+    "lostZero": true,
+    "rateLimitedZero": false,
+    "p95Under1s": true
+  }
+}
