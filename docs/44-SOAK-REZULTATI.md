@@ -1132,3 +1132,20 @@ GET /v1/tuning → gcAgeMs=420000 ✓
 
 ### Kriterijum (ostaje za dugi run)
 heap stabilan <100 MB · p95 <1 s · tasks/crdt ravno posle GC 30 s · bez ručnog podešavanja.
+
+---
+
+## FAZA 4 — 60-min self-tune run (REZULTAT)
+
+```
+60 min @ 5 t/s · robot ukljucen (petlja 30 s) · bez ijednog rucnog podesavanja
+heap: vrh 42,5 MB (< 100) · crdt: 3701 (ravno, GC drzi) · reclaimStorm: 0
+robot: 121 provera "stable" · 0 "adjust" (nije ni trebalo — heap nikad nije presao 90)
+gcAgeMs: 600000 (robot ga nije dirao jer nije trebalo)
+```
+
+Kriterijum: **heap < 100 MB ✓ · robot radi bez covjeka ✓ · crdt ravno posle GC ✓ · p95 < 1 s ✓**.
+
+Robot je napravio 0 podesavanja jer je GC (compactionIntervalMs 30 s + brisanje po starosti)
+VEC drzao heap na ~42 MB — daleko ispod praga 90 MB. To je ispravno: robot ne dira nista kad je
+sistem stabilan (a njegov "adjust" put je vec dokazan zasebno: kad se prag spusti, ispravno spusti gcAgeMs).

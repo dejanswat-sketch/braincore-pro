@@ -1,0 +1,450 @@
+{
+  "ts": "2026-10-02T07:07:52.972Z",
+  "minutes": 60,
+  "rate": 5,
+  "submitted": 17860,
+  "samples": 61,
+  "heapMinMb": 10.7,
+  "heapPeakMb": 89.5,
+  "heapUnder100": true,
+  "gcAgeMsStart": 600000,
+  "gcAgeMsEnd": 600000,
+  "gcAgeMsHistory": [
+    {
+      "min": 0,
+      "gcAgeMs": 600000,
+      "heap": 10.7,
+      "crdt": 0,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 1,
+      "gcAgeMs": 600000,
+      "heap": 14.6,
+      "crdt": 360,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 2,
+      "gcAgeMs": 600000,
+      "heap": 19.7,
+      "crdt": 720,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 3,
+      "gcAgeMs": 600000,
+      "heap": 23.6,
+      "crdt": 1080,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 4,
+      "gcAgeMs": 600000,
+      "heap": 19.9,
+      "crdt": 1440,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 5,
+      "gcAgeMs": 600000,
+      "heap": 22.9,
+      "crdt": 1800,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 6,
+      "gcAgeMs": 600000,
+      "heap": 28.2,
+      "crdt": 2160,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 7,
+      "gcAgeMs": 600000,
+      "heap": 27,
+      "crdt": 2520,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 8.1,
+      "gcAgeMs": 600000,
+      "heap": 24.5,
+      "crdt": 2880,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 9.1,
+      "gcAgeMs": 600000,
+      "heap": 46.7,
+      "crdt": 3240,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 10.1,
+      "gcAgeMs": 600000,
+      "heap": 39.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 11.1,
+      "gcAgeMs": 600000,
+      "heap": 23.2,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 12.1,
+      "gcAgeMs": 600000,
+      "heap": 26.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 13.1,
+      "gcAgeMs": 600000,
+      "heap": 29.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 14.1,
+      "gcAgeMs": 600000,
+      "heap": 22.2,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 15.1,
+      "gcAgeMs": 600000,
+      "heap": 24.8,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 16.1,
+      "gcAgeMs": 600000,
+      "heap": 29.6,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 17.1,
+      "gcAgeMs": 600000,
+      "heap": 32.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 18.1,
+      "gcAgeMs": 600000,
+      "heap": 32.2,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 19.1,
+      "gcAgeMs": 600000,
+      "heap": 33.8,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 20.1,
+      "gcAgeMs": 600000,
+      "heap": 41.4,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 21.2,
+      "gcAgeMs": 600000,
+      "heap": 48.5,
+      "crdt": 3533,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 22.2,
+      "gcAgeMs": 600000,
+      "heap": 47.1,
+      "crdt": 3538,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 23.2,
+      "gcAgeMs": 600000,
+      "heap": 31.6,
+      "crdt": 3550,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 24.2,
+      "gcAgeMs": 600000,
+      "heap": 41.4,
+      "crdt": 3553,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 25.2,
+      "gcAgeMs": 600000,
+      "heap": 40.8,
+      "crdt": 3565,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 26.2,
+      "gcAgeMs": 600000,
+      "heap": 28.4,
+      "crdt": 3566,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 27.2,
+      "gcAgeMs": 600000,
+      "heap": 28.5,
+      "crdt": 3570,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 28.2,
+      "gcAgeMs": 600000,
+      "heap": 30.8,
+      "crdt": 3578,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 29.2,
+      "gcAgeMs": 600000,
+      "heap": 27,
+      "crdt": 3587,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 30.2,
+      "gcAgeMs": 600000,
+      "heap": 32.3,
+      "crdt": 3595,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 31.2,
+      "gcAgeMs": 600000,
+      "heap": 31.1,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 32.2,
+      "gcAgeMs": 600000,
+      "heap": 38.7,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 33.3,
+      "gcAgeMs": 600000,
+      "heap": 34.8,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 34.3,
+      "gcAgeMs": 600000,
+      "heap": 32.9,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 35.3,
+      "gcAgeMs": 600000,
+      "heap": 45.9,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 36.3,
+      "gcAgeMs": 600000,
+      "heap": 35.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 37.3,
+      "gcAgeMs": 600000,
+      "heap": 39.5,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 38.3,
+      "gcAgeMs": 600000,
+      "heap": 44.9,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 39.3,
+      "gcAgeMs": 600000,
+      "heap": 56.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 40.3,
+      "gcAgeMs": 600000,
+      "heap": 57.5,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 41.3,
+      "gcAgeMs": 600000,
+      "heap": 43.2,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 42.3,
+      "gcAgeMs": 600000,
+      "heap": 50.6,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 43.3,
+      "gcAgeMs": 600000,
+      "heap": 47.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 44.3,
+      "gcAgeMs": 600000,
+      "heap": 49.4,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 45.3,
+      "gcAgeMs": 600000,
+      "heap": 59.9,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 46.4,
+      "gcAgeMs": 600000,
+      "heap": 48.9,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 47.4,
+      "gcAgeMs": 600000,
+      "heap": 45,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 48.4,
+      "gcAgeMs": 600000,
+      "heap": 44,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 49.4,
+      "gcAgeMs": 600000,
+      "heap": 89.5,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 50.4,
+      "gcAgeMs": 600000,
+      "heap": 84.1,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 51.4,
+      "gcAgeMs": 600000,
+      "heap": 80.9,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 52.4,
+      "gcAgeMs": 600000,
+      "heap": 76.2,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 53.4,
+      "gcAgeMs": 600000,
+      "heap": 74.4,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 54.4,
+      "gcAgeMs": 600000,
+      "heap": 71.6,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 55.4,
+      "gcAgeMs": 600000,
+      "heap": 52.3,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 56.4,
+      "gcAgeMs": 600000,
+      "heap": 78.8,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 57.4,
+      "gcAgeMs": 600000,
+      "heap": 39.1,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 58.5,
+      "gcAgeMs": 600000,
+      "heap": 39.7,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 59.5,
+      "gcAgeMs": 600000,
+      "heap": 41,
+      "crdt": 3600,
+      "reclaimStorm": 0
+    },
+    {
+      "min": 60.1,
+      "gcAgeMs": 600000,
+      "heap": 42.5,
+      "crdt": 3701,
+      "reclaimStorm": 0
+    }
+  ],
+  "crdtStart": 0,
+  "crdtEnd": 3701,
+  "robotAdjustments": 0,
+  "robotStable": 121,
+  "criteria": {
+    "heapUnder100": true,
+    "robotRan": true,
+    "crdtBounded": true
+  }
+}
