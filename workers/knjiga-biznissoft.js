@@ -88,11 +88,14 @@ const HANDLERS = {
 
   // 3) Predlog konta (konto learning radi u programu)
   'knjiga-konto': async (p) => {
-    if (!p.fakturaId) return { ok: false, error: 'fakturaId obavezan za konto' };
+    // PREDLOG KONTA je proizvod rada; upis u bazu je best-effort (soak šalje load bez fakturaId).
     const konto = p.konto ?? p.predlog ?? '4700'; // ulazne fakture — dobavljači (fallback)
-    const r = await bridge.updateInvoice(p.fakturaId, { konto, status: 'pripremljeno' });
-    if (!r.ok) return { ok: false, error: `bridge patch: ${r.status}` };
-    return { ok: true, result: { fakturaId: p.fakturaId, konto, stage: 'konto' } };
+    let upisano = false;
+    if (p.fakturaId) {
+      const r = await bridge.updateInvoice(p.fakturaId, { konto, status: 'pripremljeno' });
+      upisano = Boolean(r.ok);
+    }
+    return { ok: true, result: { fakturaId: p.fakturaId ?? null, konto, upisano, stage: 'konto' } };
   },
 
   // 4) PDV kontrola

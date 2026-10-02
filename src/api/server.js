@@ -346,6 +346,22 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         if (!admin || provided !== admin) return send(401, { error: { code: 'ADMIN_REQUIRED', message: 'Traži se BRAINCORE_ADMIN_KEY' } });
         return send(200, usageReport());
       }
+      // FAZA 2: admin izdavanje ključa (isti `issuer` kao Stripe tok) — za multi-tenant soak/ops.
+      if (req.method === 'POST' && url.pathname === '/v1/keys') {
+        const admin = env.BRAINCORE_ADMIN_KEY ?? null;
+        const provided = req.headers['x-api-key'] ?? (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');
+        if (!admin || provided !== admin) return send(401, { error: { code: 'ADMIN_REQUIRED', message: 'Traži se BRAINCORE_ADMIN_KEY' } });
+        const raw = await readBody(req);
+        let body = {};
+        try { body = raw ? JSON.parse(raw) : {}; } catch { return send(400, { error: { code: 'BAD_JSON', message: 'Tijelo nije JSON' } }); }
+        const issued = await issuer.issue({
+          tenantId: String(body.tenantId ?? 'nmq'),
+          email: body.email ?? null,
+          plan: String(body.plan ?? 'pro-999'),
+          stripeSessionId: String(body.stripeSessionId ?? `admin-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+        });
+        return send(201, { key: issued.key, record: { ...issued.record, key: undefined } });
+      }
       if (req.method === 'GET' && url.pathname === '/v1/keys') {
         const admin = env.BRAINCORE_ADMIN_KEY ?? null;
         const provided = req.headers['x-api-key'] ?? (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '');

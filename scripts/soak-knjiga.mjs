@@ -24,6 +24,8 @@ const RATE = Number(arg('rate', 5));
 const API = String(arg('api', 'http://127.0.0.1:8099')).replace(/\/$/, '');
 const OUT = arg('out', path.join(ROOT, 'docs', `soak-knjiga-${new Date().toISOString().replace(/[:.]/g, '-')}.json`));
 const PIDS = ['999888777', '100100100', '555666777'];
+const KEYS = String(process.env.NMQ_KEYS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+const TYPE = String(arg('type', process.env.NMQ_TASK_TYPE ?? 'knjiga-konto'));
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const j = async (u, o = {}) => {
@@ -67,12 +69,15 @@ const submit = async () => {
   const pib = PIDS[sent % PIDS.length];
   const n = sent + 1;
   const body = {
-    type: 'knjiga-ingest',
+    type: TYPE,
+    durable: true,
     payload: { pib, broj: `SOAK-${n}`, dobavljac: `Dobavljac ${n % 97}`, neto: 10000 + (n % 500), pdv: 2000, bruto: 12000 + (n % 500) },
   };
   sent += 1;
   try {
-    const r = await j(`${API}/task`, { method: 'POST', body: JSON.stringify(body) });
+    // B dio: round-robin preko 5 ključeva → svaki tenant ispod 2/s limita, ukupno 5/s
+    const key = KEYS.length ? KEYS[(sent - 1) % KEYS.length] : null;
+    const r = await j(`${API}/task`, { method: 'POST', headers: key ? { 'x-api-key': key } : {}, body: JSON.stringify(body) });
     if (r.ok) accepted += 1;
     else { rejected += 1; errors.push(`${r.status}:${JSON.stringify(r.body).slice(0, 120)}`); }
   } catch (e) { rejected += 1; errors.push(e.message); }

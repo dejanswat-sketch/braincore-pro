@@ -525,41 +525,55 @@ export { encryptPayload, decryptPayload, deriveKey } from './shared/crypto.js';
 const invokedPath = process.argv[1] ? fs.realpathSync(process.argv[1]) : null;
 const isMain = Boolean(invokedPath) && import.meta.url === pathToFileURL(invokedPath).href;
 const hasPortArg = process.argv.some((a) => a === '--port' || a.startsWith('--port='));
-if (isMain && hasPortArg) {
+// `NMQ_PORT`/`NMQ_API_PORT`/`NMQ_NODES` rade isto kao `--port`/`--api-port`/`--nodes`, pa se roj
+// može digni iz env-a bez ručnih argumenata (zamka: bez `--port` CLI blok se NE izvrši i proces izađe 0).
+const hasPortEnv = Boolean(process.env.NMQ_PORT);
+if (isMain && (hasPortArg || hasPortEnv)) {
   const arg = (name, fallback = null) => {
     const withEq = process.argv.find((a) => a.startsWith(`--${name}=`));
     if (withEq) return withEq.split('=').slice(1).join('=');
     const idx = process.argv.indexOf(`--${name}`);
     return idx >= 0 && process.argv[idx + 1] ? process.argv[idx + 1] : fallback;
   };
-  const nodePort = Number(arg('port', 8001));
-  const peers = String(arg('peers', '') || '').split(',').map((s) => s.trim()).filter(Boolean);
+  const nodesCount = Math.max(1, Number(arg('nodes', process.env.NMQ_NODES ?? 1)) || 1);
+  const nodePort = Number(arg('port', process.env.NMQ_PORT ?? 8001));
+  const explicitPeers = String(arg('peers', '') || '').split(',').map((s) => s.trim()).filter(Boolean);
   const secret = arg('secret', process.env.NMQ_CLUSTER_SECRET ?? 'genesis-local-dev-secret');
   const tenantId = arg('tenant', process.env.NMQ_DEFAULT_TENANT ?? 'nmq');
   const logLevel = arg('log', process.env.NMQ_LOG_LEVEL ?? 'info');
   const bootLogger = createLogger({ level: logLevel, service: `nmq-node-${nodePort}` });
-  const node = await createSwarmNode({
-    nodeId: arg('id', `node-${nodePort}`),
-    port: nodePort,
-    host: arg('host', '0.0.0.0'),
-    advertiseHost: arg('advertise', '127.0.0.1'),
-    peers,
-    secret,
-    tenantId,
-    logger: bootLogger,
-    runner: async (task) => ({ output: `node ${nodePort} obradio ${task.id}` }),
-  });
+  const host = arg('host', '0.0.0.0');
+  const advertiseHost = arg('advertise', '127.0.0.1');
+  const clusterPorts = nodesCount > 1 ? Array.from({ length: nodesCount }, (_, i) => nodePort + i) : [];
+  const swarm = [];
+  for (let i = 0; i < nodesCount; i += 1) {
+    const p = nodesCount > 1 ? clusterPorts[i] : nodePort;
+    const peers = nodesCount > 1 ? clusterPorts.filter((x) => x !== p).map((x) => `${advertiseHost}:${x}`) : explicitPeers;
+    swarm.push(await createSwarmNode({
+      nodeId: arg('id', `node-${p}`) + (nodesCount > 1 && i > 0 ? '' : ''),
+      port: p,
+      host,
+      advertiseHost,
+      peers,
+      secret,
+      tenantId,
+      logger: bootLogger,
+      runner: async (task) => ({ output: `node ${p} obradio ${task.id}` }),
+    }));
+  }
+  const node = swarm[0];
   const started = await node.start();
-  bootLogger.info('node.boot', { ...started, peers: peers.length });
-  // Ispis u formatu iz smernica: „SYNCED in 1.2s, 3 peers alive"
+  for (let i = 1; i < swarm.length; i += 1) await swarm[i].start();
+  bootLogger.info('node.boot', { ...started, peers: node.stats().peersAlive, nodes: swarm.length });
   const peersAlive = node.stats().peersAlive;
   const humanMs = (started.syncMs / 1000).toFixed(1);
   // eslint-disable-next-line no-console
-  console.log(`${started.synced ? 'SYNCED' : 'PARTIAL'} in ${humanMs}s, ${peersAlive + 1} nodes alive (udp :${started.port}, http :${started.httpPort}, tenant ${tenantId})`);
+  console.log(`${started.synced ? 'SYNCED' : 'PARTIAL'} in ${humanMs}s, ${peersAlive + 1} nodes alive (udp :${started.port}, http :${started.httpPort}, tenant ${tenantId}, nodes ${swarm.length})`);
+  const allNodes = swarm;
 
   // ── BRAINCORE PRO: javni API + live feed (api.braincore.pro / live.braincore.pro) ──
   // Pokreće se samo na jednom čvoru (nginx `api.` i `live.` pokazuju na njega).
-  const apiPort = arg('api-port', null);
+  const apiPort = arg('api-port', process.env.NMQ_API_PORT ?? null);
   let apiServer = null;
   if (apiPort) {
     const { createApiServer } = await import('./api/server.js');
@@ -576,7 +590,7 @@ if (isMain && hasPortArg) {
 
   const shutdown = async () => {
     if (apiServer) await apiServer.close().catch(() => {});
-    await node.close();
+    for (const n of allNodes) await n.close().catch(() => {});
     process.exit(0);
   };
   process.on('SIGINT', shutdown);
