@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="sr">
+<head>
+<meta charset="utf-8" />
+<title>Braincore Pro — Uputstvo za Maju</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1a2230; line-height: 1.55; font-size: 12.5px; }
+  h1 { font-size: 26px; color: #0f172a; margin: 0 0 4px 0; }
+  h2 { font-size: 18px; color: #7a3c0f; border-bottom: 2px solid #ffb43d; padding-bottom: 4px; margin: 26px 0 10px; page-break-after: avoid; }
+  h3 { font-size: 14px; color: #0f172a; margin: 16px 0 6px; }
+  p { margin: 6px 0; }
+  .subtitle { color: #64748b; font-size: 14px; margin-bottom: 18px; }
+  .box { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; margin: 12px 0; background: #f8fafc; }
+  .box.warn { border-color: #fca5a5; background: #fef2f2; }
+  .box.ok { border-color: #86efac; background: #f0fdf4; }
+  .box.info { border-color: #7dd3fc; background: #f0f9ff; }
+  .box b { color: #0f172a; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 1px solid #e2e8f0; padding: 7px 10px; text-align: left; font-size: 12px; }
+  th { background: #f1f5f9; color: #0f172a; }
+  code, .mono { font-family: Consolas, "Courier New", monospace; font-size: 11.5px; background: #f1f5f9; padding: 1px 5px; border-radius: 4px; }
+  .step { margin: 10px 0; padding-left: 26px; position: relative; }
+  .step .n { position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; background: #ffb43d; color: #1a2230; font-weight: bold; text-align: center; line-height: 20px; font-size: 12px; }
+  .toc { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 20px; }
+  .toc li { margin: 3px 0; }
+  .footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #e2e8f0; color: #94a3b8; font-size: 11px; }
+  .kbd { display: inline-block; border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 5px; padding: 1px 8px; background: #fff; font-weight: bold; }
+  .status { font-weight: bold; }
+  .s-ubradi { color: #b45309; }
+  .s-proknjizeno { color: #15803d; }
+</style>
+</head>
+<body>
+
+<h1>Braincore Pro — Uputstvo za Maju</h1>
+<p class="subtitle">Kako robot priprema ulazne kalkulacije, a ti ih samo potvrđuješ u BizniSoftu (F11).</p>
+
+<div class="box info">
+<b>Najvažnije u jednoj rečenici:</b> Ti i dalje radiš u BizniSoftu kao i do sada — robot umesto tebe
+pregleda fakturu, predloži konto, proveri PDV i spremi ulaznu kalkulaciju u status <b>„U obradi"</b>.
+Ti samo stisneš <span class="kbd">F11</span> i potvrdiš. Ništa novo ne učiš.
+</div>
+
+<div class="toc">
+<b>Sadržaj</b>
+<ol>
+  <li>Šta je Braincore Pro i šta radi za tebe</li>
+  <li>Pokretanje (jedan klik)</li>
+  <li>Svakodnevni rad — korak po korak</li>
+  <li>Sve situacije i šta da radiš</li>
+  <li>Statusi faktura — šta koji znači</li>
+  <li>Folderi: ulaz i za-proveru</li>
+  <li>Kako robot uči od tebe</li>
+  <li>Ako nešto ne radi — brzi popravci</li>
+</ol>
+</div>
+
+<h2>1. Šta je Braincore Pro i šta radi za tebe</h2>
+<p>Braincore Pro je <b>robniji pomoćnik</b> koji stoji između primljenih eFaktura i BizniSofta.
+On ne zamenjuje BizniSoft i ne zamenjuje tebe — on radi <b>pripremu</b> koja ti je do sada oduzimala vreme.</p>
+<table>
+  <tr><th>Robot radi sam</th><th>Ti (Maja) radiš</th></tr>
+  <tr><td>preuzme fakturu (iz eFakture/SEF-a/emaila)</td><td>otvoriš BizniSoft</td></tr>
+  <tr><td>pročita dobavljača, opis, iznos</td><td>vidiš „U obradi"</td></tr>
+  <tr><td>predloži konto (naučen od tvojih knjiženja)</td><td>pregledaš predlog</td></tr>
+  <tr><td>proveri PDV stopu (20/10/0)</td><td><span class="kbd">F11</span> — potvrdiš</td></tr>
+  <tr><td>spremi ulaznu kalkulaciju u „U obradi"</td><td>nastaviš dalje</td></tr>
+</table>
+<p><b>Pravilo bezbednosti:</b> robot <b>nikad ne knjiži sam</b> ono u šta nije siguran. Ako je predlog
+kontа nesiguran ili je PDV sumnjiv, on to <b>ne dira</b> i ostavlja tebi u folderu
+<code>E:\knjige\za-proveru\</code>. Ti odlučuješ ručno — kao i do sada.</p>
+
+<h2>2. Pokretanje (jedan klik)</h2>
+<div class="step"><span class="n">1</span>Na radnoj površini dvoklikni na <b><code>pokreni-roj.bat</code></b>.</div>
+<div class="step"><span class="n">2</span>Otvori se crni prozor (ne zatvaraj ga). U njemu piše da je roj pokrenut i da radnik prati taskove.</div>
+<div class="step"><span class="n">3</span>Otvori <b>BizniSoft</b> i radi normalno.</div>
+<div class="box warn"><b>Ne zatvaraj crni prozor</b> dok radiš — u njemu živi roj i radnik. Ako ga zatvoriš,
+robot prestaje da priprema. Kad završiš dan, možeš ga zatvoriti (sutra opet dvoklik).</div>
+
+<h2>3. Svakodnevni rad — korak po korak</h2>
+<div class="step"><span class="n">1</span><b>Pokreni roj</b> — dvoklik na <code>pokreni-roj.bat</code>.</div>
+<div class="step"><span class="n">2</span>U BizniSoftu otvori: <b>Upravljanje eFakturama → Kreiranje ulaznih kalkulacija na osnovu primljenih eFaktura</b>.</div>
+<div class="step"><span class="n">3</span>Vidiš listu stavki sa statusom <span class="status s-ubradi">„U obradi"</span> — to je robot pripremio.</div>
+<div class="step"><span class="n">4</span>Pregledaj predlog konta i PDV. Ako je sve u redu, označi i stisni <span class="kbd">F11</span>.</div>
+<div class="step"><span class="n">5</span>Stavka prelazi u <span class="status s-proknjizeno">„Proknjiženo"</span>. Gotovo.</div>
+<div class="box ok"><b>To je ceo posao.</b> Robot je pročitao, predložio konto, proverio PDV i spremio.
+Ti si pregledala i potvrdila. Ništa više.</div>
+
+<h2>4. Sve situacije i šta da radiš</h2>
+
+<h3>Situacija A — normalan tok (robot je siguran)</h3>
+<div class="box ok">Predlog konta je <b>pouzdan (≥ 0.92)</b>, PDV je standardan (20/10/0).
+→ Faktura se pojavi u BizniSoftu kao <b>„U obradi"</b>. Ti <span class="kbd">F11</span>.</div>
+
+<h3>Situacija B — robot NIJE siguran u konto</h3>
+<div class="box warn">Predlog konta je <b>ispod 0.92</b> (robot još nije naučio tog dobavljača).
+→ Robot <b>ne knjiži</b>. Faktura ide u <code>E:\knjige\za-proveru\</code>.
+Ti otvori taj fajl, vidiš predlog i <b>ručno knjižiš</b> u BizniSoftu kao i do sada.
+(Svaki put kad to uradiš, robot te uči — vidi poglavlje 7.)</div>
+
+<h3>Situacija C — sumnjiv PDV</h3>
+<div class="box warn">PDV stopa nije 20/10/0 (npr. 7% ili 12% ili greška u fakturi).
+→ Robot <b>ne knjiži</b>. Faktura ide u <code>E:\knjige\za-proveru\</code> sa objašnjenjem zašto.
+Ti proveriš fakturu i odlučiš ručno.</div>
+
+<h3>Situacija D — crni prozor se zatvorio / računar se restartovao</h3>
+<div class="box info">Ništa se nije izgubilo — roj i radnik su se ugasili, ali svi podaci su sačuvani.
+Samo <b>ponovo dvoklikni</b> <code>pokreni-roj.bat</code> i nastavi. (Radnik nastavi gde je stao.)</div>
+
+<h3>Situacija E — u BizniSoftu ne vidiš nove stavke</h3>
+<div class="box info">Moguće je da radnik još nije obradio (obično 1–2 sekunde). Sačekaj par sekundi i
+osveži pogled. Ako i dalje nema: proveri da li crni prozor još radi (poglavlje 8).</div>
+
+<h3>Situacija F — hoćeš da vidiš šta je robot uradio danas</h3>
+<div class="box info">Otvori <code>E:\knjige\za-proveru\</code> — tamo su sve sumnjive fakture koje čekaju tebe.
+One „U obradi" su u BizniSoftu. Broj proknjiženih vidiš u BizniSoftu kao i obično.</div>
+
+<h2>5. Statusi faktura — šta koji znači</h2>
+<table>
+  <tr><th>Status</th><th>Šta znači</th><th>Ko ga postavlja</th></tr>
+  <tr><td><code>Nova</code></td><td>faktura je stigla, ništa još urađeno</td><td>robot</td></tr>
+  <tr><td><code>pripremljeno</code></td><td>robot je predložio konto, čeka pregled</td><td>robot</td></tr>
+  <tr><td class="status s-ubradi"><code>spremno_za_biznisoft</code> (= „U obradi")</td><td>spremno za uvoz u BizniSoft, čeka tvoju potvrdu</td><td>robot</td></tr>
+  <tr><td><code>REVIZIONIRANO</code></td><td>izvezeno, čeka uvoz u BizniSoft</td><td>program</td></tr>
+  <tr><td class="status s-proknjizeno"><code>uneto_u_biznisoft</code> / <code>plaćeno</code></td><td>proknjiženo / plaćeno — završeno</td><td>ti (F11) / program</td></tr>
+</table>
+
+<h2>6. Folderi: ulaz i za-proveru</h2>
+<table>
+  <tr><th>Folder</th><th>Šta je tu</th></tr>
+  <tr><td><code>E:\knjige\ulaz\</code></td><td>spremni dokumenti koje robot čita</td></tr>
+  <tr><td><code>E:\knjige\za-proveru\</code></td><td><b>sumnjive fakture</b> — otvori i odluči ručno</td></tr>
+</table>
+<p>U <code>za-proveru</code> svaki fajl je JSON: piše <b>zašto</b> je tu (npr. „confidence 0.60 &lt; 0.92" ili
+„PDV stopa 7% nije standardna") i <b>ceo sadržaj fakture</b> — da imaš sve na jednom mestu.</p>
+
+<h2>7. Kako robot uči od tebe</h2>
+<p>Robot uči <b>iz tvojih knjiženja</b>, ni iz čega drugog.</p>
+<div class="box info">
+Kad istog <b>dobavljača + opis + približan iznos</b> proknjižiš <b>3 puta</b> na isto konto, robot to
+zapamti i ubuduće taj predlog daje sa <b>95% pouzdanosti</b> — i priprema sam („U obradi").
+Dok nema 3 ponavljanja, predlog je nesiguran i ide u <code>za-proveru</code> — to je namerno, da te ne bi preduhitrio.
+</div>
+<p>Što više knjižiš, robot postaje tačniji. Prvih nedelju-dve će više faktura ići na <code>za-proveru</code>;
+posle će sve više ići direktno u „U obradi". To je normalno i očekivano.</p>
+
+<h2>8. Ako nešto ne radi — brzi popravci</h2>
+<table>
+  <tr><th>Problem</th><th>Šta da uradiš</th></tr>
+  <tr><td>Crni prozor se zatvorio</td><td>ponovo dvoklik <code>pokreni-roj.bat</code></td></tr>
+  <tr><td>U BizniSoftu nema novih „U obradi"</td><td>sačekaj 2–3 sekunde; proveri da crni prozor radi; proveri <code>za-proveru</code> (možda je sve otišlo tamo jer je nesigurno)</td></tr>
+  <tr><td>Sve ide u <code>za-proveru</code></td><td>normalno na početku — robot još uči; knjiži ručno, posle 3× će ići samo</td></tr>
+  <tr><td>Računar se restartovao</td><td>dvoklik <code>pokreni-roj.bat</code>, ništa nije izgubljeno</td></tr>
+  <tr><td>Poruka „bridge nedostupan"</td><td>program Knjigovođa Pro nije pokrenut — pokreni ga (isti računar, port 5055)</td></tr>
+</table>
+
+<div class="box warn"><b>Važno (sigurnost):</b> robot <b>ne knjiži ništa sam</b> dok nije 95% siguran.
+Sve nesigurno čeka <b>tebe</b> u <code>za-proveru</code>. Ti si i dalje jedina koja knjiži — robot samo
+priprema. To je cela poenta.</div>
+
+<div class="footer">
+Braincore Pro · braincore.pro · Uputstvo za Maju · verzija 1.9.2 (robot + BizniSoft veza).
+Ovo uputstvo opisuje stvarno izmereno ponašanje: roj preskače <code>knjiga-*</code> taskove, radnik ih
+preuzima (17–33 ms), a predlog konta dolazi iz funkcije <code>predict_konto</code> (pouzdanost 0.60–0.95).
+</div>
+
+</body>
+</html>
