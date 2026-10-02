@@ -67,6 +67,9 @@ export const NODE_DEFAULTS = {
   compactionAgeMs: 600_000,
   /** GC cijelih task:/result:/claim: zapisa (ne samo tombstone-a) — 1h soak je pokazao da tabla raste vječno. */
   gcAgeMs: 600_000, // 10 min (7 min je pogorsao reclaim_storm 82->246 i dao lost=1, a heap NIJE smanjio)
+  // FAZA 2 — tipovi taskova koje izvršavaju SPOLJNI radnici (npr. `knjiga-` → Knjigovođa Pro).
+  // Prazno = zamrznuto ponašanje nepromijenjeno. Postavlja se env-om `NMQ_EXTERNAL_TYPES=knjiga-,ocr-`.
+  externalTypes: [],
   claimConfirmMs: 120, // koliko čekamo da vidimo da li je neko drugi preuzeo isti task
   taskTtlMs: 30_000,
   maxInFlight: 3,
@@ -94,6 +97,11 @@ export async function createSwarmNode({
   registry = null,
 } = {}) {
   const cfg = { ...NODE_DEFAULTS, ...(config ?? {}) };
+  // FAZA 2: spoljni radnici — `NMQ_EXTERNAL_TYPES=knjiga-,ocr-` (prazno = roj izvršava sve, kao do sada)
+  if (!(cfg.externalTypes ?? []).length) {
+    const fromEnv = String(config?.env?.NMQ_EXTERNAL_TYPES ?? globalThis.process?.env?.NMQ_EXTERNAL_TYPES ?? '').trim();
+    if (fromEnv) cfg.externalTypes = fromEnv.split(',').map((s) => s.trim()).filter(Boolean);
+  }
   // Claim verifikacija nikad kraća od 2× gossip intervala (inače trka u claim-u, dokazano chaos testom)
   const gossipInterval = Number(cfg.gossip?.intervalMs ?? 300);
   cfg.claimConfirmMs = Math.max(Number(cfg.claimConfirmMs ?? 0), cfg.minClaimConfirmMs, gossipInterval * 2);
@@ -204,8 +212,18 @@ export async function createSwarmNode({
    *   • inače: ako je istekao lease (ili je prošao kratki grace poslije claim-a) → task se vraća u igru
    * Bez ovoga task koji je držao ubijeni čvor ostaje zauvijek „preuzet" (dokazano chaos testom: 5 izgubljenih).
    */
-  function isClaimLive(claim) {
-    if (!claim) return false;
+  /**
+   * FAZA 2 — da li tip taska izvršava SPOLJNI radnik (npr. `knjiga-ingest` → Knjigovođa Pro).
+   * Prazna lista (`externalTypes: []`) znači da roj izvršava sve kao i do sada — zamrznuto ponašanje.
+   */
+  function isExternalType(type) {
+    const list = cfg.externalTypes ?? [];
+    if (!list.length || !type) return false;
+    const t = String(type);
+    return list.some((p) => (String(p).endsWith('-') ? t.startsWith(String(p)) : t === String(p)));
+  }
+
+  function isClaimLive(claim) {    if (!claim) return false;
     const age = Date.now() - Number(claim.at ?? 0);
     // FENCING: claim je „naš" samo ako se poklapa i nodeId I instanceId tekućeg procesa. Poslije restarta
     // novi proces ima novi instanceId, pa su svi stari claim-ovi TUĐI — inače bi ih naslijedio i izvršio
@@ -687,6 +705,10 @@ export async function createSwarmNode({
       .filter((e) => e.key.startsWith('task:'))
       .map((e) => e.value)
       .filter((t) => t && t.state !== 'done' && !inFlight.has(t.id))
+      // FAZA 2 — SPOLJNI RADNICI: ove tipove NE izvršava roj; čekaju spoljnog radnika
+      // (npr. `knjiga-*` → Knjigovođa Pro preko `/v1/worker/claim`). Podrazumijevano PRAZNO,
+      // pa je ponašanje zamrznute baze nepromijenjeno dok se ne uključi `externalTypes`.
+      .filter((t) => !isExternalType(t.type))
       .filter((t) => !crdt.get("result:" + t.id)) // vec ima rezultat (i ako state nije stigao) -> ne izvrsavaj ponovo
       .filter((t) => !isClaimLive(crdt.get(`claim:${t.id}`)))
       .sort((a, b) => (b.value ?? 1) - (a.value ?? 1) || String(a.createdAt).localeCompare(String(b.createdAt)));
