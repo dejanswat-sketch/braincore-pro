@@ -42,7 +42,13 @@ export const API_DEFAULTS = {
 
 export async function createApiServer({ node, registry = null, keyIssuer = null, config = {}, logger, metrics, audit, env = process.env } = {}) {
   if (!node) throw new Error('createApiServer traži swarm node');
-  const cfg = { ...API_DEFAULTS, ...(config ?? {}) };
+  const cfg = {
+    ...API_DEFAULTS,
+    ...(config ?? {}),
+    // OBA limita su podesiva env-om (za load-test): globalni (zaštita mašine) i po-ključu (tenancy).
+    rateLimitPerMin: Number(config?.rateLimitPerMin ?? env.NMQ_RATE_LIMIT_PER_MIN ?? API_DEFAULTS.rateLimitPerMin) || API_DEFAULTS.rateLimitPerMin,
+    rateLimitPerKeyPerMin: Number(config?.rateLimitPerKeyPerMin ?? env.NMQ_RATE_LIMIT_PER_KEY_PER_MIN ?? API_DEFAULTS.rateLimitPerKeyPerMin) || API_DEFAULTS.rateLimitPerKeyPerMin,
+  };
   const genomeRegistry = registry ?? createGenomeRegistry({ secret: env.NMQ_CLUSTER_SECRET ?? node.gossip?.settings?.secret ?? 'braincore-registry-secret', logger, metrics, audit });
   const issuer = keyIssuer ?? createKeyIssuer({ dataDir: cfg.dataDir ?? null, logger, metrics, audit });
   const feed = createLiveFeed({ node, config: cfg.feed ?? {}, logger, metrics });
@@ -153,7 +159,9 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
     };
 
     if (req.method === 'OPTIONS') return send(204, '');
-    if (!allowRate()) return send(429, { error: { code: 'RATE_LIMITED', message: 'Previše zahtjeva; pokušaj ponovo za minut.' } });
+    // Globalni limit čuva JAVNI API; unutrašnji worker claim/done (localhost) NE troši taj budžet —
+    // inače worker-ov polling (40/s) bi pojeo svih 240/min i ugušio taskove (mjereno: 84/146 odbijeno).
+    if (!url.pathname.startsWith('/v1/worker/') && !allowRate()) return send(429, { error: { code: 'RATE_LIMITED', message: 'Previše zahtjeva; pokušaj ponovo za minut.' } });
 
     try {
       if (req.method === 'GET' && (url.pathname === '/health' || url.pathname === '/')) {
@@ -376,28 +384,37 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         return send(200, { revoked: await issuer.revoke(id, { by: 'admin' }) });
       }
       // ── FAZA 2: spoljni radnici (npr. knjiga-biznissoft) ────────────────────
-      // ADITIVNO: koristi POSTOJEĆE node mehanizme (`tryClaim`, CRDT `result:`), ne mijenja logiku roja.
+      // DIREKTAN claim (bez `tryClaim`): worker nije čvor roja, pa mu ne treba 600 ms confirm
+      // prozor ni LWW trka. Roj ove tipove IONAKO preskače (`externalTypes`), pa je dovoljan
+      // jednostavan lease + fencing `attempt` (isti garant kao i roj: bez duplog istog attempt-a).
       if (req.method === 'POST' && url.pathname === '/v1/worker/claim') {
         const raw = await readBody(req);
         let body = {};
         try { body = raw ? JSON.parse(raw) : {}; } catch { return send(400, { error: { code: 'BAD_JSON', message: 'Tijelo nije JSON' } }); }
         const types = Array.isArray(body.types) && body.types.length ? body.types.map(String) : null;
         const workerId = String(body.workerId ?? 'worker');
+        const instanceId = String(body.instanceId ?? '');
+        const leaseMs = Number(body.leaseMs ?? 30000) || 30000;
+        const now = Date.now();
         const candidates = [...node.tasks.values()]
           .filter((t) => t && t.id && (!types || types.includes(t.type)))
           .filter((t) => !node.crdt.get(`result:${t.id}`) && node.crdt.get(`task:${t.id}`)?.state !== 'done')
           .sort((a, b) => Number(a.createdAt ?? 0) - Number(b.createdAt ?? 0))
-          .slice(0, 25);
+          .slice(0, 500);
         for (const t of candidates) {
-          const c = await node.tryClaim({ ...t, claimedBy: workerId });
-          if (c?.claimed) {
-            metrics?.inc('worker_claims_total', { type: String(t.type) });
-            return send(200, {
-              task: { id: t.id, type: t.type, payload: t.payload ?? null, attempt: c.attempt ?? node.crdt.get(`claim:${t.id}`)?.attempt ?? 1 },
-              claimedBy: workerId,
-              leaseMs: Number(body.leaseMs ?? 30000),
-            });
-          }
+          const claimKey = `claim:${t.id}`;
+          const existing = node.crdt.get(claimKey);
+          // preskoči task koji već drži ŽIV lease (nije istekao) — nećemo raditi dupli posao
+          if (existing && now - Number(existing.at ?? 0) < leaseMs) continue;
+          const attempt = (Number(existing?.attempt ?? 0) || 0) + 1;
+          node.crdt.set(claimKey, { nodeId: workerId, instanceId, at: now, leaseMs, attempt, external: true });
+          node.crdt.set(`task:${t.id}`, { ...(node.crdt.get(`task:${t.id}`) ?? {}), id: t.id, state: 'claimed', claimedBy: workerId, attempt });
+          metrics?.inc('worker_claims_total', { type: String(t.type) });
+          return send(200, {
+            task: { id: t.id, type: t.type, payload: t.payload ?? null, attempt },
+            claimedBy: workerId,
+            leaseMs,
+          });
         }
         return send(204, null);
       }
@@ -415,6 +432,7 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         };
         node.crdt.set(`result:${taskId}`, { ...record, state: 'done', doneBy: workerId });
         node.crdt.set(`task:${taskId}`, { ...(node.crdt.get(`task:${taskId}`) ?? {}), id: taskId, state: 'done', doneBy: workerId });
+        node.crdt.delete(`claim:${taskId}`); // oslobodi lease odmah, ne čekaj istek
         node.done.push(record);
         if (node.done.length > 2000) node.done.splice(0, node.done.length - 2000);
         metrics?.inc(ok ? 'worker_tasks_done_total' : 'worker_tasks_failed_total', { worker: workerId });

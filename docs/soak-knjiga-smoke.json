@@ -1,14 +1,13 @@
 {
-  "ts": "2026-10-02T00:18:34.269Z",
-  "minutes": 0.4,
+  "ts": "2026-10-02T00:48:17.460Z",
+  "minutes": 0.5,
   "rate": 5,
-  "submitted": 116,
-  "accepted": 116,
+  "submitted": 146,
+  "accepted": 146,
   "rejected": 0,
-  "workerDone": 3,
+  "workerDone": 146,
   "workerFailed": 0,
-  "resultsInSwarm": 3,
-  "lost": 113,
+  "lost": 0,
   "p50ms": 0,
   "p95ms": 0,
   "p99ms": 0,
@@ -17,7 +16,8 @@
   "rateLimited": 0,
   "errors": [],
   "criteria": {
-    "lostZero": false,
+    "lostZero": true,
+    "rateLimitedZero": true,
     "p95Under1s": true
   }
 }

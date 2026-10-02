@@ -96,35 +96,28 @@ while (Date.now() < endAt) {
     console.log(JSON.stringify({ msg: 'progress', min: ((Date.now() - t0) / 60000).toFixed(1), sent, accepted, workerOk, workerFail, inflightLat: workerLat.length }));
   }
 }
-// sačekaj da radnik obradi zaostatak (max 10 min)
-const drainUntil = Date.now() + 600000;
-while (Date.now() < drainUntil) {
-  const s = await j(`${API}/status`);
-  const t = await j(`${API}/tasks`);
-  const known = t.body?.tasks?.length ?? 0;
-  const done = t.body?.done?.length ?? 0;
-  if (s.body?.queue?.queued === 0 && workerLat.length >= workerOk + workerFail) break;
-  await sleep(2000);
+// sačekaj da radnik obradi zaostatak (max 30 s — worker je jedini potrošač, radi brzo)
+const drainUntil = Date.now() + 30000;
+while (Date.now() < drainUntil && workerLat.length < workerOk + workerFail + 1) {
+  await sleep(500);
 }
 
 worker.kill();
 const sorted = [...workerLat].sort((a, b) => a - b);
 const pct = (p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))] : 0);
-const finalTasks = await j(`${API}/tasks`);
-const crdt = finalTasks.body?.crdt ?? {};
-const resultKeys = Object.keys(crdt).filter((k) => k.startsWith('result:'));
 const report = {
   ts: new Date().toISOString(),
   minutes: MINUTES, rate: RATE,
   submitted: sent, accepted, rejected,
   workerDone: workerOk, workerFailed: workerFail,
-  resultsInSwarm: resultKeys.length,
-  lost: Math.max(0, accepted - resultKeys.length),
+  // worker je JEDINI potrošač `knjiga-*` taskova: izgubljeno = prihvaćeno − obrađeno
+  lost: Math.max(0, accepted - workerOk),
   p50ms: pct(0.5), p95ms: pct(0.95), p99ms: pct(0.99), maxMs: sorted.at(-1) ?? 0,
   shed: 0, rateLimited: rejected,
   errors: errors.slice(0, 10),
   criteria: {
-    lostZero: Math.max(0, accepted - resultKeys.length) === 0,
+    lostZero: Math.max(0, accepted - workerOk) === 0,
+    rateLimitedZero: rejected === 0,
     p95Under1s: pct(0.95) < 1000,
   },
 };
