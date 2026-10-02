@@ -446,6 +446,18 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         metrics?.inc(ok ? 'worker_tasks_done_total' : 'worker_tasks_failed_total', { worker: workerId });
         return send(200, { recorded: true, taskId, ok });
       }
+      // ── FAZA 4: self-tune — robot čita i podešava knobe u runtime-u ─────────
+      if (req.method === 'GET' && url.pathname === '/v1/tuning') {
+        return send(200, { tuning: node.getTuning?.() ?? null });
+      }
+      if (req.method === 'POST' && url.pathname === '/v1/tuning') {
+        const raw = await readBody(req);
+        let body = {};
+        try { body = raw ? JSON.parse(raw) : {}; } catch { return send(400, { error: { code: 'BAD_JSON', message: 'Tijelo nije JSON' } }); }
+        const r = node.setTuning?.({ gcAgeMs: body.gcAgeMs, compactionIntervalMs: body.compactionIntervalMs, claimLeaseMs: body.claimLeaseMs }) ?? null;
+        metrics?.inc('self_tune_adjust_total', {});
+        return send(200, r);
+      }
       if (req.method === 'GET' && (url.pathname === '/live' || url.pathname === '/live/')) {
         const html = await readFile(path.join(HERE, 'live.html'), 'utf8');
         return send(200, html, { 'content-type': 'text/html; charset=utf-8' });

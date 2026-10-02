@@ -134,6 +134,7 @@ export async function createSwarmNode({
   const claimEvents = new Map(); // taskId -> [događaji] — samo za NEDOVRŠENE zadatke
   const executing = new Set(); // taskovi koje OVAJ cvor TRENUTNO izvrsava (guard; inFlight drzi tryClaim)
   const reclaimCount = new Map(); // taskId -> koliko je puta OVAJ cvor preuzeo (za dijagnostiku storm-a)
+  let reclaimStormCount = 0; // FAZA 4 — broj `reclaim_storm` događaja (signal za self-tune robota)
   const claimSetByAttempt = new Map(); // taskId -> Map(attempt -> Set(nodeId)) — dokaz dvostrukog claim-a
   const myClaimAt = new Map(); // taskId -> kada je OVAJ cvor upisao svoj claim (za mjerenje gossip kruga)
   const attemptFloor = new Map(); // taskId -> najvisi attempt koji je OVAJ cvor koristio (monotoni token)
@@ -485,6 +486,7 @@ export async function createSwarmNode({
       const reclaims = (reclaimCount.get(task.id) ?? 0) + 1;
       reclaimCount.set(task.id, reclaims);
       if (reclaims >= 5) {
+        reclaimStormCount += 1;
         const ageMs = existing ? Date.now() - Number(existing.at ?? 0) : null;
         logger?.warn?.('node.reclaim_storm', {
           taskId: task.id, reclaims, attempt, nodeId: id, instanceId,
@@ -727,6 +729,7 @@ export async function createSwarmNode({
   }
 
   let loopRefs = null;
+  let compactTickRef = null; // FAZA 4 — referenca na compactTick da ga setTuning može restartovati
   function startLoops() {
     const claimTimer = setInterval(() => {
       tick().catch((err) => logger?.warn?.('node.tick_failed', { error: err.message }));
@@ -735,7 +738,7 @@ export async function createSwarmNode({
     const queueTimer = setInterval(() => queue.requeueStale().catch(() => {}), Math.max(1000, cfg.taskTtlMs));
     if (queueTimer.unref) queueTimer.unref();
     // Kompakcija CRDT-a: uklanja tombstone-e starije od `compactionAgeMs` (tabla ne raste u nedogled)
-    const compactTimer = setInterval(() => {
+    function compactTick() {
       try {
         crdt.compact({ olderThanMs: cfg.compactionAgeMs });
         // GC: briše završene/zapuštene task:/result:/claim: zapise starije od gcAgeMs,
@@ -787,7 +790,9 @@ export async function createSwarmNode({
           if (done.length > DONE_MAX) done.splice(0, done.length - DONE_MAX);
         }        logger?.warn?.('node.compact_failed', { error: err.message });
       }
-    }, cfg.compactionIntervalMs);
+    }
+    const compactTimer = setInterval(compactTick, cfg.compactionIntervalMs);
+    compactTickRef = compactTick;
     if (compactTimer.unref) compactTimer.unref();
     pheromone.startDecay();
     loopRefs = { claimTimer, queueTimer, compactTimer };
@@ -1003,6 +1008,44 @@ export async function createSwarmNode({
         derivedTotalMs: derived.graceMs + derived.confirmMs,
         explicit: { grace: explicitGrace, confirm: explicitConfirm },
       };
+    },
+
+    /**
+     * FAZA 4 — self-tune: čitanje i RUNTIME podešavanje knoba koje smo ručno namještali #7→#16.
+     * Robot čita ovo svakih 30 s i pomjera `gcAgeMs`/`compactionIntervalMs`/`claimLeaseMs` po mjerenju
+     * (heap, reclaim_storm, p95) — umjesto čovjeka. Sigurnosne granice su DOKAZANE mjerenjem
+     * (7 min je pogoršalo storm 82→246; lease nikad ispod 3 s).
+     */
+    getTuning: () => ({
+      gcAgeMs: cfg.gcAgeMs,
+      compactionIntervalMs: cfg.compactionIntervalMs,
+      claimLeaseMs: cfg.claimLeaseMs,
+      heapUsedMb: Number((process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1)),
+      rssMb: Number((process.memoryUsage().rss / 1024 / 1024).toFixed(1)),
+      crdtEntries: crdt.size,
+      tasks: tasks.size,
+      reclaimCount: reclaimCount.size,
+      reclaimStormCount,
+      queueDepth: queue.stats?.()?.queued ?? null,
+    }),
+
+    setTuning: ({ gcAgeMs, compactionIntervalMs, claimLeaseMs } = {}) => {
+      const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, Number(v)));
+      const before = { gcAgeMs: cfg.gcAgeMs, compactionIntervalMs: cfg.compactionIntervalMs, claimLeaseMs: cfg.claimLeaseMs };
+      if (gcAgeMs != null) cfg.gcAgeMs = clamp(gcAgeMs, 5 * 60_000, 30 * 60_000);
+      if (claimLeaseMs != null) cfg.claimLeaseMs = clamp(claimLeaseMs, 3_000, 60_000);
+      if (compactionIntervalMs != null) {
+        cfg.compactionIntervalMs = clamp(compactionIntervalMs, 5_000, 300_000);
+        // `setInterval` je zakucan pri startu — restartuj tajmer kad se interval promijeni
+        if (loopRefs?.compactTimer && compactTickRef) {
+          clearInterval(loopRefs.compactTimer);
+          loopRefs.compactTimer = setInterval(compactTickRef, cfg.compactionIntervalMs);
+          if (loopRefs.compactTimer.unref) loopRefs.compactTimer.unref();
+        }
+      }
+      const after = { gcAgeMs: cfg.gcAgeMs, compactionIntervalMs: cfg.compactionIntervalMs, claimLeaseMs: cfg.claimLeaseMs };
+      logger?.info?.('node.self_tune', { before, after, heapUsedMb: after.heapUsedMb });
+      return { before, after };
     },
 
     /** Zatvaranje čvora MORA zaustaviti sve njegove petlje.

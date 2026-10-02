@@ -1104,3 +1104,31 @@ POST /task (knjiga-*, durable) → roj PRESKOČI (externalTypes) → /v1/worker/
 → Knjigovođa Pro bridge (5055) → /v1/worker/done (result: + claim: brisanje)
 ```
 `NMQ_EXTERNAL_TYPES=knjiga-` u env-u; `--nodes 3` diže roj u jednom procesu bez ručnih argumenata.
+
+---
+
+## FAZA 4 — self-tune robot (workers/self-tune.mjs)
+
+Čita `/v1/tuning` svakih 30 s i SAM pomjera `gcAgeMs`/`compactionIntervalMs`/`claimLeaseMs`
+— ono što smo ručno radili #7→#16 (110,5 → 99,6 MB heap). Sigurnosne granice su U NODE-U
+(`setTuning` klampuje): gcAgeMs [5 min, 30 min], compactionIntervalMs [5 s, 5 min], lease [3 s, 60 s].
+
+### Pravila (iz mjerenja, ne pogađanja)
+| Signal | Akcija |
+|---|---|
+| heap > 90 MB | GC kasni → smanji gcAgeMs (×0.7) + compactionIntervalMs (×0.5) |
+| reclaim_storm raste | gcAgeMs pretijesan → povećaj gcAgeMs (×1.25) |
+| heap < 50 MB + storm miran | relaksiraj ka 10 min (×1.15) |
+| queueDepth > 1000 | duži lease (×2) |
+
+### Dokazano (test)
+```
+GET /v1/tuning → {gcAgeMs:600000, heap:16.1, reclaimStorm:0, ...}
+robot ONCE (TUNE_HEAP_HIGH=10) → "adjust" heap 16.1 > 10
+  wanted {gcAgeMs:420000, compactionIntervalMs:15000}
+  applied {gcAgeMs:420000, compactionIntervalMs:15000}
+GET /v1/tuning → gcAgeMs=420000 ✓
+```
+
+### Kriterijum (ostaje za dugi run)
+heap stabilan <100 MB · p95 <1 s · tasks/crdt ravno posle GC 30 s · bez ručnog podešavanja.
