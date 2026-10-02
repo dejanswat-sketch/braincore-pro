@@ -1077,3 +1077,30 @@ Ovo je PRVI run u kojem je svih sest zeleno u jednom satu, poslije zatvaranja sv
 restart-token (`attempt` u `task:` pri claim-u), reclaim-storm (`withdrawOwnClaim`), i cross-node trka
 (`attemptFloor` + `executing` guard). Heap je zatvoren tek kad je `[mem-by-structure]` pokazao da memoriju
 drze `tasks` Map + dijagnosticke mape (ne CRDT), pa je popravljen interval GC-a na 30 s i brisanje po starosti.
+
+---
+
+## FAZA 2 — knjiga-biznissoft (BizniSoft worker), soak 60 min @ 5 faktura/s
+
+### Rezultat (jedini run poslije svih popravki)
+```
+submitted 17 484 · accepted 17 484 · rejected 0 · lost 0 · shed 0
+workerDone 17 484 (= accepted → NEMA ponovnog preuzimanja) · p95 ~1 ms (konto) / 17 ms (ingest preko bridge-a)
+duplicateSameAttempt = 0 · rate-limited = 0
+```
+
+### Dokaz za video
+> jedan ključ 2/s limit · pet ključeva 10/s kapacitet · 5 faktura/s · 17 484 taskova · 0 izgubljenih · 0 duplih istog attempt-a · 0 odbijenih.
+
+### Popravke (redom, sve mjerene)
+1. `/v1/worker/claim` ne koristi `tryClaim` (600 ms confirm + LWW) nego DIREKTAN lease + fencing `attempt` → 15 s → 1 ms.
+2. `/v1/worker/*` izuzet iz globalnog rate limita (worker polling 40/s je jeo 240/min i gušio taskove).
+3. claim skenira CRDT (`task:`), NE `node.tasks` Map (koji drži sve zauvijek) → bez ponovnog rada poslije GC.
+4. Rate limiti podesivi env-om (`NMQ_RATE_LIMIT_PER_MIN`/`_PER_KEY_PER_MIN`); global 240→600 za 5/s.
+
+### Nova arhitektura
+```
+POST /task (knjiga-*, durable) → roj PRESKOČI (externalTypes) → /v1/worker/claim (direktan lease)
+→ Knjigovođa Pro bridge (5055) → /v1/worker/done (result: + claim: brisanje)
+```
+`NMQ_EXTERNAL_TYPES=knjiga-` u env-u; `--nodes 3` diže roj u jednom procesu bez ručnih argumenata.
