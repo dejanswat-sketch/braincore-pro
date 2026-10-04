@@ -185,19 +185,24 @@ async function bootApi({ config = {}, registry = null, env = {} } = {}) {
   return { node, api, base };
 }
 
-test('API: health/status/metrics/live stranica + task bez ključa (demo tenant)', async () => {
-  const { node, api, base } = await bootApi();
+test('API: health/metrics/live javno, /status traži ključ, task sa localhosta bez ključa', async () => {
+  const ADMIN = 'test-admin-key-1234567890';
+  const { node, api, base } = await bootApi({ env: { BRAINCORE_ADMIN_KEY: ADMIN } });
   try {
     const health = await (await fetch(`${base}/health`)).json();
     assert.equal(health.ok, true);
     assert.equal(health.service, 'braincore-pro-api');
     assert.equal(health.npmDependencies, 0);
 
-    const status = await (await fetch(`${base}/status`)).json();
+    // BEZBJEDNOST: /status više nije javan (izdavao je članove roja i opterećenje)
+    const statusNoKey = await fetch(`${base}/status`);
+    assert.equal(statusNoKey.status, 401, 'status bez ključa → 401');
+    const status = await (await fetch(`${base}/status`, { headers: { 'x-api-key': ADMIN } })).json();
     assert.equal(status.nodeId, node.nodeId);
     assert.equal(status.peersAlive, 0);
     assert.ok(Array.isArray(status.alive));
 
+    // /metrics ostaje dostupan lokalnim alatima (Prometheus scrape sa iste mašine)
     const metrics = await (await fetch(`${base}/metrics`)).json();
     assert.equal(metrics.tasksDone, 0);
     assert.equal(metrics.liveClients, 0);
@@ -335,8 +340,9 @@ test('Live feed: snapshot sadrži čvorove, feromone koji opadaju i rezultate', 
 // ─────────────────────────── Genome Registry ───────────────────────────
 
 test('Genome Registry preko API-ja: prima samo metrike, vraća top-10% genom', async () => {
+  const ADMIN = 'test-admin-key-1234567890';
   const registry = createGenomeRegistry({ secret: SECRET, config: { minSamples: 2, topPercent: 10 } });
-  const { node, api, base } = await bootApi({ registry });
+  const { node, api, base } = await bootApi({ registry, env: { BRAINCORE_ADMIN_KEY: ADMIN } });
   const edge = createFederationClient({ nodeId: 'edge-1', secret: SECRET, registry });
   try {
     const report = edge.buildReport({ fitness: 0.9, tasksDone: 10, pheromoneEfficiency: 0.8, genomeId: 'g-1' });
@@ -369,7 +375,10 @@ test('Genome Registry preko API-ja: prima samo metrike, vraća top-10% genom', a
     assert.equal(best.update.blob.systemPrompt, 'Bolji prompt');
     assert.ok(best.update.samples >= 2);
 
-    const stats = await (await fetch(`${base}/v1/registry/stats`)).json();
+    // BEZBJEDNOST: /v1/registry/stats traži ključ
+    const statsNoKey = await fetch(`${base}/v1/registry/stats`);
+    assert.equal(statsNoKey.status, 401, 'registry/stats bez ključa → 401');
+    const stats = await (await fetch(`${base}/v1/registry/stats`, { headers: { 'x-api-key': ADMIN } })).json();
     assert.equal(stats.stats[0].genomeId, 'g-1');
   } finally {
     await api.close();

@@ -21,6 +21,7 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { attachWebSocket } from '../live/ws.js';
@@ -161,6 +162,55 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
     };
 
     if (req.method === 'OPTIONS') return send(204, '');
+
+    // ── BEZBJEDNOST: ko smije da vidi interne podatke ────────────────────────
+    // Važeći ključ = admin ključ (BRAINCORE_ADMIN_KEY) ili izdati tenant ključ (issuer,
+    // isti onaj koji se izdaje posle plaćanja). Bez ključa: 401.
+    // Loopback (Prometheus, lokalni alati) je izuzet samo za /metrics?format=prom.
+    const isLoopback = () => {
+      const a = req.socket?.remoteAddress ?? '';
+      const direct = (a === '127.0.0.1' || a === '::1' || a === '::ffff:127.0.0.1');
+      if (!direct) return false;
+      // ⚠️ nginx (api.braincore.pro) takođe proxira SA 127.0.0.1 — ako zahtjev nosi
+      // X-Real-IP / X-Forwarded-For, to je spoljni posjetilac, ne lokalni alat.
+      const fwd = req.headers['x-real-ip'] ?? req.headers['x-forwarded-for'] ?? '';
+      return !fwd;
+    };
+    const providedKey = () => req.headers['x-api-key'] ?? (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') ?? '';
+    // Ručno izdati tenant ključevi (CLI: `node src/cli.js keys <tenantId> [role]`) žive u
+    // config/tenants.json — isti hash kao u src/tenancy/store.js: sha256(pepper + ':' + key).
+    const tenantsFile = path.join(HERE, '..', '..', 'config', 'tenants.json');
+    let _tc = { mtime: 0, data: null };
+    const loadTenants = () => {
+      try {
+        const st = fs.statSync(tenantsFile);
+        if (st.mtimeMs !== _tc.mtime) _tc = { mtime: st.mtimeMs, data: JSON.parse(fs.readFileSync(tenantsFile, 'utf8')) };
+      } catch { }
+      return _tc.data;
+    };
+    const hashKey = (key) => createHash('sha256').update(`${env.NMQ_API_KEY_PEPPER ?? 'nmq-robot'}:${key}`).digest('hex');
+    const requireKey = async () => {
+      const provided = providedKey();
+      if (!provided) return { ok: false, code: 401, body: { error: { code: 'AUTH_REQUIRED', message: 'Traži se API ključ (Authorization: Bearer <ključ> ili x-api-key)' } } };
+      const admin = env.BRAINCORE_ADMIN_KEY ?? null;
+      if (admin && provided === admin) return { ok: true, who: { tenantId: 'nmq', role: 'admin', keyId: 'admin', auth: 'admin-key' } };
+      const rec = await issuer.verify(provided).catch(() => null);
+      if (rec) return { ok: true, who: { tenantId: rec.tenantId, role: rec.role ?? 'operator', keyId: rec.id ?? 'key', auth: 'api-key' } };
+      const tf = loadTenants();
+      if (tf) {
+        const h = hashKey(provided);
+        for (const t of (tf.tenants ?? [])) {
+          for (const k of (t.apiKeys ?? [])) {
+            if (k.hash && k.hash === h) {
+              if (t.suspended) return { ok: false, code: 403, body: { error: { code: 'TENANT_SUSPENDED', message: `Tenant ${t.id} je suspendovan` } } };
+              return { ok: true, who: { tenantId: t.id, role: k.role ?? 'operator', keyId: k.id ?? 'key', auth: 'tenant-key' } };
+            }
+          }
+        }
+      }
+      return { ok: false, code: 401, body: { error: { code: 'INVALID_KEY', message: 'API ključ nije važeći ili je opozvan' } } };
+    };
+
     // Globalni limit čuva JAVNI API; unutrašnji worker claim/done (localhost) NE troši taj budžet —
     // inače worker-ov polling (40/s) bi pojeo svih 240/min i ugušio taskove (mjereno: 84/146 odbijeno).
     if (!url.pathname.startsWith('/v1/worker/') && !allowRate()) return send(429, { error: { code: 'RATE_LIMITED', message: 'Previše zahtjeva; pokušaj ponovo za minut.' } });
@@ -170,12 +220,22 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         return send(200, { ok: true, service: 'braincore-pro-api', nodeId: node.nodeId, uptimeMs: Date.now() - startedAt, npmDependencies: 0 });
       }
       if (req.method === 'GET' && url.pathname === '/status') {
+        const auth = await requireKey();
+        if (!auth.ok) return send(auth.code, auth.body);
         return send(200, { ...node.stats(), membership: node.gossip.membershipList(), liveClients: ws.clientCount() });
       }
       if (req.method === 'GET' && url.pathname === '/tasks') {
+        const auth = await requireKey();
+        if (!auth.ok) return send(auth.code, auth.body);
         return send(200, { tasks: [...node.tasks.values()], done: node.done.slice(-100), crdt: node.crdt.toObject() });
       }
       if (req.method === 'GET' && url.pathname === '/metrics' && (url.searchParams.get('format') === 'prom' || String(req.headers.accept ?? '').includes('text/plain'))) {
+        // Prometheus je na istoj mašini (scrape 127.0.0.1:8081) — njemu ne treba ključ;
+        // svima ostalima treba (metrike otkrivaju strukturu i opterećenje roja).
+        if (!isLoopback()) {
+          const auth = await requireKey();
+          if (!auth.ok) return send(auth.code, auth.body);
+        }
         // Prometheus text format (v0.0.4) — bez npm klijenta, samo tekst
         const stats = node.stats();
         const m = [];
@@ -265,6 +325,10 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         });
       }
       if (req.method === 'GET' && url.pathname === '/metrics') {
+        if (!isLoopback()) {
+          const auth = await requireKey();
+          if (!auth.ok) return send(auth.code, auth.body);
+        }
         const stats = node.stats();
         return send(200, {
           peersAlive: stats.peersAlive,
@@ -287,14 +351,25 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         } catch {
           return send(400, { error: { code: 'BAD_JSON', message: 'Tijelo nije JSON' } });
         }
-        // Opciona autentikacija ključem (ključ se izdaje posle Stripe plaćanja)
-        const apiKey = req.headers['x-api-key'] ?? (req.headers.authorization ?? '').replace(/^Bearer\s+/i, '') ?? null;
-        let keyTenant = 'demo';
+        // Autentikacija ključem. Ključ se izdaje posle plaćanja (Stripe) ili admin CLI-jem.
+        // Anonimni prijem taskova je ISKLJUČEN po defaultu (inače bilo ko troši LLM budžet);
+        // za javni demo se može uključiti sa NMQ_ALLOW_ANONYMOUS_TASKS=1.
+        const apiKey = providedKey() || null;
+        let keyTenant = env.NMQ_DEFAULT_TENANT ?? 'nmq';
         if (apiKey) {
-          const record = await issuer.verify(apiKey);
-          if (!record) return send(401, { error: { code: 'INVALID_KEY', message: 'API ključ nije važeći ili je opozvan' } });
-          body.tenantId = body.tenantId ?? record.tenantId;
-          keyTenant = record.tenantId;
+          const admin = env.BRAINCORE_ADMIN_KEY ?? null;
+          if (admin && apiKey === admin) {
+            body.tenantId = body.tenantId ?? keyTenant; // admin radi u ime default tenanta
+          } else {
+            const record = await issuer.verify(apiKey);
+            if (!record) return send(401, { error: { code: 'INVALID_KEY', message: 'API ključ nije važeći ili je opozvan' } });
+            body.tenantId = body.tenantId ?? record.tenantId;
+            keyTenant = record.tenantId;
+          }
+        } else if (!isLoopback() && env.NMQ_ALLOW_ANONYMOUS_TASKS !== '1') {
+          // Lokalni procesi (workers/knjiga-*, CLI) smiju bez ključa — nginx uvijek
+          // dodaje X-Real-IP, pa spoljni zahtjev NIKAD nije "loopback".
+          return send(401, { error: { code: 'AUTH_REQUIRED', message: 'Za prijem taska traži se API ključ (Authorization: Bearer <ključ> ili x-api-key)' } });
         }
         if (!allowRateForKey(keyTenant)) {
           noteUsage(keyTenant, { rejected: true });
@@ -325,6 +400,8 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
         return send(update.update ? 200 : 404, update);
       }
       if (req.method === 'GET' && url.pathname === '/v1/registry/stats') {
+        const auth = await requireKey();
+        if (!auth.ok) return send(auth.code, auth.body);
         return send(200, { stats: genomeRegistry.stats(), reports: genomeRegistry.history({ limit: 50 }) });
       }
       if (req.method === 'POST' && url.pathname === '/v1/stripe/webhook') {

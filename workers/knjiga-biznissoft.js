@@ -21,6 +21,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const API = (process.env.BRAINCORE_API ?? 'https://api.braincore.pro').replace(/\/$/, '');
+// Ako je API zaštićen ključem (npr. produkcijski api.braincore.pro), worker ga šalje.
+// Lokalni roj (127.0.0.1) ne traži ključ — dovoljan je loopback.
+const API_KEY = process.env.NMQ_API_KEY ?? process.env.BRAINCORE_API_KEY ?? '';
 const BRIDGE = (process.env.BRIDGE_URL ?? 'http://127.0.0.1:5055').replace(/\/$/, '');
 const WORKER_ID = process.env.WORKER_ID ?? 'knjiga-worker-1';
 const TYPES = String(
@@ -36,7 +39,7 @@ const log = (msg, extra) => console.log(JSON.stringify({ ts: new Date().toISOStr
 async function jsonFetch(url, opts = {}) {
   const res = await fetch(url, {
     ...opts,
-    headers: { 'Content-Type': 'application/json', ...(opts.headers ?? {}) },
+    headers: { 'Content-Type': 'application/json', ...(API_KEY ? { 'x-api-key': API_KEY } : {}), ...(opts.headers ?? {}) },
   });
   const text = await res.text();
   let body;
@@ -119,7 +122,9 @@ const HANDLERS = {
       return { ok: true, result: { konto, confidence, zaProveru: f, stage: 'konto-na-proveru' } };
     }
 
-    // VISOKA pouzdanost → ulazna kalkulacija u statusu „spremno za BizniSoft" (= „U obradi" u BS).
+    // VISOKA pouzdanost → faktura je PRIPREMLJENA i ide Maji na odobrenje
+    // (Kontrolna soba u programu). Robot NIKAD ne knjiži sam: on predloži konto,
+    // PDV i stavke, a Maja pregleda i odobri prije BizniSoft-a.
     let fid = p.fakturaId ?? null;
     if (!fid) {
       const inv = await bridge.createInvoice({
@@ -131,15 +136,15 @@ const HANDLERS = {
         bruto: p.bruto,
         datum: p.datum,
         tip: 'ulazna',
-        status: 'spremno_za_biznisoft',
+        status: 'pripremljeno',
         izvor: `braincore:${WORKER_ID}`,
       });
       if (!inv.ok) return { ok: false, error: `bridge invoices: ${inv.status} ${JSON.stringify(inv.body).slice(0, 120)}` };
       fid = inv.body?.data?.id;
     }
     let upisano = false;
-    if (fid) { const r = await bridge.updateInvoice(fid, { konto, status: 'spremno_za_biznisoft' }); upisano = Boolean(r.ok); }
-    return { ok: true, result: { fakturaId: fid, konto, confidence, upisano, status: 'spremno_za_biznisoft', stage: 'konto' } };
+    if (fid) { const r = await bridge.updateInvoice(fid, { konto, status: 'pripremljeno' }); upisano = Boolean(r.ok); }
+    return { ok: true, result: { fakturaId: fid, konto, confidence, upisano, status: 'pripremljeno', cekaOdobrenje: true, stage: 'konto-pripremljeno' } };
   },
 
   // 4) PDV kontrola — neobična stopa ide Maji
@@ -165,8 +170,11 @@ const HANDLERS = {
     return { ok: true, result: { ...(r.body?.data ?? {}), stage: 'reconcile' } };
   },
 
-  // 6) PRIPREMA ZA BIZNISOFT: „ulazna kalkulacija" + izvoz fajla u outbox
+  // 6) IZVOZ ZA BIZNISOFT — radi se POSLE Majinog odobrenja u Kontrolnoj sobi.
   'knjiga-biznissoft': async (p) => {
+    if (p.odobreno !== true) {
+      return { ok: false, error: 'Izvoz je dozvoljen samo posle Majinog odobrenja (payload.odobreno = true)' };
+    }
     const r = await jsonFetch(`${BRIDGE}/api/v1/outbox/write`, {
       method: 'POST',
       body: JSON.stringify({

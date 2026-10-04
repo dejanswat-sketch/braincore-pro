@@ -18,9 +18,16 @@ REM ── worker vuce taskove SA lokalnog roja i pise u Knjigovodja Pro (5055) 
 set BRAINCORE_API=http://127.0.0.1:8081
 set BRIDGE_URL=http://127.0.0.1:5055
 
+REM ── ROBOT BRIDGE: HTTP API Knjigovodje (mora biti gore prije workera) ──
+echo   [1/3] Robot bridge (Knjigovodja :5055)...
+start "robot-bridge" cmd /c "cd /d E:\NMQ-PROGRAMI\knjigovodja && python services\robot_bridge.py"
+timeout /t 6 /nobreak >nul
+
+echo   [2/3] Roj (3 cvora)...
 start "BRAINCORE-roj" node src\index.js --port 8001 --api-port 8081 --nodes 3
 timeout /t 12 /nobreak >nul
 
+echo   [3/3] Knjiga worker...
 start "knjiga-worker" node workers\knjiga-biznissoft.js
 
 echo.
@@ -32,9 +39,12 @@ echo   Ulaz:          E:\knjige\ulaz\
 echo   Za provjeru:    E:\knjige\za-proveru\
 echo  ======================================================
 echo.
-echo   Sada u BizniSoftu:
-echo     Upravljanje eFakturama -> Kreiranje ulaznih kalkulacija
-echo     na osnovu primljenih eFaktura -> vidi "U obradi" -> F11 Potvrdi
+echo   TOK — ROBOT PRIPREMA, MAJA ODOBRAVA:
+echo     1. Robot predlozi konto i PDV i faktura ide u "Ceka odobrenje"
+echo     2. Otvori Knjigovodja Pro  -^>  tab "Kontrolna soba"
+echo     3. Pregledaj fakturu i klikni ODOBRI  (nista se ne knjizi bez toga)
+echo     4. Posle odobrenja: izvoz XLSX za BizniSoft
+echo     5. U BizniSoftu: U obradi  -^>  F11 Potvrdi
 echo.
 echo   (Ovaj prozor drzi procese; ne zatvaraj ga dok radis.)
 pause
