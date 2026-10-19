@@ -1,0 +1,65 @@
+BizniSOFT v13 - wrew.biznisoft.com - o x
+S 2026 ~ Osnovnefunkcle 4& Pretraaa GD 2, Mo} Vodit [&) Pomeénk ~ 2 Kontakt ,) @=——= A | Tema: —_—<e= MWMse »- (& [FE Panel Zatvorisve
+Period> 01.01.26 ¥ 19.08.26 BK D itortz & Pertmen Be Arti
+ADMINIS TRACIJA < BIZNISOFT v13 Konfiguresnje BenSoft-a x
+Konfigurisanje BizniSoft-a Konfigureconi paremetri Upravtenje sertifikativa Ze operatere Zafrmu/ kwenta Zarednustanicu Zeubou Za odjekat firme Zawrstu dokumenta BantGoft
+ele Integritete agp _ }Parametra | Naz konfigureconos paremetra = Podrazumevana... * Sfre  N22W firme / Kijenta Mesto Adresa Pa 2
+Zelijwavanje perioda ky seks 10883 Port 2 fberkod scenera o 7 OBKA 22.04.25 BEOGRAD NEGOSEVA 112 111222333
+> Upravijanje erhivirenjem podate 10226 Poslni partnen - pretraga po meksmalng] rezolucp 8 NIXCLA VIDAKOVIC PR URBAN STAN LOZNICKO POLIE BRACE JUGOVICA 1 115617352
+> Upravijanje operaterime nies Sasa eT 9 DASIGO 0.0.0. BEQGRAD BEOGRAD (Z=MUN) _ALTINA GRIGORTIA BOZOVICA 9A 102749639
+= « od ¥
+> Upravijanje izvestajime 30 OBUKA 22.07.2026 BEOGRAD NIEGOSEYA 19 111555333
+: co traneakris 10324 Pretraga prixane samo artide sa stanjen or =F = SA) ON MAD mr AP I
+Upravijanje transakcijama = : z f it Lateral mci rea SALCN HAR ech ad (NOVI JURIIA GAGARINA 219 A 108822239
+Upravijanje izgledom tabela 10524 Prevod ns Orifcu podrazumeve prevod svi Semenate STYLE PAI - BEOG: GRAD) !
+Upravijanje sinhronizecijom tabe a evelage 33 SR “TEST FIRMAT BEOGRAD LUKE CELOVICA TREBINICA 101148253
+pan) S q Bt ' > — ~ _ s st 6 f
+> Nove postoma godina 1220 | ee Pre u deren dolar rien pode es 200 OBLKA 17.6,2026, BEOGRAD (SAYST LUKE CELOVICA TREBINICA 33 '
+BizniSoft stetusi i drevnici 10288 |Priked proseinu nebevnu cenu u Stari artids « «€ ¢ 120d15 > » Mt = K 2 te >
+> Brisenje entiteta bez promete 11145 |Pricad samo fakture ze operatere (parameter 11087) ID Param... = Naz konfiguracionog perametre Entket Vrec.entkets  Vrecnost Priorket |Napomena a
+ee ye ee ga SHamike 10996 Proseznu nebaynu cenu redunaj na osowu Prerad.NC NO131 Pocud orvu gobodnu Afru « artitl Fimafijent 99
+sklaGivanje odnosa cena preme
+Dat s 9 ' “1 10579 Prosetnu nabaynu cory za abjeete kod se vode po nadawim DOL31 Poeud orvu sobodnu Afru - arti Firmafigent = 100 f
+ata termina U525 | éunsj po frre: eon
+vi renine obiekt =< pe peed eecmnsatt SER $0132 Ponud arwu siobodnu Sfru «partner Fe Nedyent 199
+Postevi referentne objekte 10986 Provera indatrice Drijennie orion zatver aria grupneg RS
+levrai sinhronizadju/replikadju ** |radneg naloga 19223 Omegud evidendju pastath mat-ova FRemaitdjent 3
+Kontrolni broj po moduly 97 10976 Provera statusa pre konatneg knpdorja 00549 eFaktura - Informacion posredn&k Fimaijent 10 és picks chewces }
+Fiektronsko potpisvanje dokume 10428 RPIDAW'C to uredajs Nems $0550 eFaktura - gud za autentifikacty Firmafizent 10 :
+Uvoz-Izvoz podataka @ baze 10005 Rach werme od 06:00:00 | Bez posrednika
+SQL Monitor 11095 | Snnhronzadie eFeklura - ne aiuriraj statuse danainjh faxturs 10550 eFakture -Mjud 25 sutentifkediu Frmaijent 99 Moj-eRadun
+Podaci o pragramu i licene Legs SMhranzacya primjenih » Preuami GUY i Adrese firme,
+“~ |Nepomene, Inzemog bros za rutrsnje OSS! eFaktura - Korist DEMO cknudenje Fimatijent 99
+11186 | Specifiiost poslovenya YD $0552 eFaktura - Omogud brisanje statusa dokumenta Fimajkijent 10
+10015 |Standardni tip dostave = $0552 eFaktura » Omogud brisanje statusa dokumenta Fimakijent 99
+10386 Univerzaing pretrage - razmak je procenst = u
+, = ‘ 1ogg9 ON=™equG promanu statuss oamhenh efsktura u Operater JRENA
+10854 Uriverzaing pretrage ve wii barkod citadem i ‘Pregedeno” oriikom seProrizedje Tz
+OSTALA PODESAVAQUA I PUNKCLIE + loses WeMensho ogranonje trajania Tarsakctje (minimum 30, sco vars Gremogud promenu statuaa primkenin eFaksura u OQoerater DEMO
+208° | makermum 993 sehund) nie "Pregedeno” priikom snhronizeaje
+dy OMILJENE FUNKCUE 10011 | Wsta Stanpe Graficka 20330 timnGoft Ssfequerd - konsvzko ime Brno
+b OpéTI SIFARNICI 10505 | WMS Integraciis 20932 BenGok Sak ars Simisot
+z eee cr orc yaaa 10568 | WMS Integracia - Sp 2 10932 BznGoft Safeguard - wreme arhrurayjs BnGoft 13:00°09
+ed “ ~ —,
+20% 10406 | WIS exstenaja 20935 BiznGoft Safeguard - bez tadele KASA BiznGoft
+Naty “ ta C:Wsers'‘Gzns -
+5) PDV EVIDENCIIA | SEF 10405 | WMS putanja foldera IN wl chpeming 10336 BiznGoft Safeguard - omogud disanje arhve BiznGof
+(p ROBNO -TRGOVINA 10408 WMS utara foldera OUT | aN Jeers mS 20937 tanGof Ssfequard - vreme arhiwranys 2 Gano
+: = : oft'Pesxtap
+anaes ao Gann
+TEPROIZVODNIA 10207 | WHS difra magedna 0 Lil4l eOtpremmice - hud zs sutentfkecqu Firmafizert 10
+& FINANSUSKA OPERATIVA 5| Zagzruzenie na 2 dec od nabavé 19fb3Sc2-4717-43
+10015 | Zecirutende na 2 decieale kod nabavke Li4) cOtpremnica « Xgud za autentifkach Fimaftijent 100 94-643 06576f8
+{i OBRACUN ZARADA 11123 eFakturs - Broj olpwemmice je jednak broju dokuments }6Se
+A Fakhy oie on ba ted ok hy 19fb3Sc2-1717-43
+(6S STALNA SREDSTVA | INVENTAR 11009 | eFaktura - Broj otpremrice je jednak broju fakture LEN) cOtpremeica - <gué za autentifkactys Fimakiient 99 oa-basecasvafe
+oF aktura « Braj panude/narudtherice je tecnak brow OS
+I. UPRAVLIANJE KADROVIMA 10901 |S : eos - =
+— 7 = =" ~ 12141 eOtpremrica - jue zs sutentfkecqu frmafijernt 9
+* eFaktura - Dokumente 23 valutrom kKlsuzviom registruf u
+£ UPRAVUANJE DOKUMENTIMA 1088S stanoj valutt 11142 eOtpremnics - Konst DEMO olrudenje frmakhkert 100
+Se SPECIFICNI PODSISTEMI 10548 | 2f'aktura - Informsconi posrednik Nepostosobsvezs 11142 cOtpremnics - Kons DEMO ohrudenje frmakhert 99 a
+INST | aR abe We we ar tantifirarib:
+ADMINISTRACIIA « « < IBodll44 > » mt = @ Koes %* YT « « ¢ 60058 > » mt - S a a a : i
+{S> Prikazi pocatke Dodaj vrednost §=Obrisivrednost = Kopiraj Nalep Podraz.qodine Upssi / Primeni
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBIUCA | 101549299 | 06037402 290-1252-44 003 - PRODAVINICA BR.01 TRX &) F

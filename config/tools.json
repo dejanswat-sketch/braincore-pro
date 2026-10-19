@@ -1,54 +1,179 @@
 {
-  "$comment": "Konfiguracija alata. `builtin` podešava ugrađene alate; `mcpServers` spaja spoljne MCP servere (stdio ili Streamable HTTP); `sandbox` definiše granice. Tajne NIKAD ovdje — samo imena env varijabli.",
-  "sandbox": {
-    "$comment": "Aplikativne granice za alate i MCP podprocese. OS izolacija (namespaces/seccomp) je na kontejneru/K8s.",
-    "level": "restricted",
-    "envAllowlist": ["PATH", "HOME", "LANG", "TZ", "SLACK_BOT_TOKEN", "NOTION_TOKEN", "GITHUB_TOKEN", "HUBSPOT_TOKEN", "SHOPIFY_TOKEN", "STRIPE_SECRET_KEY"],
-    "maxMemoryMb": 256,
-    "maxTimeoutMs": 20000,
-    "allowChildProcess": true
-  },
-  "builtin": {
-    "http_fetch": {
-      "enabled": true,
-      "allowlistFromEnv": "NMQ_HTTP_ALLOWLIST",
-      "defaultAllowlist": ["api.deepseek.com", "api.openai.com", "generativelanguage.googleapis.com"]
-    },
-    "email_send": { "enabled": true, "mode": "outbox", "webhookEnv": "NMQ_EMAIL_WEBHOOK" },
-    "notify": { "enabled": true, "webhookEnvSuffix": "_WEBHOOK" },
-    "invoice_create": { "enabled": true, "defaultVatRate": 0.2, "defaultCurrency": "EUR", "defaultDueDays": 15 }
-  },
-  "mcpServers": [
-    {
-      "id": "nmq-crm",
-      "transport": "stdio",
-      "command": "node",
-      "args": ["mcp/example-server.mjs"],
-      "enabled": true,
-      "riskLevel": "medium",
-      "scopes": ["crm:read", "crm:write", "support:read"],
-      "tags": ["crm", "support"],
-      "timeoutMs": 15000,
-      "tools": {
-        "crm_note_add": { "riskLevel": "medium" },
-        "crm_contact_lookup": { "riskLevel": "low" },
-        "tickets_search": { "riskLevel": "low" }
-      }
-    },
-    {
-      "$comment": "Šablon za pravi HTTP MCP server (npr. interne NMQ API-je). Uključiti kad postoji URL i token.",
-      "id": "nmq-internal-http",
-      "transport": "http",
-      "url": "https://api.aicommandcenter.pro/mcp",
-      "headers": { "authorization": "Bearer ${NMQ_INTERNAL_MCP_TOKEN}" },
-      "enabled": false,
-      "riskLevel": "high",
-      "scopes": ["internal:read"],
-      "timeoutMs": 20000
-    }
+ "$comment": "Konfiguracija alata. `builtin` podešava ugrađene alate; `mcpServers` spaja spoljne MCP servere (stdio ili Streamable HTTP); `sandbox` definiše granice. Tajne NIKAD ovdje — samo imena env varijabli.",
+ "sandbox": {
+  "$comment": "Aplikativne granice za alate i MCP podprocese. OS izolacija (namespaces/seccomp) je na kontejneru/K8s.",
+  "level": "restricted",
+  "envAllowlist": [
+   "PATH",
+   "HOME",
+   "LANG",
+   "TZ",
+   "SLACK_BOT_TOKEN",
+   "NOTION_TOKEN",
+   "GITHUB_TOKEN",
+   "HUBSPOT_TOKEN",
+   "SHOPIFY_TOKEN",
+   "STRIPE_SECRET_KEY"
   ],
-  "notes": [
-    "Talas 1 integracija (Gmail, Slack, Notion, GitHub, Jira, HubSpot, Stripe, Shopify, Postgres…) dodaje se ovdje kao novi unos u mcpServers — vidi docs/03-MCP-INTEGRACIJE.md.",
-    "Svaki MCP server dobija riskLevel; politika (config/policies.json) odlučuje da li alat smije, ne smije ili traži odobrenje."
-  ]
+  "maxMemoryMb": 256,
+  "maxTimeoutMs": 20000,
+  "allowChildProcess": true
+ },
+ "builtin": {
+  "http_fetch": {
+   "enabled": true,
+   "allowlistFromEnv": "NMQ_HTTP_ALLOWLIST",
+   "defaultAllowlist": [
+    "api.deepseek.com",
+    "api.openai.com",
+    "generativelanguage.googleapis.com"
+   ]
+  },
+  "email_send": {
+   "enabled": true,
+   "mode": "outbox",
+   "webhookEnv": "NMQ_EMAIL_WEBHOOK"
+  },
+  "notify": {
+   "enabled": true,
+   "webhookEnvSuffix": "_WEBHOOK"
+  },
+  "invoice_create": {
+   "enabled": true,
+   "defaultVatRate": 0.2,
+   "defaultCurrency": "EUR",
+   "defaultDueDays": 15
+  }
+ },
+ "mcpServers": [
+  {
+   "id": "nmq-crm",
+   "transport": "stdio",
+   "command": "node",
+   "args": [
+    "mcp/example-server.mjs"
+   ],
+   "enabled": true,
+   "riskLevel": "medium",
+   "scopes": [
+    "crm:read",
+    "crm:write",
+    "support:read"
+   ],
+   "tags": [
+    "crm",
+    "support"
+   ],
+   "timeoutMs": 15000,
+   "tools": {
+    "crm_note_add": {
+     "riskLevel": "medium"
+    },
+    "crm_contact_lookup": {
+     "riskLevel": "low"
+    },
+    "tickets_search": {
+     "riskLevel": "low"
+    }
+   }
+  },
+  {
+   "$comment": "NMQ FULL VIDLJIVOST — komandna vrata (127.0.0.1:8790). Roj kroz ova vrata traži posao od mašine: 9 komandi, sve ČITANJE/MJERENJE (nema objave, pisanja po sajtovima, restarta ni shell-a). Dodato 12.10.2026 po planu predlozi/roj-komanduje-masinom.md.",
+   "id": "nmq-fv-vrata",
+   "transport": "http",
+   "url": "http://127.0.0.1:8790/mcp",
+   "headers": {
+    "x-api-key": "${KOMANDNA_VRATA_KLJUC}"
+   },
+   "enabled": true,
+   "riskLevel": "low",
+   "scopes": [
+    "fv:read"
+   ],
+   "tags": [
+    "full-vidljivost",
+    "masina"
+   ],
+   "timeoutMs": 120000,
+   "tools": {
+    "stanje-masine": {
+     "riskLevel": "low"
+    },
+    "provera-cuvara": {
+     "riskLevel": "low"
+    },
+    "asov": {
+     "riskLevel": "low"
+    },
+    "citation-lock": {
+     "riskLevel": "low"
+    },
+    "ghost-demand": {
+     "riskLevel": "low"
+    },
+    "roj-stanje": {
+     "riskLevel": "low"
+    },
+    "testovi": {
+     "riskLevel": "low"
+    },
+    "pokreni-test": {
+     "riskLevel": "low"
+    },
+    "llms": {
+     "riskLevel": "low"
+    }
+   }
+  },
+  {
+   "$comment": "Šablon za pravi HTTP MCP server (npr. interne NMQ API-je). Uključiti kad postoji URL i token.",
+   "id": "nmq-internal-http",
+   "transport": "http",
+   "url": "https://api.aicommandcenter.pro/mcp",
+   "headers": {
+    "authorization": "Bearer ${NMQ_INTERNAL_MCP_TOKEN}"
+   },
+   "enabled": false,
+   "riskLevel": "high",
+   "scopes": [
+    "internal:read"
+   ],
+   "timeoutMs": 20000
+  },
+  {
+   "$comment": "HOSTINGER API MCP (zvanični @hostinger/mcp, 417 operacija: domeni, DNS, deploy statike, SSL, e-mail, VPS). Server drži Windows zadatak NMQ-Hostinger-MCP na 127.0.0.1:8100 (token iz store-a, nikad u fajlu). ⛔ POZOR: `execute` i `multi-execute` su riskLevel high — njima se hosting MIJENJA (deploy, delete, restart), pa traže odobrenje. Server drži JEDNU sesiju: ako je zauzeta, pokreni `E:\\NMQ-PROGRAMI\\full-vidljivost\\_hostinger-mcp-restart.mjs`. Dodato 14.10.2026.",
+   "id": "hostinger-api",
+   "transport": "http",
+   "url": "http://127.0.0.1:8100/",
+   "headers": {
+    "Authorization": "Bearer ${HOSTINGER_API_TOKEN}"
+   },
+   "enabled": true,
+   "riskLevel": "high",
+   "scopes": [
+    "hostinger:read"
+   ],
+   "tags": [
+    "hostinger",
+    "hosting",
+    "deploy"
+   ],
+   "timeoutMs": 120000,
+   "tools": {
+    "search": {
+     "riskLevel": "low"
+    },
+    "execute": {
+     "riskLevel": "high"
+    },
+    "multi-execute": {
+     "riskLevel": "high"
+    }
+   }
+  }
+ ],
+ "notes": [
+  "Talas 1 integracija (Gmail, Slack, Notion, GitHub, Jira, HubSpot, Stripe, Shopify, Postgres…) dodaje se ovdje kao novi unos u mcpServers — vidi docs/03-MCP-INTEGRACIJE.md.",
+  "Svaki MCP server dobija riskLevel; politika (config/policies.json) odlučuje da li alat smije, ne smije ili traži odobrenje."
+ ]
 }

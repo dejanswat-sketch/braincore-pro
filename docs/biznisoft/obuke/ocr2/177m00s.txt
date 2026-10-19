@@ -1,0 +1,56 @@
+S 2026 ~ Osnovne funkcle 4® Pretraga GD 2_ Mo} Vodit [&) Pomoéak ~ GS Kontakt , @=——= 4 Tema: w_—e= Wise» ( [TH Panel Zatvorisve
+Period> 01.01.26 + 19.08.26» [Re Stampa F1l-Potwrdi “j (Shft) F3-Knjifenje ~ [8 Stomray | BK = [*% Preuzmy G Omati- D stoma & Petnen Bg Artki = OBRADA DOKUMENTA~
+HINANSIJSKO POSLOVANJE < BIZNISOFT v13_ Kalkulacta troovacke robe x
+Kontni plan firme * | Broj naloga Datum Dod... |Nazv partnera - dobavtate (Brof dokume... Detum ¢... D2tum v.../Datum PDV MNefa.../P... Status Imnos za... |Prethod... Razika ... |Vrednost ... Storno |POP... Vrsta PDV prometa hn... Pe... /Platen... |Placeno... Tip dok... | Izvor 0... 4
+Obreda naloga Za glavnu knje KLO001-0000< 22,04, 26 04762 PAN-SEED DOO NOVI SAD 1/2 22.04.25 22.04.26 ¥} 6 1.000,00 0,00 333,33 1,600,00 9,01 Ss -Bez prave odbitka PDY - 24190 Fakture Bektronske fak
+KnjiZenje neloge KLO0 L-cooos 22.04.26 00024 DOO SELECTA STR. S877. KN' | 2/25 22.04.25 22.04.25 | 14 360,00 66,00 0,00 360,00 82.2 Dobra! ustuge asim dodra iz 24190 Faktura Drug radu
+v Finansijske transekcije KLO01-L0C006 org a WB vs ey a) 1 oe 5) p19: 4 97 On wi “46 Bo a bw dn 24290 Fekture Drug ragun f
+Recun troskove KL001-00007 BY) as Powezani srtikli - Partner: 03235 - DP PRODUCTS DOO BEOGRAD - x 24290 Fektre | Bektronske fak
+Nebavke osnowmog sredst
+O0ces 24 z for Ps 4500 akira ‘ ne fak |
+Elektronske dopune ar ~ 720K | Sfra ark... Nezw arckls parnera JMR PDV (Barked partners Sifra Nazv actkb Barkod Barkod tp | Katalosh..../ Natin poverive... = my area eae bs |
+KLOO1-CECes 22) ene oer poomeememmnamanens ' ' - 24290 Poktur: ktronske Fak
+Faktura nefekturisane rob A ire Savana Posen ance Kom si [9590022904209 | 000000 | EMILKA RASPUERRY 20968 SHOOLISIEBING —Stancardy | |Sifra po oartreru =
+Ariiyse miata’ KL001-00010 221 tea nn natn aman an enema ananannnanannnnnen anes : :, ScD 24190 Fakture | Drugi radu
+Bes Pore kisi’ Bhat xlooL-ccoll aL 000036 MINE SUNKA PIZZA S206 KOM $i (8600012505009 000012) DUOL ALU FOLIIA 10M Paes FOIL Standard Sifra po part A 34090 Fakta | Drag ratun |
+Prijem racuna komitenta : : v |
+Prijem carinskog recuna KLOO1-C0012 22) cocos7 MINT SALAMA PILECA 3006 Kom «SI 8500012505207 Standard Nye cefngano 24290 Fokture Bektronske fak |
+Dhazna faktura KLO01-00015 ik cccoss SLAIS CAINA 2006 Kom Sil 8500012504514 Standard Nye defingane 24290 Fekbre | Bektronske fok |
+~ Zalveranje stevki glavne knjig K1001-00014 22; 24590 Fakta Elektronske fak |
+Zatvaranje stavid KLOO1-00015 13, 24290 Pekture — Elektronske fak
+Zalvaranje avanse
+, « « ¢€ 150d15 _—————————__—___} r
+> Obrada vode u elektronskor
+Obrada dnevnih pazara PRIKAZT SVE DOKUMF PROKNIZZENO Osve?
+» Dokumenti o smanjenju/pove “Stevke dokumenta Vahl
+Postoyne knjige shinies - - ~
+‘ RBR Sifra. | Naz art Nazy nosioca troska POP... Vrst2 PDV prometa Vrem
+» Blagajnitko posiavanje | — ~
+Isplata paljoprivrednom proiz > 1 00001 Secke ped 83.2 Dobtrsi usage com dobraiz take 19,08
+Obrecun poreze po odbitku ni > 2) OOOO15 | FUZE TEA 33.2 Dodral usluge ogim cobra i tater = 19.06
+Pregled avensih raguna
+PreknjiZevanje prometa
+Obretun poreze na dodatu vr
+Obretun reziike u oer
+Obregun Ru na meloprodajr
+Obretun kursnih raziika ¥
+6 Se >
+wa OMILJENE FUNKCUE
+© opsti SiFaRNiCi
+St FINANSIISKO POSLOVANIE
+[E) PDV EVIDENCIJA | SEF
+U5) ROBNO -TRGOVINA
+SEPROIZVODNIA nvr 2 LodAcs) RON ee cow WT
+i> FRNANSUSKA OPERATIVA Otvori nepovezane Sort po Sif_ert.part. i Ox / POTYRDI ODUSTANT
+(fl OBRACUN ZARADA : ;
+= 0002 UKLPENO 24 COKUMENT- 0,00 0,00 87,88 722,12 800,00
+(@ STALNASREDSTVAIINVENTAR og > > pe = @ 2 <2) lela ie Ss = .
+& J | xia.
+Ao UPRAVLIANJE KADROVIMA F5-Nova Obrisi dokument Stempaj v ObriSistavke Skener/Date t. 8 (8s L8n ec5 : A ,
+SS UPRAVLIANJE DOKUMENTIMA SSC FRO =
+a 0... (Braj malaga =| Datum Part... |Nazi¢ partnera Koléina Cena Prev... |Lenrabat |Prea... Ten.ake....|Nab.cena |Prc RUC mos RUC | Cena bez...|Cena se... VP Vredn...|MP Vredn...\Mesto TR Nosioc TR | Vreme ores \Operater a
+Saal SPECIFIC PODSISTEMS OD1/KLOO1-0000S [22.07.26 0008 |_MANDOTEK CGO 2,00 600,09 9,00 0,00) 0,09 9,00) 600,00) 11,21 233,33 46,67 800,03 1:333,34) 1.600,00) 900003 22.07.26 10a ee |
+“> ADMINISTRACIIA 001/KLO01-00011 0:,07.26 — 04774 /POCETNO STANIE 1,00 600,00 0,00 0,00) 0,00 0,00) 690,00; 14,2: 95,67, 666,67 800,00 996,67 900,00; 000003 22.07.26 11eaeog DEMO: :
+sp, _ OOL/KLOOL-CCO13 | 31.05.26 03236 |OP PRODUCTS DCO SEAGRAD 1,06 600,00 0,00 0,00 0,00 9,00 600,00 6,00 9,00 600,00 720,00 500,00 720,00 900093 22.07.26 13:17:31 (CeMO
+WF 091 KL001-00004 | 22.04.26 _0-4762 PAN-S8E5 COO NOVI SAD 2,00 00,00 4,00 0,co) 0.09 9,00 800,00 33,33 333,33 6,67 800,09 1.333,34_1.600,00 909003 22.04.26 10:31:37 __ |e ’
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBRUCA | 101549299 | 06037402 290-1252-44 003 - PRODAVNICA BR.01 TRX &) F

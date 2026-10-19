@@ -1,0 +1,69 @@
+BizniSOFT v13 - wrew.biznisoft.com = o x
+S 2026 ~ Osnovne funkcle 4& Pretraga Gap 2, oj Vodit [S) Pomoénk ~ 2 Kontakt ,) @=—ee 4 Tema: —<e= Wise ~ © [TF Panel Zatvorisve
+Parody 01.07.26 ¥ 31.07.26» [Ee Stampa BK ®D store & Petnen By Athi
+ADMINISTRACIJA < BIZNISOFT v13 Konfiguresnje BenSoft-a x
+Konfigurisanje BizniSoft-a Konfigurecioni paremetri Upravtenje sertfikatina Ze operatere Zafrmu/ kwenta Zarednu stanicu Zeubou Za odjekat firme Za wstu dokuments BantGoft
+Shih Integritete apes _ Parametra [Naz konfigureconoc paremetra = Podrazumevana... * Kortsnitko ime Ime | prezime Matitni broj OB)
+Zakljvtavanje perioda knjizenja = an . a ,
+i J J ' } un \ Westa parametra : KonAguracta | DEMO OPERATER OEMO a
+> pray ane ert renye m pocats iN = =
+. 2 . v Nasifkadis : 101 Osowia podelavanie JELENA JELENAE 900
+Upravijanje operaterime —— NOVI NOVI OPERATER 900
+> Upravijanje izvestayima 10526 Mice Be See Wen Seviee a OPER BIZNISOPT ADMINISTRATOR 000
+3 stomatsko usaghdavanje versie programa « aduriray — =
+> Upravijanje transakcijarna 10915 | eySoft POS 7 Ya waraee Prog 4 THILO628 THR.CB2B 900
+Upravijanje izgledom tabela 40917 Aulomatsko usegladavarije verze programa - forsiraj
+Upravijanje sinhronizecijom tabe usaghtavanje
+> Nave poslome godina 10916 nie usaglséavanje verze programs - onemogud
+proveru > »
+nSoft status sevnici ‘ As > olen? . oo ‘v7
+BizniSoft stetusi i drevnici 10293 |BariSaft Licenca - Khuz | ledS$ > » »I % ¥
+> Brisenje entiteta bez promete 10291 |SariSoft Uenca - Nazty konsnka ID Param... = Nazw konfiguracionog perametre Entket Vrec.entketa  Vrecnost Priorket |Napormena “
+Definisanje opsega Sfamike 10292 |BaiSoft Licenca - Senjets broj 20312 Onsmegud kopranje cokumenta veze) cpesuocdrad py cin
+UsklaGivanje odnosa cena preme 10935 |SiriSoft Sefeguard - bez tabele KASA ~~ naloga GK zi :
+Data terminal 10930 |amiSoft Safeguard « horietitko ime 0344 veer koprrarge dolanenta veze | ones u cored Firmafijent 99
+Postavi referentne objekte 10931 SavSoft Safeguard - banks 3 .
+SA ‘ é = 7 1032: Qnemogud kopranie dokunenta veze | opes u olrad Frmakbient 100
+levrSi sinhronizadju/repikadju 10936 | GariSoft Safeguard - omogué brsanje arhrve ~~" _naloga GK sia
+lniciraj formiranje niveladije po ¢ 10932 BariSoft Safeguard - ene erhivirenie 13:00:00 0312 Onemogua kopranje cohmenta vere! opesucbrad =) bemo
+Kontrolni broj po moduly 97 10937 | BariSoft Safpguard - vreme arhivirania 2 17:00200 naloga GK
+P Gmogud promenu cene na Glamin dokumentina na
+Fiektronsko polpisivanje dokume 10294 Bajenje pamin redowa je podrazumevano 0389 « tendardni naSn (bez F9 ibez F'20) Bimisoft ¥
+Uvaz-Tzvoz podataka @ beze 10170 Data terminal - Haz « ignore artide bez Waza u objekat 19339 Qnogud rome cene ne Wemin dokumentine ne FrmaMhient 99
+- 4 SW? |. Bir fans zELD) — 32
+SQL Monitor {0277 |Oata terrinal « oduaré rezervigane kokSne standardni nt in (002 F9 i bez F 10) =
+Podeci o praqramy i licenc syqqg Omecud prom=|nu cene ne Wemin dohumentos ne ae @
+10076 |Oata terminal - pocrazumevari 20389 | standardni naGn (bez F9 i bez F 10) Femajkizent 100 <
+10007 Gata temnal - port 2 va3a9 O79UG oromenu cene na itaanie Cohmentina na Cearshar DEMO
+10008 [Data te'minel - separator i standerdni nsdn (bez I'S | bez F 20)
+100CE | Data terminal - 5 CIPHERLAB 800% enazn Omogud izber primijewh i preghedan#) e=akturs prikom = Q
+2 ~ = P 20870 formiranta kalaibaota (ft ratuna rodka Operater EMO :
+sang Ostum POY na ePaktur jecnak datumu sienje u usiowmea kad . —
+‘s = > 10CES | «uy sva tri datusa eta roays Mormrenpe kalldacye na canovu ormbene efiaktreR sagen: 99 m
+OSTALA PODEZAVANIA J FUNKCLIE « 10357 Besterna de . dite na ETP a = - Sifts a tide zs robu - opita stopa = ~
+S = vA 23E v 357 Exeter dokuments oe skladiite na serveru nays Formiranye kalladactie na cana prinkone eFakture/ER eee SoS Fe
+10353 FTP Host ww ~ Sifra srtide za robu - posebne stope <a totais z
+J eee lee = AKAKAAKARAAKAAKA Pe Or TT Fs Nuala Olean (obs
+ya OMILJENE FUNKCHE 1038 as cn ~ 20953 deel Noes u lransakciy Otiss robe FemaMBent 450
+fi) opSri SiFARNICI USS ETE RO 21 wearcangerne eee
+10355 | FTP Username 22007 | hereestre WS me \Fiema/Kizent 450 j
+8 FINANSUSKO POSLOVANIE 10$7? Mksraj objekat SzriSoft-s c stavke recepture 1
+DI Ee = 12019 Onogud riveladju u objektina tina 09) 11 Firrmakijent 459
+[E] PDV EVIDENCIJA | SEF 10928 |Formranje pazara ria osriovu ESF koreutuje parameter 10005 = ad
+spay Onemogud proweru Koraynostt dolamenta za Izvor Fimakiient 450 |
+a ROBNO TRGOVINA 11173 Porsraj server za likencranie Nema “™ Glektroneke facture vitesse 7
+11087 GIN zs operalera <2 Onenogud proveru Boranresti doxumerita za izvor
+21047 Firmaiijent 10
+SEPROIZVODNIA 10476 ID sertékata za clecrorad potps by 347 Ejourronin Ficsare we 2
+ FINANSUSKA OPERATIVA 10404 | Iziame fakture - kopiraj prethodni rabat 22047 pkeika aise Soreynesh dokuments za izvor Operater DEMO
+fie OBRACUN ZARADA peggy eme fekture - omake Sskalzacpe se podrazumeve za seane Nadn evidentranja dakumenta vere prikom knitionja —— :
+= a os inera koi je findko ike u objextu mekerodaje 11206 HrestPabcralacheld ms ir wen) Firma/tijent = 100 Bro} columenta
+(> STALNA SREDSTVA | INVENTAR 10087 Kaltadis - Nud zachyu prodainu cenu v rsta parametra : Cviadienie
+Ie. UPRAVLIANJE KADROVIMA 10001 Kijent kori internet VPN konekoju \ Kisgifkacta = 29) Soecifidna oviaddonja
+S UPRAVLIANJE DOKUMENTIMA 10016 |KnijZenje naloga 22 detestovarim minus stanjem 20020 lamers naloge drugog opevatera Operater DEMO :
+<> SPECIFICNI PODSISTEMI AIOE Romer eee po peeiary : 20020 Ianena ndloge drugog operatera Opeater NOM
+sey |Monsultu; Datum OD definsan u zagavhu kao potetr datum ’ = “.
+10437 7 ----, Onooud oromony karaictora artida kada costoloromet — = «4 ean wen
+ADMINISTRACIIA « « < 3501144 > » w+ = 6 x Oe” T “Kx «& ¢ 60057 > » I +€ = B .ow* ¥ l {
+{S} Prkazi pocatke Dodaj vrednost §=Obrisivrednost = Xopiraj Nalep Podraz.godine Upesi / Primeni
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBPUCA | 101549299 | 06037402  290-1252-44 003 - PRODAVNICA BR.01 TRX &) f i

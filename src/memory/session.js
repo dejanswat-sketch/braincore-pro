@@ -125,6 +125,7 @@ export function createSessionStore({ dataDir, logger, maxMessages = 40, keepRece
       try {
         const res = await llm.chat({
           model,
+          fast: true,   // HIBRID: sazimanje je kratko -> brzi model (gemma3:4b)
           messages: [
             { role: 'system', content: 'Sažmi razgovor u najviše 12 kratkih činjenica i otvorenih zadataka. Bez uvoda.' },
             { role: 'user', content: text },

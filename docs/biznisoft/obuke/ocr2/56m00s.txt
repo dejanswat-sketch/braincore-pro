@@ -1,0 +1,54 @@
+BizniSOFT v13 - wrew.biznisoft.com - o x
+S 2026 ~ Osnovnefunkcle #& Pretaga © 3, Mo} Vout [&) Pomeénk ~ 3 Kontakt ,) @=—= A Tema: —_——<e= Wise ~ — [panel Zatvorisve
+Period> 01.01.26 ¥ 19.08.26» [i Stampa F1l-Potwrdi 4p (Shft) F3-Knjifenje ~ [8 Stomray BK = [> Preuzm’ G! Omatiy D store & Pertnen By Artk) = OBRADA DOKUMENTA~
+ROBNO .TRGOVINA ¢€ BIZNISOFT y13 izbzna fektura-racun = Kalkulacga troovacke robe Planer Info Za Stampu ?
+> Artikli i Starnici * OBJ|Broj raguna Detum pro...| Datum... Kupac | Nazv partnera - kupce Broj Gokum... |Datum PDV Dostava P.. Status Ukupno tnos Fakturés... eFakture Stomo POP...|Vrste PDV prometa PDV Operater |O... 1 -PODACL O ENTITETU
+> Cenownici 007 RNOO7000001 10.06.25 19.08.25 00024 DOO SELECTA STR SSM 77 KNIAZ 10.08.25  Nadprevoz poi pU rads 3.2 | Promet za koj je poreski | Sifra artis 095222
+Prijem robe Naa arthia COCA COLA
+v Iedavenje robe JMR / POV stops KOM j 20 %
+Tlazna faktures - racur Cenovnik Ostal kupd
+Olpremnica robe 2 - PINANSUSKI PODACI STAVKE
+Avensni recun Yrednost artis 1.200,00
+Profektura - rezervacije Vrednost za kuoca 1.440,00
+Ratun sopstvenih traskove Cena za kuoca 120,00
+Nelog 24 izdavanje robe Cena za kupca +... 144,00
+Periodiéno fakturisanje laws POY 240,00
+> Tzvoz robe i usivga . 5 ; ; 6 - PINANSLISKI PODAC! PARTNERA
+>» Tlaz robe - akajski rebat 1od1 ESN Sra pertnera 00024
+> Interni prenosi PRIKAZI SVE DOKUMENTE 3 DOO SELECTA STR SM 77 KNJAZEVAC U OBRADI Osve2zi Uhura pobraiiva... 0,00
+Narudzbine i trebovenje oe Dospeta potrady.. 9,00
+> Povraéaj robe kupca stake dokuments Valute oledanja Avansniracun’ Napomena Specilixacja/POS eOtpremmice Paking Bta Knivenja Dogedaji Pola poze Veridoxument Sertskibrojew Obavestenia Garancje 9 - STATISTIKA ENTITETA - 20.06.26
+> Pavraéaj robe dobavijady Sfra Nazy srk Koléna Cans | SHR. |enos rab, [Mesto TR Mosoc TR |Vrednost Konto fev.cena | Nazv mests troska Nazi’ nosioca trosxa_ = POP... | Wrsta PDV prometa PDV... | Vreme gmene < Prokryizeno stanje 100,90
+>» Elektronske olpremnice 1| 995222 | COCA COLA : 0,00 [: 20S 9,00) 9,00 | 1.44000 13201 $20,009) 3.2 _| Promet za ko} je poreaid Ss i Raspolotivo stange $00,00
+Nivelacija cene > Respolozve sa p.. 200,00
+Popis robe Stanje u frei 160,00
+> Olpis robe u objektu ? reame cone : ooh
+Transformecije artikale il CANS 200,00
+WE ‘ Progetna nab.cens 100,00
+Fakturisanje bez obretune ne Cena ber POY 129,00
+» Kormisiono poslovanje Cena sa POV 144,00
+> Tuda roba na zelihama SeRUC NBC 20,00
+» Roba na obradi/doredi RUC VPC 16,67
+Posavenje $3 kooperantime Ubupne uaz 200,00
+> Evidencija arnbalaze 3 Uhupne izlaz 0,00
+mpi gate set em F Premodna nedesa 0,00
+> $$. ? Pre +necehe 0,00
+oy OMILJENE FUNKCUE Zadhs nabevka 20,068.26 (200,00)
+Nazv dodavgjada = MANDOTEK DOO.
+© opsti SiraRNICI
+Stanje | promet ar tide 095222
+8 FINANSUISKO POSLOVANIJE
+[E] PDV EVIDENCIA | SEF
+m ROBNO TRGOVINA
+SEPROIZVODNIA |
+. ae
++ FINANSLUISKA OPERATIVA
+(ha OBRACUN ZARADA Zt. eben) SEE Dae ners 00024
+(@) STALNA SREDSTVA | INVENTAR |
+Ig. UPRAVLIANJE KADROVIMA
+2S UPRAVLIANJE DOKUMENTIMA |
+= SIST
+ie SPECIFICNI PODSISTEMI uM UKUPNO ZA DOKUMENT. 1,00 0,00 0,00 aaa
+“4 ADMINISTRACIIA ' lodl > 1+¢- @ LLL” .
+{S} F5-Nova Obrisidokument Stempaj » Obrisi stavke F9 - Lm.cene ozs 1 | g 9 K F
+99 | SR"TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBIWICA | 101149299 | 06037402 290-1252-64 007 - VELEPRODAJA CENTRALNI MAGACIN TRX &) F |

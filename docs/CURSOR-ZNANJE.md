@@ -1,0 +1,149 @@
+# CURSOR ARHIVA — pun tekst razgovora
+
+> 17413 razgovora (130.3 MB) izvucenih iz Cursor state.vscdb.
+> Ovo je PUN TEKST (korisnik + Cursor), ne samo naslovi.
+> Pun tekst je u: C:\Users\Administrator\.dsh\NMQ\data\cursor-razgovori\ (fajl razgovor-NNNN-naslov.md)
+> NE ucitavaj cijelu arhivu u kontekst — pretrazi je (grep/nadji) i citaj samo pogodke.
+
+## Teme u arhivi (koliko razgovora pominje)
+- Sajt / frontend: 2568
+- SEO / GEO: 2535
+- Deploy / server: 2215
+- Robot / agent: 2215
+- Bug / greska: 2194
+- Ollama / AI model: 1509
+- SQL / baza: 1495
+- Windows / PowerShell: 1387
+- Git / kod: 1309
+- Naplata / Creem: 1272
+- Usteda / trosak: 804
+- Tunel / domen: 743
+- Casino / igra: 707
+- Knjigovodja: 320
+
+## Najveci razgovori (120 — najbogatiji znanjem)
+- 11988 KB — Directory creation for nmk-cyberpulse
+- 9475 KB — Commander SEO redosled
+- 7583 KB — Custom Build hire setup
+- 4758 KB — Odgovor na pitanje o mišljenju
+- 4641 KB — Commander SEO redosled
+- 4248 KB — Custom Build hire setup
+- 3303 KB — Commander SEO redosled
+- 2662 KB — New project folder creation
+- 2625 KB — Custom Build hire setup
+- 2568 KB — AI hybrid automotive platform
+- 2486 KB — Commander SEO redosled
+- 2302 KB — Commander SEO redosled
+- 2287 KB — Commander SEO redosled
+- 2280 KB — Commander SEO redosled
+- 2252 KB — Server machine update instructions
+- 1954 KB — Commander SEO redosled
+- 1920 KB — Commander SEO redosled
+- 1872 KB — Application terms page issue
+- 1604 KB — Commander SEO redosled
+- 1582 KB — NMQ portfolio i jezici
+- 1313 KB — Commander SEO redosled
+- 1302 KB — Server machine update instructions
+- 1275 KB — Server machine update instructions
+- 1221 KB — Server machine update instructions
+- 1204 KB — Server machine update instructions
+- 1040 KB — Server machine update instructions
+- 1023 KB — Forward V11 FINAL install guide
+- 923 KB — Commander SEO redosled
+- 728 KB — Server machine update instructions
+- 709 KB — Commander SEO redosled
+- 695 KB — USB drive contents
+- 640 KB — Node.js Express dashboard setup
+- 625 KB — Continue Trend Analyzer work
+- 582 KB — Server machine update instructions
+- 567 KB — Nastavi V11.1 MULTILANG implementaciju
+- 548 KB — NMQ portfolio i jezici
+- 456 KB — USB drive contents
+- 455 KB — Nastavi V11.1 MULTILANG implementaciju
+- 442 KB — Commander SEO redosled
+- 441 KB — Commander SEO redosled
+- 441 KB — Commander SEO redosled
+- 441 KB — Custom Build hire setup
+- 440 KB — Market research inquiry
+- 425 KB — Market research inquiry
+- 425 KB — NMQ control panel script error
+- 414 KB — AI hybrid automotive platform
+- 406 KB — Cursor opening issue with Node.js 22
+- 381 KB — Market research inquiry
+- 373 KB — Server machine update instructions
+- 343 KB — Desktop architect access issue
+- 325 KB — Forward V11 FINAL install guide
+- 294 KB — USB drive contents
+- 286 KB — AI Command Center executable
+- 285 KB — AI Command Center executable
+- 285 KB — AI Command Center executable
+- 248 KB — Forward V11 FINAL install guide
+- 241 KB — Commander SEO redosled
+- 240 KB — AI Command Center executable
+- 239 KB — AI Girlfriend Agency
+- 235 KB — Knjigovodja Pro software
+- 230 KB — Market research inquiry
+- 229 KB — Balkan Hero game
+- 229 KB — Balkan Hero game
+- 217 KB — Market research inquiry
+- 216 KB — Custom Build hire setup
+- 214 KB — OAA Cloud machine handoff
+- 205 KB — Commander SEO redosled
+- 200 KB — Migrate domain on Hostinger
+- 197 KB — Nastavi V11.1 MULTILANG implementaciju
+- 194 KB — Knjigovodja Pro software
+- 182 KB — Nastavi V11.1 MULTILANG implementaciju
+- 176 KB — Balkan Joe Kodi addon review
+- 174 KB — Balkan Hero game
+- 170 KB — OAA Cloud machine handoff
+- 170 KB — GDDE MI JE NMK discussion
+- 168 KB — SEO operator shortcut
+- 162 KB — Server machine update instructions
+- 162 KB — AI hybrid automotive platform
+- 155 KB — Forward V11 FINAL install guide
+- 150 KB — New project folder creation
+- 147 KB — New project folder creation
+- 143 KB — Custom Build hire setup
+- 137 KB — SendIcon component definition
+- 136 KB — Review this content
+- 124 KB — SEO operator shortcut
+- 124 KB — AI Command Center executable
+- 124 KB — AI Command Center executable
+- 124 KB — AI Command Center executable
+- 124 KB — AI Command Center executable
+- 123 KB — New project folder creation
+- 123 KB — Electron app build instructions
+- 123 KB — Database and API configuration
+- 123 KB — AI Command Center executable
+- 123 KB — Nissan Qashqai service inquiry
+- 123 KB — Cursor opening issue with Node.js 22
+- 122 KB — Knjigovodja Pro software
+- 122 KB — Programs for data analytics
+- 122 KB — Server machine update instructions
+- 121 KB — New project discussion
+- 121 KB — Node.js Express dashboard setup
+- 121 KB — Desktop architect access issue
+- 121 KB — Directory creation for nmk-cyberpulse
+- 121 KB — Program customization for Mirko
+- 121 KB — Balkan Hero game
+- 120 KB — Application terms page issue
+- 120 KB — Express and PostgreSQL configuration
+- 118 KB — Programs for data analytics
+- 118 KB — Directory creation commands
+- 117 KB — GDDE MI JE NMK discussion
+- 116 KB — Market research inquiry
+- 116 KB — Server machine update instructions
+- 113 KB — NMQ Arhitekta features comparison
+- 113 KB — NMQ Arhitekta features comparison
+- 111 KB — AI Girlfriend Agency
+- 111 KB — NoMoreQuiet project overview
+- 110 KB — Server machine update instructions
+- 110 KB — Directory creation commands
+- 109 KB — Review this content
+- 108 KB — Server machine update instructions
+- 106 KB — Beg iz grada project
+
+## Kako koristiti arhivu
+- Pretraga: `grep -i "pojam" <arhiva>\*.md` ili robotov `znanje.nadji(pojam)`
+- Najkorisniji su razgovori >10 KB (567 komada) — tu su prava rjesenja i odluke.
+- Razgovori <1 KB (13.205) su kratke razmjene — slabo korisni.

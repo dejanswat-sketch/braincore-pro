@@ -1,0 +1,54 @@
+BizniSOFT v1i3 - wea. biznisoft.com _ a x
+S 2026 ~ Osnovne funkcle 4® Pretraga Geom 2_ oj Vout [) Pomoénk ~ (2 Kontakt e———= s Teme: —_—e= MMse »- (& [Panel Zatvorisve
+Perioc~ 01.01.26 - 19.08.26 v Fil -Potwdi 4p (Shft) F3-Knjitenje ~ [9 stomra BK |} Preuzmi GI Omati-v D torts & Pertnen Ba Art) ©OBRADA DOKUMENTAY
+ROBNO .TRGOVINA ¢ BIZNISOFT v13  Izazna faktura-ratun Otpremnicarobe x
+Cenownici . OBJ | Broj ragunz Datum pro...| Datum @... Kupac| Naz partnera - kupce Broj cokum... |Dostava P....Status (Ukupne nos |Fexturisa... Stormo | F&...|POP...| Vista POV promete PDV Opereter 0...
+> Prijem robe » 001 /O07001000001 29.02.25 2.02.26 00080 | MANDOTEX 500 1 Nes orewor es 290,00 40,00 32 — Promet 24 koji je porests DEMO
+v Tzdavenje robe 001 |OTOOLI25314 22.04.25 72.04.25 00060 | MANDOTEK 900 2 Vozaé 23 [pol 360,00 60,00 3.2 Promet za koji je porests DEMO
+Belazna fakture - ragur G01 |OT001128815 22.07.26 |2207.26 00001 | MAGNUM DOO PARACIN had orevor [po1 800,00 133,33 3.2 Promet za koa 3¢ porests camo |
+Otpremnics robe 001 |OTOD1125816 19.06.26 19.08.25 00060 | MANDOTEXD00 KS preva wot 360,00 60,00 3.2 |Promet 25 koji je porests OO |
+vensni racun Ls
+Profaktura - rezervadje
+Retun sopstvenih troskove |
+Nelog 24 izdavanje robe
+Periodicno fakturisanje
+» Tzvoz robe i usluga
+» Tlaz robe - akajski rabat
+“« « 40d - ee . 4 5 :
+Interni prenos « & < M004 - so
+> NarudzZbine i trebovanje PRIKAZI SVE DOKUMENTE 3 MANDOTEK DOO U OBRADI Osve2
+Povracaj rabe kupca __
+> Povraéaj robe dobavijadu Stavke dokumenta Napomena eOtpremmice Paking &ta Krigenja Dogadaji Pola poze Vermi dokument’ Seriskibrojew Obavestenja Garancije
+Fiektronske otpremnice | Podaci o dokurnentu Podaci © primaocOz...  Povezana dokuments otpreme
+Nivelacija cena Broj naloga —_| Broj otorermnke Datum ada) Vreme ada| Status dokumenta Nadin otpreme Tip otpremni)Vreme zadrje mer Nez primalaca PB Mat.broj Mesto Adres Otpremnice
+Popis robe 7001125816 (EO26-07001125816 GP 19-Aug-25 (1217113 | Posiata olprenrice fai Sopetver prevoz  Exsterns | 29.08,251%17:15 MANDOTEKDCO 113045842 21793523 @ BEOGRAD (ZVEZDA | BULEY,
+> Otpis robe u objektu
+Transformecije artikale |
+Fakturisenje bez obrecune ne
+> Kornisiono poskivanje
+> Tuda roba na zelihama
+Roba na obradi/doredi
+» Poslavanje s4 kooperantime
+Evidencija ambalaze
+> BizniSoft POS - Kasa u malop I lof1 + = Xx o @ *® ¥ ‘@ ” ,
+= a Stavke dokumenta Pnkozdokuments Specfkact2pravoza Napomena
+é 6, , , (obane s = y  |inven - " % . F. - Nazw > --¥ :
+oy OMILJENE FUNKCUIE Rbr Offre arti... |Naziv arti¢a Bareod Jed.... |Kobéns Akcune kate... | Wrednos... |Duvan - pako,.. Duvan - Sta Doc. nf, - Mazr Dod.inf. - Vrednost
+1 con0o9 E¥O.KA RASPEERRY L00GR S6Q0115399376 KOM 1,000 0,000 Preemnice
+© opsti SiFARNICI
+8 FINANSUSKO POSLOVANIJE
+[E] PDV EVIDENCIIA | SEF
+m@ RORNO TRGOVINA <Mema podataka za prikaz>
+SEPROIZVODNIA
+&» FINANSUSKA OPERATIVA
+(3 OBRACUN ZARADA 1 06 3 Jie ste 4 xX Oe
+(> STALNA SREDSTVA | INVENTAR Zz period Swi status Sviobjekti Proveri status Promenavozila Start prevoze — Storniraj Preuzmi XML Stampaj dokument Osvezi podatke OK / Potvrdi
+Lt I
+OS: VERAILIANIE KADROVINA F5-Nova Obrisidokument Stempaj ¥ Obrifi stavke F9-Izrn.cene Formiraj 223
+ogidhnmiestsheeneteompats lease al a) P Kol P bat |p 1 t PrCRUC Imnos RUC |C P Vred P TR TR rene {operates |
+0... |Broj malaga (Datum art... |Nazie partnera oltina Cena 1C.... |Een.rabat |Pre.a... Ten.ake.r...|Nab.cena |Prc.RUC  Imnos RUC |Cena bez...|\Cena sa... VP Vredn...|MP Vredn...|\Mesto TR Nosoc Vrermne er er
+Sm SPECIFICNI PODSISTEMI —— eee
+% ADMINISTRACIIA
+<Neme podetaks zs prkaz>
+{Sp
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBUCA | 101149299 | 06037402  290-1252-64 002 - PRODAVNICA BR.01 TRX &) F F

@@ -1,0 +1,42 @@
+www.biznisoft.com   Strana: 1 
+ 
+BizniSoft                              2025. god. 
+ 
+ 
+ 
+ 
+Isplata bonusa 
+ 
+ 
+ 
+ 
+ 
+Bonus se isplaćuje kao zarada i može se isplatiti uz samu zaradu ili kao drugi/treći obračun za mesec u kojem je zaposleni 
+radio. 
+ 
+U modulu Obračun zarada, u  delu Tabele poreza, doprinosa i vrsti plaćanja, u tabeli Vrste plaćanja zarade, naknada i 
+dodataka, potrebno je otvoriti novu vrstu zarade, npr. 111 – Bonus po osnovu poslovnog uspeha (Slika 1).  
+  
+ 
+Slika 1 – Vrsta zarade 111 – Bonus na osnovu poslovnog uspeha 
+ 
+Sledeći korak je da se u delu Obrazac PPP -PD – Vezna tabela prihoda iz radnog odnosa popuni vezna tabela za ovu šifru 
+vrste zarade (Slika 2).  
+ 
+ 
+Slika 2 – Vezna tabela za vrstu zarade Bonus 
+ 
+Ukoliko se bonus isplaćuje kao prva isplata u mesecu, ali bez isplate zarade, onda je potrebno da se za šifru zarade u polju 
+Sraz. SocDop. upiše N (Slika 3).  
+
+www.biznisoft.com   Strana: 2 
+ 
+ 
+Slika 3 – Bonus kao prva isplata, bez isplate zarade 
+ 
+Prilikom obračuna bonusa, u samom obračunu se ne unose časovi, već samo Bruto ili Neto iznos. 
+ 
+ 
+ 
+ 
+BIZNISOFT TIM 

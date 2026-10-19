@@ -55,10 +55,11 @@ export function createCritic({ llm, logger, metrics, callLlm } = {}) {
             { role: 'user', content: `ZADATAK:\n${String(task ?? '').slice(0, 1000)}\n\nODGOVOR:\n${String(output ?? '').slice(0, 3000)}` },
           ];
           // Ako imamo ctx — koristimo callLlm (budžet + cost + span). Inače direktan poziv (samo za testove).
+          // HIBRID: ocjenjivanje je kratko i deterministicko (temperature 0) -> brzi model.
           const res =
             ctx && callLlm
-              ? await callLlm(ctx, { messages, temperature: 0, maxTokens: 250, model, role: 'critic' })
-              : await llm.chat({ model, messages, temperature: 0, maxTokens: 250, signal, tenantId, responseFormat: { type: 'json_object' } });
+              ? await callLlm(ctx, { messages, temperature: 0, maxTokens: 250, model, role: 'critic', fast: true })
+              : await llm.chat({ model, fast: true, messages, temperature: 0, maxTokens: 250, signal, tenantId, responseFormat: { type: 'json_object' } });
           const parsed = safeJson(res.text);
           if (parsed) {
             method = 'llm';

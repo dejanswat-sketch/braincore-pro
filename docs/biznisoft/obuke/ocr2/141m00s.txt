@@ -1,0 +1,61 @@
+BizniSOFT vi3 - wrew.biznisoft.com = 4 x
+S 2026 ~ Osnovne funkcle 4& Pretraga GD fq Mo} Vodit [) Pomoénk ~ 2 Kontakt.) @=——ee 4 Teme: —<e= Wise ~ ( [TE Panel Zatvorisve
+Parody 01.07.26 ¥ 31.07.26» [ey Stampa BK D tstot2 & Petnen Bm Artki
+ADMINIS TRACIJA <  BIZWISOFT v13 Konfigursenje 8enSoft-a x
+Konfigurisanje BizniSoft-a Konfigurecon! parenetri Upravianje sertfikatira Za operatere Za firm / kwenta Zarednustanicu Zaulbou Za objekatfirme Zavwstu doxumenta BanGoft
+Prowera integritets podataka 5 saramatra_|Maztv konfigureconog paremetra = Podrazumevana... * Kortsnitko ime —_Ime | prezime Matitni broj OB}
+Zakljvtavanje periods knjizZenja = . — . s rr
+10029 Ignore pogretne kobdine cemo OPERATER DEMO 000
+> Upravijanje arhiviranjem podate JELENA JEENAE 000
+Upravijanje operaterime 10317 [lor outa bropeve NOVI NOVI OPERATER 900
+> Upravijanje izvestajime 10440 | [greet Seiinsan barkxocove 27 OPER BIZNISOPT ADMINISTRATOR 009
+> Upravijanje trensakcijama iosse [zvetta} oredieds MASA prometa prixemge | stave s8 THRO THROBS 900
+Upravijanje izgledom tabela — ee Es -
+Upravijanje sinhronizecijom tabe 10505 Knjd komerdjaistu prion anyizenja kaes prometa
+>» Nave posiome godina 10095 |Knjd robri promet po operatering
+BizniSoft stetusi i dnevnici 10556 (Knjd ansformediu kao razduzerge u robnom | ljod5 > » »1 + = 2 Le ME SY?
+> Brisenje entiteta bez promete 10575 | Konsultuy VP cenownix za ostale kupoe ID Param... = Naz konfiguracionog parametre Entket Vrec.entketa  Vrecnost Priorket Napomena .
+Definisanje opsega Sfarmike 1102$ |Korsultug ar tide a cenom 0 u prodajnim cenovnoms i \ Vrsta parametra = Kanfiguracta j
+Uskladivanje odnosa cena preme - :
+nea ac al hy 10686 Korsultup berkod komercielnog pakovariis v Klas®kacje « 101 Cerone podedavaria
+Postavi referentne objekte 10318 |Korsultuy cene referentnog objekte 20076 Dets terminal - podrazumeveni firmafirent 10
+levrdi sinhronizacju/replikadju 10564 |Konsultuje definieare weste POY prometa na rivou erticls 202312 Ponud orvu siobodnu Sfru - arth Frmafkizent = 100
+lniciraj formiranje niveladje po ¢ 10959 Loyalty shoje se primenjuju i ne articke sa rabstom 20232 Ponud orvu slobodnu Sfru - acti Frmafkhent 99
+Kontrolni broj po modulu 97 10185 Loyalty progeam - Unos se kod 20232 Ponud prvu siobocnu Sfru - psrtnen frmafigent = 100 |
+Elektronsko potpisnanje cokume 10186 |Lovally program - posloje prodajne ekoje 20223 Omegué ewdenayu poslath mal-ove Frmaftizent 3 |
+tones podataka @ baze 11196 Loyalty program - postog evidendija bodova 20549 efiskture - Informsoon posrecnk Frma/ijent 10 Bez posrednika
+‘ konitor
+Poded 0 program i licenc 1092 Loyalty prog-am - Stampaj informadiu o ustedi 20543 ef'skture - Informacom posednk frmafhent 99 Bez posredtke
+; 10502 Mena vaga » COM port coms 20550 efakture - jue za sutentfkecu firmafisent 10
+10143 Mems vags -loxeqjs | nenv fads se pocsans cberdalplss.t 85fb76b5-8304-4
+xt $0550 oFaktura - Kijud za autentifkact Firmafijent 9 bb6.a33¢-1d7d04 y
+10144 Merna vaga - loeadija | naziy programa za progranirange S a bizer 403d
+= < —_ 20551 efakture - Kons DEMO olrugenje firmahert 99
+‘<< ° 10145 Merma vega - tof \ Bizerbs 3C2 5 sh ook rm
+. AS o 20552 efakture - Omoquo bnsarpe statuss dokumenta frmafijent: = =10
+OSTALA PODESAVANIA 1 PUNKCLIE + 10037 |Naztv codazth pocataica REGISTARSAI ess ~ ~
+GROJ: 20552 effekture - Omoqué brisanje statusa dokument Frmaftlent 99
+op OMILJENE FUNKCUE 10055 Ne priazuy rebate u POSu 1agg9 Onenogud promeny statusa primbenh eFakturs u Ooerater DEMO
+fee CaCINCE 11064 Ne wi grupisante erticals pritkom izdavarge fiexelnog reduns “Pregedano orfikom sinmronizacye
+i OPsmi: 11082 | Mveedie 99 propizenom cerownihu se formiraju u BizniSoft 20869 boone ml ioe errant bora Operater JELENA
+aad ~ | POS -
+BB FINANSUSKO POSLOVANE ES P = e Fre 20930 EienSoft Safeguard - korierétko ime EienSoft
+10384 Omagud evidenoqu hupaca kos ne plataju virmanom
+) PDV EVIDENCIIA | SEF 5 210931 BiznSoft Saf 6 -lozrk GizenSoft
+aa 12022 |Omogue funkayy Bez promene cene prithom promene veste renders eas comet = r 5
+Ij ROBNO -TRGOVINA POW promete 10932 BientSoft Safeguard - weme arhivirania BizniSoft 13:00:00
+ZEPROIZVODNJA OSES | epaaURT Ne PORE eee ice eB ince Prawn Se 10935 BiznSoft Safeguard - bez tadele KASA Benoft
+% FINANSLISKA OPERATIVA paced bined ocho irrmentctedait cro 20935 BiznSoft Safeguard - onogud brisenje arhive BieniSoft
+3 OBRACUN ZARADA 10420 | Omogud immenu vredoosS virmarskog ratune 10937 BinSoft Safeguard - weme ativiraria 2 Bansoft
+- 10542 Omogud ostelo bezgolovinsko pladanje bez urmes kupcs 19fb2sc?- £7F7 43
+(@ STALNA SREDSTVA | INVENTAR 11084 |Cmogud pregied BiziSoft dokumenta 11141 eOtpremnice - jue zs sutentfkecnu Firmafizent 100 94-5536 57678
+7#S5e
+J@. UPRAVLIANJE KADROVIMA o a sea
+= 10910 | Smegue prikaz WEB porudddbina Lit4t eOlpremrice - Xjuc 2a sulentifkadu Firmafijent 9
+. og | OMmagUd provery prekoradense za pasloy mr mnera
+Sm UPRAVLIANJE DOKUMENTIMA 11124 POsa ee we ae MS Lii4: eOlpremnice - Mud 24 sulentifkadju FirmaMiient 10
+im SPECIFICNI PODSISTEMI 11085 Omegud proveru prijave operaters na rediditin radeim 5 19fp3Sc2 f7F7-43
+tO? | cone Y 11141 eOtpremrice - Kqué zs sutentfkesqu frmafkhert 99 94-b43F-<65 76f8 v
+ADMINISTRACHA « « < 35061144 > » w+ = @ x oe *’ T Ke «& < Wo > DmMe - Yon ¥ t i
+fs} Prikazi podatke Dodaj vrednast §=Obrisivrednost = KXopiraj Nalep Podraz.godine Ups / Primeni
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBIUCA | 101549299 | 06037402 290-1252-44 002 - PRODAVNICA BR.01 TRX &) F F :

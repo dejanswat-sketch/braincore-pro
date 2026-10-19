@@ -1,0 +1,562 @@
+ 
+ 1 
+  
+ 
+ 
+ 
+ 
+BizniSoft v9.0     
+                                                                                                                          
+UVOZ PODATAKA IZ XLS/XLSX FAJLA U BizniSoft 
+  
+USLOVNO FORMATIRANJE TABELA  
+ 
+ 
+  
+Video uputstvo sa opisom sortiranja, filtriranja, grupisanja i uslovnog formatiranja kolona u 
+tabelama možete pogledati na sledećem linku https://www.youtube.com/watch?v=UC_x3nq5Eyw 
+  
+  
+ 
+ 
+Uvoz podataka iz Excel-a  
+  
+BizniSoft pruža mogućnost uvoza podataka iz XLS/XLSX fajla što je naričito značajno sa stanovišta novih 
+korisnika.  
+ 
+Za adekvatan import podataka, neophodno je da korisnik pripremi podatke iz prethodne aplikacije Šifarnik 
+artikala, Poslovnih partnera / Kupaca i dobavljača u XLS odnosno XLSX formatu.  
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 2 
+ 
+ 
+ 
+  
+  Savetujemo Vam da prethodno izvršite proveru tabel â (u smislu ispravnosti podataka) budući da će 
+od kvaliteta izvornog XLS/XLSX dokumenta zavisiti kasniji pravilan import podataka . Ukoliko nemate 
+predznanje i praksu sa radom u Excel -u, molimo Vas da se konsultujete sa našim kolegama iz tehničke 
+podrške za dodatne instrukcije!  
+ 
+ 
+ 
+ 
+ 
+Postupak uvoza Artikala 
+ 
+Prilikom mapiranja polja biće dostupna samo ona koja su vidljiva u Grid -u i ona na kojima je omogućen fokus i edit, 
+što znači da u tabelama (artikli, partneri) prvo treba omogućiti prikaz svih polja Alt + F1 (za širi prikaz kolona u dnu 
+ekrana) i zatim pristupiti uvozu podataka. Naravno, podrazumeva se da izmena podataka F2-Izmene treba prethodno 
+da bude omogućena.  
+ 
+ 
+Pod pretpostavkom da je otvorena nova baza za firmu i da je tabela artikala prazna, najpre čekirajte opciju u dnu 
+ekrana F2-Izmene kako biste omogućili upis a zatim se pozicionirajte u tabeli i desnim klikom izaberite opciju Uvezi iz 
+Excela: 
+  
+ 
+ 
+ 3 
+  
+ 
+ 
+ 
+ 
+ 
+Nakon klika na izabranu opciju, pojaviće se ekran za izbor lokacije. Klikom na odgovarajuću lokaciju na računaru, 
+selektovanjem odgovarajuće datoteke, potvrdite uvoz na polje Open: 
+ 
+
+ 
+ 4 
+  
+ 
+  
+Dobićete Pregled XLS/XLSX tabele: 
+ 
+ 
+
+ 
+ 5 
+ 
+ 
+ 
+ 
+U sledećem koraku, odabraćete kolone za uvoz postupkom mapiranja kolona. Polje Obriši mapiranja je izuzetno 
+koristan taster, budući da briše prethodne korake ukoliko dođe do greške u redosledu i izboru kolona!  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 6 
+ 
+ 
+Klikom na polje Ignoriši prvi red  (narandžasta pozadina po default -u će nestati iz prikaza) a  program će 
+aktivacijom ove funkcionalnosti izostaviti prvi red iz izvorne tabele: 
+ 
+ 
+ 
+Mapiranje kolona i priprema za dalji uvoz, vrši se klikom na Naziv artikla u tabeli iz pregleda a zatim iz padajuće 
+liste selektujte odgovarajuću vrednost: 
+ 
+
+ 
+ 7 
+ 
+  
+  
+Zatim u tabeli kliknite na ćeliju sa obeležjem kolone jedinica mere i po istom principu izaberite JMR iz padajuće 
+liste: 
+ 
+
+ 
+ 8 
+ 
+ 
+Prema istom principu, selektujte odgovarajuće vrednosti iz tabele prema odgovarajućem nazivu 
+kolone iz padajuće liste: 
+ 
+
+ 
+ 9 
+ 
+  
+  
+  
+Nakon mapiranja kolona, klikom na funkciju Ok / Uvezi tabelu, automatski će se upisati u tabelu sv a polja koje 
+ste selektovali prilikom mapiranja:  
+ 
+ 
+
+ 
+ 10 
+ 
+ 
+Prilikom učitavanja podataka, na ekranu će se pojaviti Progresbar, sačekajte da se proces uvoza završi: 
+ 
+ 
+ 
+ 
+
+ 
+ 11 
+ 
+  
+ 
+  
+  
+Ovim postupkom je izuzetno ubrzano preuzimanje podataka, što je naročito  značajno za  knjigovodstvene 
+agencije kod kojih postoji potreba za prevođenjem velikog broja šifarnika poslovnih partnera i artikala.  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 12 
+ 
+ 
+ 
+Postupak uvoza Partnera/Kupaca i dobavljača 
+ 
+Analogno prethodnom postupku, ista funkcionalnost omogućena je u Šifarniku poslovnih partnera.  
+Desnim klikom miša, izborom opcije Uvezi iz XLS/XLSX omogućen je uvoz podataka iz Excel fajla u šifarnik 
+Poslovnih partnera. Obavezno čekirajte F2-Izmene u dnu ekrana a zatim desnim klikom miša, odaberite opciju 
+Uvezi iz Excela: 
+  
+ 
+  
+ 
+Mapiranje kolona i priprema za dalji uvoz, vrši se klikom na Naziv partnera u tabeli iz pregleda a zatim iz padajuće 
+liste selektujte odgovarajuću vrednost: 
+ 
+ 
+ 
+
+ 
+ 13 
+ 
+ 
+Po završetku mapiranja kolona, klikom na funkciju Ok/Uvezi tabelu, pojaviće se progres-bar prilikom učitavanja 
+podataka. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 14 
+ 
+ 
+ 
+Postupak uvoza podataka u Matičnu knjigu radnika 
+ 
+ 
+Isti princip važi i za uvoz podataka iz Excel XLS/XLSX fajla u Matičnu knjigu radnika. Aktivirajte širi 
+prikaz kolona Alt+F1 i omogućite izmene F2-Izmene. Mapirajte odgovarajuće kolone: JMBG, ime i 
+prezime, ime roditelja, datum rođenja, broj tekućeg računa itd iz izvornog Excel dokumenta a zatim 
+kliknite na polje Ok/Uvezi ovu tabelu: 
+ 
+ 
+  
+ 
+  
+  
+   
+   
+  
+
+ 
+ 15 
+      
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Napredno podešavanje tabela i uslovno formatiranje  
+  
+Funkcionalnost naprednog podešavanja svih tabela u BizniSoft -u iz menija na slici u nastavku dobija se desnim 
+klikom miša – pozicioniranjem u određenoj koloni. Klikom na Uslovno formatiranje tabele, otvoriće se susedni 
+podmeniji:  
+  
+
+ 
+ 16 
+ 
+  
+Uslovno formatiranje – Pruža mogućnost obeležavanja kolona na osnovu određenih kriterijuma.  
+  
+Opcija Bojenje opsega, boji opseg kolone prema rastućem odnosno opadajućem nizu a formatiranu kolonu:  
+ 
+  
+  
+
+ 
+ 17 
+  
+ 
+Istu kolonu možemo dodatno prilagoditi klikom na opciju Sortiraj po ovoj koloni ↓↑: 
+ 
+ 
+ 
+
+ 
+ 18 
+ 
+  
+Desnim klikom miša, preko opcije Uslovno formatiranje, zatim Ukloni pravila  sa ove kolone, brišemo zadato 
+formatiranje, a klikom na Ukloni sve sortove, vraćamo se na podrazumevana podešavanja.  
+ 
+ 
+Opcija Grafikoni podataka takođe služi za isticanje najviših vrednosti u određenoj koloni: 
+ 
+ 
+ 
+
+ 
+ 19 
+ 
+  
+  
+  
+Opcija Postavljanje ikona takođe uzima u obzir najviše, prosečne I vrednosti ispod proseka, predstavljajući ih 
+odabranim simbolima:  
+  
+ 
+ 
+  
+              
+
+ 
+ 20 
+ 
+ 
+Opcija Top/Zadnja pravila obeležava entitete koji se nalaze u predviđenom opsegu - Top 10, Top 100 itd. 
+ 
+  
+  
+ 
+ 
+ 
+  
+ 
+Ukloni pravila sa ove kolone (ili svih kolona) – uklanja formatiranja selektovane kolone ili svih kolona. Isti efekat 
+se postiže izlaskom iz aktivnog ekrana – program ne čuva izmene ukoliko se formatirana tabela ne sačuva.  
+  
+ 
+Uredi pravila formatiranja služi za definisanje pravila i uslove formatiranja izabranih kolona. Klikom na Uredi pravila 
+formatiranja otvara se Menadžer pravila uslovnog formatiranja  (Conditional Formatting Manager), služi za 
+definisanje novih pravila i promene postojećih pravila.  
+
+ 
+ 21 
+ 
+ 
+ 
+  
+  
+Novo pravilo  – služi za postavljanje, definisanje novog pravila uz mogućnost definisanja pravila 
+formatiranja za trenutnu sekciju, naziv, vrstu dokumenta, operatera itd: 
+ 
+ 
+
+ 
+ 22 
+ 
+ 
+ 
+Klikom na Novo pravilo, u okviru ekrana Menadžer  uslovnog formatiranja, odaberite neko od ponuđenih pravila a 
+zatim definišite dodatna pravila klikom na polje Formatiranje … : 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 23 
+ 
+Klik na polje Formatiranje… otvara nov ekran za promenu vrste fonta i boje: 
+  
+ 
+Susedni tab Fill nudi niz opcija za bojenje pozadine formatirane kolone: 
+ 
+
+ 
+ 24 
+ 
+ 
+Sva postavljena pravila formatiranja, biće prikazana u štampi izveštaja, desnim klikom izborom opcije Štampaj tabelu! 
+ 
+
+ 
+ 25 
+ 
+ 
+Opcija Edituj pravilo – uređuje neko prethodno postavljeno.  
+ 
+Sva podešavanja mogu se sačuvati klikom na Snimi pravila formatiranja:  
+ 
+
+ 
+ 26 
+ 
+ 
+Pri učitavanju pravila, klikom na opciju Učitaj pravila formatiranja postavljana pravila formatiranja možete primeniti 
+i ukoliko promenite firmu i primeniti pravila formatiranja drugih operatera: 
+ 
+ 
+
+ 
+ 27 
+ 
+ 
+  
+Pozicioniranjem na izabranu kolonu, u bilo kojoj tabeli, desnim klikom miša aplikacija nudi niz funkcionalnosti za 
+napredni rad sa tabelama: 
+ 
+ 
+ 
+ 
+Opcija za pretragu izabrane tabele Pretraži u tabeli analogna je prečici Ctrl+F: 
+ 
+
+ 
+ 28 
+ 
+ 
+Funkcija Štampaj tabelu nudi prikaz izabrane tabele za dalju štampu izveštaja: 
+ 
+  
+  
+ 
+
+ 
+ 29 
+ 
+ 
+ 
+Izvezi u Excel sa pripadajućim funkcionalnostima opisano je na početku korisničkog uputstva, nudi mogućnost prikaza 
+i daljeg rada sa tabelom u integrisanoj formi Excel -a. Osim integrisane forme, omogućen je izvoz u XLSX klikom na 
+opciju Koristi XLSX Format: 
+ 
+ 
+ 
+ 
+Opcija Filtriranje/Grupisanje nudi opcije filtriranja svake kolone: 
+ 
+
+ 
+ 30 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 31 
+ 
+ 
+ 
+Opcija Zaglavlje za grupisanje  pruža mogućnost izdvajanja kolone radi grupisanja određene kolone. Pri vrhu 
+ekrana u polje Prevucite zaglavlje kolona ovde da biste grupisali po tim kolonama kliknite mišem na njen naziv 
+i prevucite mišem  u polje Prevucite zaglavlje kolona ovde da biste grupisali po tim kolonama  i time izdvojite 
+određenu grupu podataka: 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+ 
+ 32 
+ 
+ 
+ 
+ Ukoliko poziciju kolone želite na vratite na podrazumevan prikaz, grupisanu kolonu klikom miša vratite na 
+prethodnu poziciju ili izađite iz aktivnog ekrana.  
+ 
+ 
+ 
+ 
+Opcija Sakrij/Prikaži kolonu uklanja iz prikaza selektovanu kolonu. Opcija Prikaži skrivene kolone, vraća poredak 
+kolona na podrazumevani: 
+ 
+
+ 
+ 33 
+  
+ 
+ 
+ 
+Opcija Fiksiraj red tabele izdvaja jedan ili više selektovanih redova u sam vrh tabele ili u podnožje tabele.  
+Funkcija Ukloni fiksiranja, vraća prikaz redova na podrazumevani: 
+ 
+ 
+
+ 
+ 34 
+ 
+ 
+ 
+Opcija  Sortiraj po ovoj koloni Rastuće/Opdajuće pruža mogućnost sortiranja vrednosti po rastućem ili 
+opadajućem nizu: 
+    
+ 
+ 
+Opcija Sumiraj po ovoj koloni prikazaće sumiranu vrednost iznosa u koloni u dnu tabele: 
+ 
+
+ 
+ 35 
+ 
+ 
+Opcija Prikaži u novoj tabeli, otvara istu tabelu u novom tabu koji možete dalje prilagoditi svojim potrebama a 
+da istovremeno zadržite poredak izvorne tabele: 
+ 
+  
+
+ 
+ 36 
+ 
+ 
+ 
+Opcija Oboji parne redove je omogućena ukoliko korisnik aktivira konfiguracioni parameter u BizniSoft 
+konfiguratoru 10294 – Bojenje parnih redova je podrazumevano: 
+ 
+ 
+
+ 
+ 37 
+ 
+ 
+Opcija Automatska visina reda automatski prilagođava veličinu sadržaja u kolonama tabele: 
+ 
+ 
+ 
+ 
+ 
+ 
+Budući da se u tabeli po default-u ne prikazuje ceo sadržaj ćelije, funkcija Automatska širina kolone proširuje 
+kolonu sa punim prikazom teksta uz mogućnost pojedinačne širine kolone ili svih kolona u tabeli: 
+ 
+
+ 
+ 38 
+ 
+ 
+Opcija Prikaži stavku u tabeli nudi detaljan pregled selektovane stavke. Aktivira se jednostavnim pritiskom na 
+taster F12 ili izborom opcije iz menija: 
+ 
+ 
+ 
+
+ 
+ 39 
+ 
+ 
+Opcija Osveži tabelu ažurira aktivnu tabelu nakon sprovedenih izmena: 
+ 
+ 
+ 
+ 
+
+ 
+ 40 
+ 
+ 
+ 
+ 
+ 
+ 
+U ovom korisničkom uputstvu nastojali smo da opišemo najznačajnije 
+funkcionalnosti vezane za import podataka i postupke u radu sa 
+formatiranjem. 
+Ukoliko imate dodatna pitanja vezana za naše korisničko uputstvo, 
+kontaktirajte našu tehnič ku podršku, pozivom našeg korisničkog servisa 
+011.400.2626. 
+21 
+  
+  
+           
+BIZISOFT TIM  

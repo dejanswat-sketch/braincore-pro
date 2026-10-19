@@ -8,18 +8,43 @@
       "plan": "enterprise",
       "locale": "sr",
       "timezone": "Europe/Belgrade",
-      "apiKeys": [],
-      "budget": { "monthlyUsd": 200, "runUsd": 1.5 },
-      "agentBudgets": { "executor": 20, "sales": 30, "support": 40 },
+      "apiKeys": [
+        {
+          "id": "key_1791465358197",
+          "hash": "b92aad9fad003859fca25fc4aedd4e933603a3e40d15a2ab5a6f79681d3bc57f",
+          "role": "admin"
+        }
+      ],
+      "budget": {
+        "monthlyUsd": 200,
+        "runUsd": 1.5
+      },
+      "agentBudgets": {
+        "executor": 20,
+        "sales": 30,
+        "support": 40
+      },
       "rateLimitPerMin": 120,
       "allowedAgents": "*",
       "hooks": {
-        "email": { "agentId": "support" },
-        "gmail": { "agentId": "support" },
-        "shopify": { "agentId": "ecommerce" },
-        "github": { "agentId": "dev" },
-        "form": { "agentId": "sales" },
-        "stripe": { "agentId": "finance" }
+        "email": {
+          "agentId": "support"
+        },
+        "gmail": {
+          "agentId": "support"
+        },
+        "shopify": {
+          "agentId": "ecommerce"
+        },
+        "github": {
+          "agentId": "dev"
+        },
+        "form": {
+          "agentId": "sales"
+        },
+        "stripe": {
+          "agentId": "finance"
+        }
       }
     },
     {
@@ -29,13 +54,27 @@
       "locale": "sr",
       "timezone": "Europe/Belgrade",
       "apiKeys": [],
-      "budget": { "monthlyUsd": 15, "runUsd": 0.2 },
-      "agentBudgets": { "support": 5, "ecommerce": 5 },
+      "budget": {
+        "monthlyUsd": 15,
+        "runUsd": 0.2
+      },
+      "agentBudgets": {
+        "support": 5,
+        "ecommerce": 5
+      },
       "rateLimitPerMin": 30,
-      "allowedAgents": ["support", "ecommerce", "router"],
+      "allowedAgents": [
+        "support",
+        "ecommerce",
+        "router"
+      ],
       "hooks": {
-        "email": { "agentId": "support" },
-        "shopify": { "agentId": "ecommerce" }
+        "email": {
+          "agentId": "support"
+        },
+        "shopify": {
+          "agentId": "ecommerce"
+        }
       }
     },
     {
@@ -45,8 +84,14 @@
       "locale": "en",
       "timezone": "Europe/Belgrade",
       "apiKeys": [],
-      "budget": { "monthlyUsd": 20, "runUsd": 0.5 },
-      "agentBudgets": { "support": 5, "sales": 5 },
+      "budget": {
+        "monthlyUsd": 20,
+        "runUsd": 0.5
+      },
+      "agentBudgets": {
+        "support": 5,
+        "sales": 5
+      },
       "rateLimitPerMin": 120,
       "allowedAgents": "*",
       "hooks": {}

@@ -1,0 +1,518 @@
+1 
+ 
+BizniSOFT v 9.0                                                                                                                 Mart 2020.g.    
+   
+OBRAČUN ZARADA   
+  
+    
+I DEO – Obračun zarada za lica u radnom odnosu    
+    
+Šifarnik banaka-kreditora    
+    
+Prvi korak u obračunu zarada je popunjavanje Šifarnika banaka -kreditora, koji se nalazi u delu Opšte 
+tabele podsistema.     
+U šifarnik banaka -kreditora unose se podaci o bankama preko kojih se isplaćuju zarade zaposlenih, 
+podaci o kreditorima, kojima zaposleni koji imaju kredite otplaćuju iz zarada, podaci o osiguravajućim 
+zavodima kojima se uplaćuje dobrovoljno osiguranje.     
+Unošenje naziva banaka-kreditora je preduslov za rad korisnika u ovom modulu.     
+Za svaku banku preko koje zaposleni prima zaradu se upisuju sledeći podaci: šifra (koju preporučujemo 
+da bude početna tri broja tekućeg banke) i naziv, dok pošta, mesto, ulica i broj i tekući – žiro račun 
+banke, model i poziv na broj odobrenja se ne upisuju. Za kreditora, odnosno lica ili firme kojima se 
+uplaćuju obustave, krediti, dobrovoljna dodatna osiguranja se upisuju svi podaci osim poziva na broj, 
+jer će on biti upisan u šifarniku obustava. U ovaj šifarnik podaci se unose klikom na dugme <F2> 
+IZMENE, zatim se klikne na dugme <F5> ili klikom na “+” u dnu ekrana za dodavanje novog reda i nakon 
+unosa odgovarajućih podataka tasterom <ENTER> se pređe preko svih polja do narednog reda da bi se 
+uneti red upisao u tabelu.     
+    
+   
+  
+Tabele poreza, doprinosa i vrsti plaćanja i naknada     
+  -  Stope poreza i doprinosa po kategorijama    
+   
+ Otvorene su osnovne kategorije kao npr. Opšta kategorija za koju se plaćaju svi doprinosi i porez, zatim 
+kategorije sa olakšicama, kategorije za ličnu zaradu preduzetnika, korisnik ima mogućnost da otvara 
+nove i menja postojeće. Svaka kategorija sadrži stope poreza i doprinosa na teret radnika i na teret 
+poslodavca tako da se porezi i doprinosi računaju prema ovoj tabeli. Kategorija zaposlenog se upisuje 
+u tabeli Matična knjiga radnika , što je objašnjeno u pasusu matična knjiga radnika ovog uputstva. 
+Funkcija ove tabele je da se kategorija zaposlenog poveže sa šifrom zaposlenog, i u skladu sa 
+parametrima iz te kategorije, program će automatski obračunavati porez i doprinose za konkretnog 
+zaposlenog.   
+   
+
+2 
+ 
+   
+  
+   
+   
+ -  Vrste plaćanja zarade, naknada i dodataka    
+    
+Šifarnik Vrste plaćanja zarada, naknada i dodataka  predstavlja tabelu sa vrstama zarada i 
+određenim parametrima koji su bitni za vrstu zarade i obračunavanje ličnog dohotka. U ovoj tabeli 
+ako ima potrebe, može se otvoriti neka nova vrsta (šifra) zarade. Za promenu podataka i unos 
+novog reda u tabelu treba kliknuti dugme <F2 – Izmene>. Klikom na “+” u donjem delu tabele 
+otvara se nov red. U polju šifra unosi se šifra zarade npr . šifra - 100, opis – redovan rad. Kolona 
+OsnTab označava kojoj osnovnoj tabeli zarada pripada (1 -redovan rad, 2 -Bolovanje preko 30 
+dana, 3-Porodiljsko bolovanje). Kada se mišem pozicioniramo na ovo polje i klikne na taster „+”, 
+nude se nazivi svih tabela i kojoj od njih ta vrsta zarade pripada. Kada se ovaj postupak primeni 
+na svakom plavičastom polju izbacuju se određene opcije. Na pr imer, u koloni Satn. koja 
+predstavlja odabir načina obračuna satnine, nude se sledeće mogućnosti: K – po koeficijentu i 
+minimalnoj ceni rada, P – na osnovu proseka iz prethodnog perioda, N – ne računa se – unose se 
+bruto ili neto iznosi. Korisnik za svako plavičasto polje na ovaj način može da izabere određene 
+opcije. U tabeli se nalaze i odgovarajući računi duguje i potražuje za svaku vrstu zarade. Kada se 
+unesu ili promene potrebni podaci klikne se na dugme OK/UPIŠI.    
+ 
+Bitno je usaglasiti konta za bolovanja u ovoj tabeli. U polju Rn.Dug. umesto 2282 upisati 2252 ili 2251. 
+  
+
+3 
+ 
+  
+   
+   
+ -  Tabela za beneficirani radni staž   
+    
+Unose se procenti, uplatni račun i konta za knjiženje beneficiranog radnog staža.   
+   
+   
+   
+ -  Specifikacija obustava za komore   
+   
+Unose se podaci od značaja za obračun doprinosa komorama na procenat.  Ne važi za komore koje se 
+mesečno plaćaju. 
+  
+  
+
+4 
+ 
+ -  Specifikacija računa za glavnu knjigu   
+   
+Unose se konta za automatsko knjiženje naloga za glavnu knjigu.  Bitno je uneti ova konta pre samog 
+obračuna zarade. 
+  
+  
+   
+   
+  
+  
+Matična knjiga radnika    
+   
+    
+U šifarniku Matična knjiga radnika unose se podaci o zaposlenima i služi kao osnova za obračun ličnih 
+dohodaka, kako neto zarada tako i svih poreza i doprinosa iz zarada. Da bi se videle sve dostupne 
+kolone/dostupna polja u koja se unose podaci neophodno je prvo kliknuti na ikonu kao na slici:  
+  
+  
+
+5 
+ 
+  
+  
+  
+Da bi se uneli podaci o radnicima, klikne se na dugme <F5> čime se otvara novi red. U polje Šifra unosi 
+se šifra radnika, u polje Vrsta isprave unosi se podatak iz padajućeg menija, u polje JMBG unosi se 
+matični broj radnika, tasterom <ENTER>  prelazi se u naredno polje. Sledeći podatak koji se unosi je 
+prezime radnika, ime roditelja, ime zaposlenog. Kada dođemo do polja Status i kliknemo na taster + , 
+ili na padajući meni, otvara se spisak svih statusa zaposenih. Korisnik klikom bira status za određenog 
+zaposlenog (npr. Rad na neodređeno vreme) i upisuje se oznaka statusa.     
+Sledeći podaci koji se un ose su Koeficijent (ako se zarade obračunavaju po koeficijentima, ako se ne 
+obračunavaju po koeficijentu onda ostavljate 0,0000), Pol, Datum rođenja, Mesto rođenja, Opština 
+rođenja, Država rođenja, Pošta, Mesto, Ulica i broj prebivališta zaposlenog, e-mail adresa zaposlenog 
+koja služi za slanje isplatnog listića na mail, Organizaciona jedinica (objekat firme) u kom radnik radi – 
+klikom na taster + otvara se spisak objekata i izabere odgovarajući objekat. U polje Opština poreza 
+unosi se šifra opštine prebivališta zaposlenog. Ako korisnik ne zna šifru opštine treba da klikne na taster 
++, otvara se polje za pretragu u kom se unosi deo naziva opštine. Klikne se na odgovarajuću opštinu i 
+na <OK/Upiši> se ta opština upisuje u matičnu knjigu. Postupak je isti i za polja Opština PIO, zdravstvo 
+i nezaposlenost u kojima se unosi šifra opštine sedišta firme. Zatim se upisuju sledeći podaci: Datum 
+zasnivanja radnog odnosa, Broj ugovora, Godine, Meseci i Dani radnog staža pre zasnivanja radnog 
+odnosa kod ovog poslodavca, Školska sprema,  Procenat minulog rada, Datum minulog rada, Način 
+isplate – klikom na taster + pojavljuju se 3 načina isplate i korisnik bira odgovarajući (tekući račun, 
+
+6 
+ 
+gotovina, štedna knjižica), Šifra Banke – isto se klikom na taster + otvara polje za p retragu, unese se 
+deo naziva banke odakle se izabere tražena. Klikom na <OK/Upiši> šifra banke se upisuje u tabelu. 
+Zatim se upisuje Broj tekućeg računa, a u polju Račun ili PBR klikom na + bira se kako se na virmanu 
+upisuje broj tekućeg računa radnika (U rubriku račun/Poziv na broj odobrenja). Posle toga upisuje se 
+procenat od punog radnog vremena, da li radi kod drugog poslodavca. U polje 12/?? unosi se broj 
+priznatih meseci za 12 meseci rada – beneficirani radni staž. Sledeće polje koje se unosi je Kategorija 
+gde se klikom na taster + otvara tabela Stope poreza i doprinosa po kategorijama , selektuje se 
+kategorija kojoj pripada taj zaposleni (npr. 1. Opšta kategorija) i klikom na <Ok/Upiši> se povlači u 
+matičnu knjigu. U polju Šifra PP klikom na taster +  bira se šifra primaoca prihoda (zaposleni, osnivač, 
+penzioner itd). Ostala polja su Datum prestanka radnog odnosa, Osnov prestanka radnog odnosa. 
+Tasterom <ENTER> prelazi se u novi red da bi se uneti podaci o radniku upisali u tabelu. Zatim se prelazi 
+na deo Podaci o radniku, gde se unosi ugovoreni iznos zarade, obustave i ostali podaci.   
+    
+Procenat minulog rada - Kada se unose podaci u BizniSoft mora se ručno izračunati trenutni važeći 
+procenat za radnika i taj procenat unosimo u program. Program ne računa sam procenat na osnovu 
+datuma zaposlenja.  
+  
+Datum minulog rada  – Označava datum kada treba minuli rad da se uveća za 0,4 %. Kada će radnik 
+napuniti narednu godinu staža da bi mu program uvećao trenutni procenat.  
+  
+Procenat minulog rada program uvećava kada korisnik klikne na opciju Ostali parametri za obračun – 
+Ažuriranje procenta minulog rada. Klikne se na Računaj i zatim na OK/Upiši pre svakog obračuna zarada.  
+  
+  
+ 
+ 
+ 
+
+7 
+ 
+  
+  
+  
+       
+U delu Podaci o radniku izabere se odgovarajući tab i unose se podaci od značaja za obračun kao što su iznos ugovorene 
+zarade i obustave na rate ili procenat.    
+  
+
+8 
+ 
+   
+   
+   
+U Ugovorene iznose zarada unose se ugovoreni iznosi zarada bez minulog rada, bez toplog obroka i 
+regresa za sve radnike. Klikom na <F2 IZMENE>, pa zatim na <F5> otvara se novi red gde se u polje Od 
+datuma unosi datum od kog važi ugovoreni iznos zarade sa napomenom da se uvek upisuje datum od 
+01. u mesecu i iznos koji važi za ceo mesec. U polje Mesečno/Po času se unosi da li je ugovoreni iznos 
+zarade za mesec ili po času rada. U sledećem polju Bruto/Neto stavlja se oznaka B ili N, tj. oznaka da li 
+je ugovoreni iznos bruto ili neto. U polju Iznos unosi se ugovoreni iznos, a u slučaju neto iznosa klikne 
+se na taster + i otvara se prozor u kom se nude opcije neto sa minulim radom i neto bez minulog rada. 
+U odgovarajuću – jednu od njih unosimo neto iznos zarade i  kliknemo na <OK/Zatvori>. Enterom 
+prelazimo na sledeći red i postupak je isti i za ostale zaposlene.    
+Pored ugovorenog iznosa zarada može se uneti i iznos za ostala lična primanja, npr za prevoz ako se 
+svakog meseca isplaćuje isti iznos može se na zeleni  + uneti iznos.  
+   
+Obustava na procenat unosi se šifra zaposlenog, oznaka N ili B tj. da li se odbija od bruto ili neto iznosa, 
+opis obustave, šifra kreditora, procenat, partija – poziv na broj koji će pisati na virmanu, datum od kada 
+počinje obustava, datum do kada traje obustava, račun glavne knjige – konto na koji će se knjižiti 
+obustava.    
+Obustava na rate  koristi se za kredite. Podaci koji se unose su: šifra zaposlenog, opis obustave, šifra 
+kreditora, partija – poziv na broj koji će pisati na virma nu, šifra valute, kurs, procenat provizije, iznos 
+obustave, broj rata, 1. rata, ostale rate, poslednja rata, otplaćeni iznos, datum od kojeg počinje obustava, 
+Koji deo? / što se odnosi na deo zarade od kog se odbija kredit (ako se unese 0, odbijaće se od s vakog, 
+ukoliko se unese broj 1, odbijaće se od prvog dela). Da bi se obustavio iznos od zarade u sva tri polja za 
+rate mora biti upisan iznos.  
+ U Dobrovoljno dodatno osiguranje unose se: šifra zaposlenog, oznaka Z ili P tj. da li ide na  teret 
+zaposlenog ili poslodavca, opis, šifra kreditora, iznos, partija – poziv na broj koji će pisati na virmanu, 
+datum od, datum do, konta duguje i potražuje glavne knjige.   
+   
+
+9 
+ 
+  
+Ostali parametri za obračun    
+    
+Šifarnik Ostali parametri za obračun obuhvata: Fond časova po mesecima, Ažuriranje procenata minulog rada, 
+Prosek zarada iz predhodne aplikacije.    
+Tabela Fond časova po mesecima, koja služi za izračunavanje radnih časova u toku jednog meseca je 
+popunjena do decembra 2030.godine. Ukoliko ima potrebe može se ova tabela korigovati na F2 -
+Izmene.    
+Tasterom <F5> otvara se red u kom se u polje Godina unosi tekuća godina, u polje Mesec redni broj 
+meseca za koji želimo da izračunamo broj dana. Enterom prelazimo u sledeće polje Radnih dana koje 
+se automatski ispunjava i  u polje časova u kom se automatski računa broj časova u tom mesecu. 
+Tasterom <Enter> se prelazi u novi red i u njemu se upisuje godina i naredni mesec, i tako dok se ne 
+unese cela tekuća godina.     
+  
+     
+Kroz opciju Ažuriranje procenta minulog rada proverava se da li je došlo do promene – povećanja 
+procenta minulog rada nekog radnika. U polje Uvećati procenat unesemo iznos za koji uvećavamo 
+minuli rad. Unosi se Zaključni datum i klikne se na Računaj i pojavljuje se radnik ili radnici kojima se 
+minuli rad menja i uvećani procenat minulog rada. Klikom na dugme <OK/Upiši> pojavljuje se prozor 
+Promenjen procenat MR u matičnoj knjizi radnika i potvrdimo sa OK. Time je u matičnoj knjizi radnika 
+upisan nov % minulog rada i budući datum promene procenta minulog rada.  Kroz opciju Prosek zarada 
+iz predhodne aplikacije se unose bruto iznosi i fond časova po mesecima iz predhodnog programa koji 
+služi za izračunavanje proseka zarade zaposlenog ukoliko je na bolovanju ili godišnjem odmoru.   
+   
+   
+   
+ 
+ 
+ 
+ 
+   
+
+10 
+ 
+Obračun zarada    
+   
+    
+Kroz opciju Obračun zarada obračunavaju se zarade zaposlenih u bruto i neto iznosu i obračunavaju se 
+porez i doprinosi iz zarada i na zarade. Sastoji se iz tri dela, deo gde se unose parametri vezani za mesec 
+za koji se vrši obraču n, deo gde se unose radnici za koje se vrši obračun i deo u kojem su podaci za 
+svakog radnika posebno. Izgled je prikazan na slici:   
+   
+  
+  
+Da bi se izračunale zarade zaposlenih prvo je potrebno uneti mesec za koji se obračunava.  Da bi se 
+otvorio novi obračun treba kliknuti na <F2 – IZMENE>, kliknuti na taster F6 za otvaranje novog reda u 
+koji se unose sledeći podaci: Godina, Mesec, Redni broj, Opis obračuna npr. Februar 2020., Časova, 
+Zarada 1 i Satnina 1 (koje se unose samo ako se obračun zarada radi po koeficijentima), Datum valute, 
+Minimalna zarada, Minimalna osnovica, Maksimalna osnovica, Neop. Dop.R i Neop. Dop.P (unose se 
+neoporezivi iznosi dobrovoljnog dodatnog osiguranja). Polja Minimalna zarada, Minimalna osnovica, 
+Maksimalna osnovica, Neop. Dop.R i Neop. Dop.P program automatski preuzima ažurne podatke sa 
+našeg sajta ukoliko imate internet na računaru. Zatim se dalje unose podaci: Princip obračuna (da li je 
+neto ili bruto princip), Neoporezivi iznos zarade (koji se takođe preuzima sa našeg sajta), Preciznost 
+obračuna (zaokružen na dinar ili sa parama), zatim čekira se da li se obračunavaju obustave i bira se 
+redosled obračuna.    
+  
+Prelazi se na srednji deo ekrana u kojem se prvo popunjava Standardni nalog za obračun.  
+Standardni nalog se koristi kada svi radnici jedne firme primaju iste vrste zarade (npr. Redovan rad, 
+Topli obrok i Regres). Prvo se klikne na <F2 IZMENE>, pa zatim u polju Šifra pritisnemo taster + kako bi 
+se otvorila tabela sa vrstama zarada, zatim klikn emo na prvu – 100 Redovan rad, pa na dugme 
+<Ok/Upiši/Kraj> i time se upisuje u tabelu. Zatim u polje Časova unesemo broj časova u tom mesecu, 
+Enterom prelazimo preko polja Bruto i Neto iznos koja ostaju prazna i prelazimo u sledeći red gde opet 
+
+11 
+ 
+u polju šifra pritiskom na taster + biramo odgovarajuću zaradu, npr. 180 - topli obrok, povučemo je u 
+tabelu i unesemo ili bruto ili neto iznos toplog obroka.   
+   
+   
+  
+ 
+Na kraju se obračunava zarada na F5 – Novo zaglavlje, gde se unosi jedan po jedan radnik ili na dugme 
+Obradi sve, gde program automatski unosi sve radnike i za njih obračunava porez i doprinose. Ako je 
+formiran Standarni nalog za obračun donji deo zaglavlja će se ispuniti sam sa svim vrstama zarada koje 
+smo uneli, bruto ili neto iznosima, časovima rada.   
+Ako nije formiran Standardni nalog za obračun, onda u polju Šifra u donjem delu ekrana kliknemo na 
+taster „+“ čime nam se otvara tabela sa vrstama zarada i tu se vidi šifra tražene vrste zarade koja se 
+posle unese u polje šifra stavke obračuna. Autom atski se ispunjava sledeće polje Opis. Unose se broj 
+časova, i bruto iznos u polje Osn.Bruto ili Neto iznos u polje Osn. Neto i pređe u novi red. Kada donje 
+zaglavlje ispunimo odgovarajućim vrstama zarada, klikne se na dugme <Porezi i doprinosi>  gde se 
+otvara tabela Obračuna poreza i doprinosa. Klikne se na dugme <OK/Upiši> i otvara se prozor 
+Obračunat porez i doprinosi  i pritisne se OK. Ako je polje Krediti u središtu forme dostupno tj. postoji 
+mogućnost klika na to polje, to znači da taj zaposleni ima kr edit ili neku obustavu. Klikom na polje 
+Kredit, otvara se odgovarajući kredit ili obustava za tog radnika, klikom na polje Ok/Upiši preuzme se 
+u obračun. Zatim se klikne na dugme <Konfirmiši>, potvrdi se konfirmacija obračuna i klikne se na OK. 
+Za sledećeg zaposlenog klikne se na <F5 Novo zaglavlje>, otvara se novi red i postupak obračuna zarade 
+je isti. Kada se urade i konfirmišu svi obračuni za zaposlene potrebno je konfirmisati ceo obračun u 
+prvom delu ekrana, izabere se obračun koji treba da se konfirmi še, klikne se na dugme <Konfirmiši> 
+javlja se sistemska poruka “Potvrdite konfirmisanje svih nekonfirmisanih radnika”  i potvrdi se 
+konfirmacija. Klikom na dugme Nalog za G.K. formira se nalog za glavnu knjigu i knjiži se u finansijskom. 
+Nakon predaje svih propisanih izveštaja nadležnim organima vrši se Arhiviranje obračuna. Obračun 
+zarada prikazan je na slici.    
+   
+
+12 
+ 
+  
+   
+  
+  
+OBRAZAC PPP-PD – FORMIRANJE I IZVOZ XML FAJLA IZ BIZNISOFTA    
+     
+Za formiranje xml fajla zarada i naknada koristi se funkcija Obrasci/Virmani/Izveštaji, pa opcija 
+Obrazac PPP -PD, klikom na dugme Formiraj automatski će se ispisati redovi na ekranu sa šiframa 
+zaposlenih, šiframa vrsti prihoda i ostalim neophodnim poljima.    
+   
+   
+
+13 
+ 
+  
+Klikne se zatim na polje PPP-PD XML i otvoriće se prozor prikazan na donjoj slici:    
+   
+   
+     
+  
+Obavezno se popunjava polje 1.4. Datum plaćanja. Ako neko od ostalih polja nije popunjeno korisnik 
+mora obavezno da popuni ta polja, osim polja 1.5. Klikom na dugme OK javlja se poruka:     
+ 
+    
+    
+ 
+    
+Ukoliko jeste, klikne se na OK, ukoliko nije, klikne se na Odustani. Klikom na odgovarajuću opciju otvara 
+se prozor u kome se selektuje Direktorijum u koji želimo da sačuvamo xml fajl.    
+    
+
+14 
+ 
+    
+    
+ Označi se ili selektuje direktorijum i klikne na Select. Sledi sistemska poruka:     
+    
+       
+ 
+Nakon snimanja fajla korisnik može da izabere i opciju Štampaj, preko koje se dobija PPP PD u 
+formatu za štampanje. Na isti način se vrši formiranje fajla kr oz opciju Obrazac PPP PD za Ostala 
+lična primanja. Fajl iz Biznisoft-a se na portal poreske uprave učitava preko opcije xml unos.    
+    
+    
+Brisanje obračuna zarada    
+    
+    
+Klikom na opciju Obračun zarada, otvara se prozor u kom se selektuje obračun u kome treba raditi ispravku, 
+ukoliko se obračuni zaposlenih ne vide, kliknite na kućicu “Svi statusi”.  Selektuje se obračun za zaposlenog 
+koji treba da se obriše, klikne se na polje Vrati zaglavlje, pa na polje Obriši zaglavlje.  Obračuni za zaposlene 
+se brišu jedan po jedan ili klikom na polje Obriši sve.  
+  
+    
+
+15 
+ 
+   
+    
+   
+   
+  
+  
+ 
+ 
+ 
+ 
+ 
+  
+Izveštaji za obračun i virmani    
+    
+  
+Izveštaji se mogu dobiti tako što izaberemo Obračun zarada, kliknemo na obračun za koji želimo izveštaje 
+i izaberemo opciju Obrasci/Virmani/Izveštaji, kao što je prikazano na slici:   
+    
+  
+
+16 
+ 
+   
+    
+    
+Specifikacija obračuna po radnicima – klikom na Štampaj se štampaju isplatni listići radnika, klikom na 
+Pošalji email-om se šalju na mail zaposlenih isplatni listići.   
+U delu Ostali izveštaji za obračun se mogu dobiti sledeći izveštaji:   
+   
+   
+
+17 
+ 
+  
+  
+  
+  
+Štampa virmana    
+    
+Virmani se štampaju ili izvoze za elektronsko plaćanje u delu Obrada virmana . Prvo se za 
+odgovarajući mesec u gornjem delu ekrana unese BOP u polje BOP – Broj Odobrenja. Zatim će se 
+u donjem ekranu pojaviti broj odobrenja i može se kliknuti na Obračun/Form iranje. Pojaviće se 
+poruka Virmani formirani i spremni na štampu. Klikom na dugme Prikaz virmana, dobijaju se 
+virmani za štampu.Klikom na polje “ Elektronsko..“ nudi se mogućnost formiranja tekstualne 
+datoteke za uvoz u E -Banking tako što se čekira Program -Klijent za E-Banking FX Client (Pexim), 
+Halcom, Reiffeissen ..   i izabere opcija OK-Nastavi.   
+ 
+        
+     
+  
+ 
+ 
+OBRAČUN PRIVREMENIH I POVREMENIH POSLOVA     
+Za obračun privremenih i povremenih poslova u matičnoj knjizi radnika se radniku dodeli kategorija ili 51 
+ili 52 u zavisnosti da li plaća sve doprinose ili samo PIO.    
+Zatim se u obračunu u gornjem delu ekrana za poresko oslobođenje upiše (nula) 0,00. Slika u nastavku.    
+Obračun se radi kroz poseban obračun, sa tim da prvi obračun  za redovno zaposlene mora biti 
+konfirmisan i arhiviran u osnovnim parametrima.    
+
+18 
+ 
+   
+    
+    
+OBRAČUN ZARADE BEZ ISPLATE NETO    
+Ukoliko firma nije u situaciji da isplati sve doprinose, porez i neto zarade onda je dužna da do kraja 
+meseca plati doprinose za predhodni mesec na najnižu mesečnu osnovicu. Ovakav obračun se u 
+BizniSoft-u obračunava preko opcije Obračun zarade bez isplate neto.    
+U Obračun zarade se na F6 otvara novi red gde se unosi godina, mesec za koji obračunavamo, 
+zatim opis obračuna i ost ali podaci. Program će u opciji Obračun zarade bez isplate neto, 
+doprinose računati na osnovicu koju unesemo u osnovnim parametrima u polju Minimalna 
+osnovica, zato je veoma bitno ovde upisati važeći podatak.      
+Zatim se odmah prelazi na opciju Obračun zarade bez isplate NETO. Otvara se prozor koji je prikazan na 
+slici:    
+    
+                                 
+U levom gornjem uglu se klikne na mesec za koji se obračunavaju doprinosi. Na F5-Novi se otvara 
+novi red gde se unosi šifra radnika i enterom se pređe u novi red. Zatim se unosi sledeća šifra 
+radnika i enterom prelazi u sledeći red. Kada se svi radnici unesu onda se klikne na dugme 
+Konfirmiši sve i obračun je završen. Ako se obračunavaju doprinosi za sve radnike onda može da 
+se, umesto da se unosi radnik po radnik, klikne na dugme Obradi sve.  Kada je obračun bez isplate 
+neto završen vraća se na deo Obračun zarada.  
+Na kraju PPP-PD obrazac se formira na način na koji je već opisan u ovom uputstvu.    
+    
+   
+  
+
+19 
+ 
+  
+II DEO – NAKNADA TROŠKOVA I DRUGA PRIMANJA ZAPOSLENIH    
+    
+Obračun Ostalih ličnih primanja    
+    
+Ostala lična primanja sastoje se iz Šifarnika ostalih ličnih primanja koji se nalazi u Opšte tabele 
+podsistema i Obračuna ostalih ličnih primanja. U Šifarniku ostalih ličnih primanja nalaze se 8 vrsta 
+primanja po čl. 18. U šifarniku se nalaze Neoporezivi iznos, % Poreza, RN glavne knj. Troška, RN g.k. 
+Neto i RN g.k. Porez. U ovom šifarniku se po potrebi menjaju i koriguju ovi parametri.    
+   
+   
+  
+  
+  
+U Obračunu ostalih ličnih primanja u gornjem levom uglu ekrana klikom na taster F6 – Novi obračun 
+se otvara novi red u kojem se unosi godina, mesec i ostali podaci za obračun koji vršimo. Zatim se u 
+gornjem desnom ekranu klikne na vrstu primanja koju obračunavamo i na kraju se u donjem ekranu 
+klikne na F5 – Novi i klikom na taster + u polju šifra otvara se Matična knjiga radnika, selektuje se 
+odgovarajući radnik i sa Ok/Upiši s e povlači u Obračun, unosi se iznos za isplatu i pređe u novi red. 
+Može da se i klikne polje <Formiraj za sve>, izabere način plaćanja, unese se iznos primanja i potvrdi 
+se sa Ok. Time će se obračunati primanja za sve radnike iz matične knjige radnika. Posle toga se klikne 
+polje < Konfirmiši sve>  i potvrdi se sa Ok. Izveštaji, PPP -PD obrazac, specifikacija, virmani i ostalo 
+dobijaju se kroz opciju Obrasci/Virmani/Izveštaji. Obračun ostalih ličnih primanja prikazan je na slici:   
+   
+
+20 
+ 
+  
+   
+  
+   
+   
+   
+   
+    
+III DEO – OPOREZIVANJE POJEDINIH VRSTA PRIHODA GRAĐANA    
+    
+Isplata licima van radnog odnosa    
+    
+Isplata licu van radnog odnosa sastoji se iz tabele Matični podaci lica van RO i Obračuna za isplatu licima 
+van RO. Prvi korak je da se lice kome se isplaćuje unese u šifarnik Matični podaci lica van RO. Klikom na 
+<F2 – IZMENE>, pa na taster F5 otvara se novi red u kom se prvo unosi šifra, zatim u polje JMBG unosi 
+matični broj tog lica, zatim se unese Prezime, Ime roditelje, Ime, Pošta, Mesto, Ulica i broj,  Opština 
+stana, Šifra opšt. doprinosa za zdravstvo, Način isplate gde se preko tastera + bira određen način, zatim 
+Šifra banke, Broj tekućeg računa, Račun ili PBR – Način doznake na tekući račun, i kod polja Šifra PP 
+klikne se na taster + čime se otvara se  prozor šifarnika primaoca prihoda, gde se izabere odgovarajući, i 
+sa Ok/Upiši se povlači u matične podatke. Zatim se enterom prelazi u novi red i time je to lice upisano u 
+tabelu. Zatim se prelazi u opciju Obračun za isplatu gde se u gornjem levom uglu na  F6-Novi obračun 
+otvara novi red u kome se unosi Datum isplate, Opis vrste prihoda , Preciznost obračuna. U gornjem 
+desnom ekranu su u tabeli upisane sve propisane vrste prihoda. U donjem delu ekrana se na F5 -Novi 
+otvara novi red u kojem prvo upisujemo šifru vrste prihoda koju isplaćujemo, zatim u polju Šifra unosi se 
+šifra lica ili se klikne na taster + na tastaturi, otvara se prozor Matični podaci, selektuje se traženo lice i   
+
+21 
+ 
+sa <Ok/Upiši> se povlači u obračun, zatim se bira način isplate, ide se do polja Neto ili Bruto u koje se 
+unosi Bruto ili Neto ugovorena naknada i pređe se enterom u novi red. Klikom na polje  
+Obrasci/Virmani/Izveštaji dobijaju se PPP-PD obrazac, virmani i ostali izveštaji:   
+   
+  
+   
+    
+   
+   
+   
+Obračun za isplatu prikazan je na slici:   
+    
+   
+  
+  
+  
+  
+BIZNISOFT TIM    

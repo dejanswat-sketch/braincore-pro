@@ -1,0 +1,57 @@
+BizniSOFT vi3 - wyew.biznisoft.com = 4 x
+S 2026 ~ oasnovnefunkcle @& Pretaqa @ 3, Mo} Vodit [&) Pometnk ~ G2 Kontakt.) Om A Teme: —_——e= Wise» ( [panel Zatvorive
+Period> 01.01.26 ¥ 19.08.26»  [ Stampz BK D tstortz & Pertnen Bg Arti) «— SIFARNIK ARTIKALAY
+STALNA SREDSTVA LINVENTAR ¢ BIZNISOFT v13 Postovnipartnen Artkh-prozvodi x Planer Info Za Stampu ?
+Sifernik amortizecionih grupa Stra Nazy artkb Am... |Pr.po... |Pret.../5fra amu. ICI. JCK.. |[Rok... [Konto Mesto tr... \Nosioc t... Min.zathe |Opt.zelhe Max.zalhe | Modi... |Acresa artkls Tein TeziCene RSD Koling na... *® +-pODACEO ENTITETU ~
+Grupe 24 poresku amortizeciju > 009203 OGLASNIK BR. 20231037 0 KG 10000 0 Sifra articls 000033
+Tabela knjigovodstvenih racuna > 009205 MASKAMIR.BELA AJSIA 0 KG 71,0000 0 Naz artis COCA COLA
+Sifernik lokac ja > 0928 TESTIPROIZVOD 0 KG 2,0000 0 9 - STATISTIKA ENTITETA - 29,038.26
+Ev Menaje Salnih sredstave > op9209 TEST 2 PROTZvOD 0 KG 1,000 0 Prokrigieno stanse 0,01 |
+Racunovodstvena Smnortizac ija > 009210 |ROBA 20 C KG 2,0000 c Raspolaiivo sta... 0,00
+Poreska amortizacija > 009214 | ANUUIRANIE 0 KG 20000 016220 | Raspoloiive sa .. 0,ce |
+Aktiviranje stalnog sredstve - ~ Tt t | Fakturne cens 0,00 |
+216 | HLEB 0 KG 1,0000 0092156 3 i
+Deljenje inventarskog broje a ais eS 2 3 | Zadnip nab.cena 0,00 J
+217 | BRAS , - 1.0000 -
+Reversi sredstava di satat AL, ~ Z ee — 2 } Prosecna nad.c.. 9,00
+> Evidencija sitnog inventara > 05218 '|S0 L KG 32,0000 0 | Cena bez POY 0,00
+Levedtaji evidencije stalnih sreds 7 009219 | KVASAC G KG 1,0000 c | Cena sa POY 0,00
+Preuzirnanje podetake iz prethox > 009220 | NEKA TEST USLUGA c KG 20000 be | ame = 0,00
+> 009221 | 1¢ PASUL? SA SNICLOM CARNEX 0 Ke | 3,0000 0 mre a a
+t ethodna nodosa ,00
+> 009222 | ISFUZE TEA MANGO 1,5. PET Ly KG 1,0000 6 Pre +nedebe . 0,00
+> 009223 |DCSTAva NtZa STaPA 0 KG 27,0000 c ARTIKAL - OSROVNI PODACI ‘
+> 009224 | DOSTAVA GPSTA STOPA 0 KG | -3,0000 fi Ghia aria ooo
+> 009229 | LENTIR Gi6-$é c KG £,0000 0 Nazv grupe NEXATEG... |
+> 009231 | MTS CLEXTRONSKA DOPUNA c KG 12,0000 c KatahZa bro;
+> 009232 | VIP ELEKTRONSKA DOPUNA 0 KG 0000 0 aan
+> 009233 GLOBALTEL ELEKTRONSKA DOPUNA Ly KG 10000 Ls FirniSoft tarifa i,
+> o10000 ARTIKA 1 KG 12,0000 0 Ops tants ROBASA... —
+> O10001 KUPUS RYPOO 25005 0 KG 32,0000 0 Genera barkod
+> 010002 | KUPUS CARBICE 2 00s c KG 1,009 c JEDINICA MERE I JEDINICNA CENA
+> 010003 | KUSUS MAGNUS 2 $005 0 KG 2,0000 c ee Kon
+> 010004 | ZAKLP POSLOWNOG PROSTORA 0 Ke | 2,0000 0 Fakior edunee 10000
+> 010005 | VINO 0 KG | 3,000 0 sad cata Se iG
+— = = . > 010006 | PARET we oe y Jed.cena - koeficnent 1,0000
+> 010007 ROBA1 0 KG 21,0000 0 KARAKTER ARTIKLA
+Gy OMIVJENE FUNKCUE > 010006 ROEA2 o KG 1,0000 6 Artical jo usuga
+E ; opsti SIFARNICI > 010009 | TEST ARTIKAL 0 KG 20000 c | Artical je srovina
+> 010010 ROEA 20% 0 KG 21,0000 0 nied wreisvod
+a FINANSLISKO POSLOVANIE Sa } Prete s Pemereeves
+> O10011 |ROBA 20% c KG 1,0000 0 Protzved po shvamoj CK
+[E) PDV EVIDENCIIA | SEF > 010012 KARA c KG 2,0000 c Artical je komeson
+75 ROBNO -TRGOVINA > 010013 | USLUGA 0 KG 2,000 0 | ——<= - [Artal je aribsezs
+ZEPROIZVODNIA > O10014 ESPRESO Ly KG 31,0000 Ls | Kooperadja
+fF ERSAHSUSKA OPERATIVA > 095222 | COCA COLA 0 Ke | 3,000 0 S aaale  S aikala
+for] OBRACUN ZARADA > = inde : KG a E i ; i beop.
+STALNA SREDSTVA | INVENTAR >: 025228 |ARTIKAL 1 Z = 40000 bd | | Lot Oi, tacse PACER
+> 095225 | SITAN INVENTAR 0 KG 21,0000 0 | ae jis
+S@. UPRAVLIANJE KADROVIMA ' ; re DD 2
+. wy 000033 |COCA COLA ses - eG] 3.0000] a se Piso «adn
+5S UPRAVLIANJE DOKUMENTIMA Speen
+« « < | d 14: [+ = x 2 we HN OT — — Imes EXO takce 0,00
+ime SPECIFICNI PODSISTEMI 8S 143 od 143 ¥s AS : - : i © il cormeka stopa
+%, ADMINISTRACIIA Atriuti artic =Finansiski podaci Napomena Dogadaji Pofa po iefi Definanje nabavnint cena Nivoi mlha Sifre 90 partnertra = Receotura Artikalu recepturi Specificacja barkodova Serfski brojevi Vrste PDV prometa Pregled dokumenat® | Sass Sfra akoze
+or $ SES RS Get ; Ones aber 7
+{8} F2 - IZMENE sn) AksS Sviartkt v S25 NEC; Pc MPC: CENA; LB Kartice 1 7@3@o K Ee
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBRUCA | 101549299 | 06037402 290-1252-44 007 - VELEPRODAJA CENTRALNI MAGACIN TRX &) f

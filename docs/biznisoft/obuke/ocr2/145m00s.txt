@@ -1,0 +1,65 @@
+SizniSOFT v13 - wea. biznisoft.com - o x
+S 2026 ~ Osnovne funkcle 4& Pretraga Ga 2q oj Vodit [&) Pomeéak ~ GS Kontakt « @=——— 4 Tema: —_——e= WMcse ~ © [TE panel Zatvorisve
+Parody 01.01.26 ¥ 19.08.26 ¥ BK D Istorga & Petnen Ba Artic
+ADMINIS TRACIJA < BIZNISOFT y13 Konfigursanje SenSoft-a x
+Konfigurisanje BizniSoft-a Konfigureconi paremetri Upravtenje sertfikatira Za operaters Za frmu/keenta Za rednu stanicu | Ze ulbou Za cbjekat firme Za vrstu dexumenta BaniSoft
+Shetek Integr iets Aapinee 1D Parametra | Mazi konfigureconog paremetra = Podramumevana... “ Korsnitko ime Ime | prezine Matitni broj OB)
+08 ap avanje . rioda knjizer ‘8 Schr cba area CG ainecee DEMO CPERATER DEMO 000
+>» Upravijanje arhiviranjem podate . x4 =
+uy SS . v NMasifkadis : 101 Osrowia podelavanie JELENA JELENA E 909
+pravijanje operaterime —— - NOVI NOVI OPERATER 900
+> Upravijanje izvestajime 10526 Mice Be Son. Wen Seve? ae OPER BIZNISOPT ADMINISTRATOR 000
+stomatsko usaghSavanje versie programa + aduriray
+> Upravijanje transakeijama 0018 een ee a THILOB2S THLOB2 900
+Upravijanje izgiedom tabela 10917 Awtomatsko usagladavanje verzie programa - forsiral
+Upravijanje sinhronizecijom tabe usaghtavanje
+» Nove postome godine 10616 ve usaghsavanje verzre programs - onemogudi
+Ae proveru . A
+BizniSoft stetusi i drevnici 10293 |BaniSoft Uicenca - Khu? | lodS > > MF = ron
+> Brisenje entiteta bez promete 10291 | BariSoft Ucenca - Nazty konsnka ID Param... = [az konfiguracionog parametre Entket Vrec.entketa Vrecnost Priorket |Napomena “
+Definisar je Opsega s farnike 10292 BaSoft Licenca - Series broj \ Vista parametra : Kanfiguracta {
+Uskladivanje odnosa cena prem 35 Se mrad: hee tab . ~ 7
+a ae a . : NOSE CENG pPrerr 10935 SiariSoft Safeguard - bez tabele KASA v Kasitkadia : 101 Omnovna podelavaria
+ate termine 10930 | BariSoft Safeguard « hortaridko ime ane tae Sen FEREM
+Postavi referentne objekte 10931 |GarvSoft Safeguard -loznks 30075 Deta terminal - podrazumeveni Frmafklzent 10
+levrSi sinhronizadju/replikadju 10536 @arvSoft Safeguard - cmoqué brsanje arhrve 202312 Ponud prvu siobodnu Sfru - arth frmafzent 99
+iniciraj formiranje niveladije po ¢ 10932 BixiSoft Safeguard - vreme erhivirenje 13;00-00 30232 Ponud orvu sebocne difru - artist Frmaykijent 100
+Kontrolni broj po modulu 97 10937 | BariSoft Safeguard - vreme arhivirania 2 17:00200 20232 Ponud pevu siobocnu Sfru - partnen frmaizent 100
+Fiektronsko potpiswanje dokume 10294 |Bojenje pamin redowa je podrazumevano 20223 Omecué evdenayu poslsth mal-ove firmaKkent 3
+agin podatake @ baze 10170 |Data terminal - faz - iqnorté artide bez vaza u objekat 20849 efiskture - Informacon posrednk frmaftljent 99 Bez posreduka
+‘ onitor — tes zor’
+10277 Data terminal - ocuami rezervisane kaline 20549 ef’skture - Informeoon posrednk frmaert 10 Bez posredake
+Podaci o praqramu i licens
+10076 (Data terminal « pocrazumevari 851b76b3-3804-4
+10007 (Osts temnel - port 2 W0SS0 eFaktura - Kjud za autentifkacty Firmakijent 99 ee sd7d04 |
+10008 Data terminal - separator ; - = ’
+ICCCE Oata terminal - sp CIP+ERLAR 00x 20550 effakture - jut zs sutentfkecqu Frmaigent 10
+, = ‘ ieeee Ostum POY ne efskturn jecnak datumu ganze u usilowme kads 20551 efekture -Xonst DEO obrugenjs frmakhert 99
+. hd 20552 effakture - Gmogué bnsarje statusa dokuments Mrmafkkent 99
+OSTALA PODESAVANIA I PUNKCLIE 10357 | Exsterna doxumernts se skladiite na FTP serveru 2
+~~ 20552 efsktura - Cmoqué brsanje ststuss dokumenta frmakhent 10
+10353 |FTP Host [iS —
+OMILJENE FUNKCUE O3S6 FTP Pason A PAARARARARARARA : Onemogud oromenu statuss prinientn e-akturs u = @
+e aes as sumer ©. 4 ae ‘Progedano” orfkkam sinnrorizadije operant ea “1
+OPSTI SIFARNICI sh es e Saas peaarienti ce mijerth Faker:
+u 10355 |FTP Usemame — Sregenane: prllon sores nom led snes memos! tee
+8 FINANSUSKO POSLOVANIE 10$77 | ksraj odjekat SzriSoft-s c 20930 BieniSoft Safeguard - korieriZko ine BienSoft
+[E) PDV EVIDENCIJA | SEF 10928 |Formiranje pazara na osnovu ESF korevtuje parameter 10005 20931 BienSoft Saf 6 -lovirka BienSoft
+1 ROBNO -TRGOVINA 11173 |forsraj server za icencrenje Nema 10932 BiniSoft Safeguard - weme athiviranja BieniSoft 13:00:00
+11067 GIN 24 operaters . ~ Pep rence a .
+TEPROIZVODNIA 10476 |ID sersékata za clecronad potpe 6 20935 BiznSoft Safequard - bez tabele KASA BienSoft
+%» FINANSUSKA OPERATIVA 10404 Iziame fakture - kopiraj orethodni rabat 20935 BiznSoft Safeguard - omogud brisenje artive BiznSoft
+{id OBRACUN ZARADA 10668 poral peeps Gouesconan alos x3 20937 BizenSoft Safeguard - weme ativiranja 2 BienSoft
+ps tners kos Ko gojextu mel jaye :
+ne s = Lii4: eOlprempics - Xjuc zs sulentifkacju Firmaijent 10
+(@ STALNA SREDSTVA | INVENTAR 10087 |KalhJadjs - Nudi zadriu prodainu cenu TOMESCE ET TCaS
+Je. UPRAVLIANJE KADROVIMA 10001 Nijent kort internet VPN konekoju LLI4l eOtpremrice - Mqué za sutentfkecqu Firmafzent 100 94-b535-265 75f8
+765e
+7 10016 |Knja wiogs £2 detextovatim minusrém stanjen
+S% UPRAVLIANJE DOKUMENTIMA seer > sche ee — ——— shade _ 11142 eOlpremmice - Xjuc za autentifixaciu Firmakdient 9
+042 |Kamercttalsta po operateru
+<> SPECIFICNI PODSISTEMI ee === lofhasc2 é7F7-43
+10457 |SOmsury De CES ESR ERTY Li SUSE AG FOES Ee Y 11141 eOtpremryca - hut zs sutentfkecqu PrmaMhernt 99 94-b43F-65 Of v
+ADMINISTRACIIA « « < 350611644 > » m+ =— coe * “ & ¢ Woods? > »9 wt = .oe™* ¥ é i
+{S> Pnkazi podatke Dodaj vrednost | Obrisivrednost Xopiraj Nalep Podraz.qodine Ups / Primeni
+99 | SR"TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBINICA | 101149299 | 06037402 290-1352-44 001 - PRODAVINICA BR.01 TRX &) F F /

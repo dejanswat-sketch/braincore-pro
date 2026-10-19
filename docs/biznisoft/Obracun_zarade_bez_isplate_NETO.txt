@@ -1,0 +1,64 @@
+www.biznisoft.com   Strana: 1 
+ 
+BizniSoft                              2025. god. 
+ 
+ 
+ 
+ 
+Obračun zarade bez isplate NETO 
+ 
+ 
+ 
+ 
+ 
+U Obračunu zarade je potrebno otvoriti zaglavlje sa F6. Unosi se godina i mesec za koji se radi obračun, potvrdi se poruka 
+za preuzimanje podataka na OK, unese se opis obračuna i obavezno se čekira polje Akontacija (Slika 1) i enterom se potvrdi 
+unos do kraja.  
+Program će u opciji Obračun zarade bez isplate NETO, doprinose računati na osnovicu koj a je uneta u zaglavlju, u polju 
+Min.Osnov. (minimalna osnovica), zato je veoma bitno da ovde bude važeći podatak.  
+ 
+ 
+Slika 1 – Obračun zarade – otvaranje zaglavlja 
+ 
+Zatvara se opcija Obračun zarade i prelazi se na opciju Obračun zarade bez isplate NETO. U gornjem levom prozoru se 
+klikne na mesec za koji se obračunavaju doprinosi, na F5 - Novi se otvara novi red gde se unosi šifra radnika i enterom se 
+pređe u novi red bez unosa bilo kakvih iznosa. Zatim se unosi sledeća šifra radnika i enterom prelazi u sledeći red. Kada se 
+unesu svi radnici, onda se klikne na dugme Potvrdi sve i obračun je završen. Ako se obračunavaju doprinosi za sve radnike 
+onda može da se, umesto da se unosi radnik po radnik, klikne na dugme Obradi sve (Slika 2).  
+ 
+ 
+
+www.biznisoft.com   Strana: 2 
+ 
+ 
+Slika 2 – Obračun zarade bez isplate NETO 
+ 
+Kada je obračun bez isplate neto završen, zatvara se taj prozor i vraća se na deo Obračun zarada gde se u tabu Obrasci / 
+Virmani / Izveštaji – Obrazac PPP-PD isti formira klikom na dugme Formiraj, a klikom na dugme PPP-PD XML izvozi i snima 
+na željenu lokaciju (desktop, folder…), a nakon toga uvozi na portal Poreske uprave . Za štampanje obrasca potrebno je 
+kliknuti na dugme Štampaj PPP-PD (Slika 3).  
+ 
+ 
+Slika 3 – Formiranje i izvoz PPP-PD obrasca 
+ 
+ 
+ 
+
+www.biznisoft.com   Strana: 3 
+ 
+U opciji Obračun bez isplate NETO, dugme: 
+F5 – Novi – otvara se red za unos radnika, 
+Obradi sve – podrazumeva se da se obračun radi za sve radnike koji u Matična knjiga radnika nemaju Status zaposlenog 
+“D – Osnivač koji nije u RO”, 
+Potvrdi – potvrđuje se obračun za označenog radnika, 
+Potvrdi sve – potvrđuju se obračuni za sve radnike, 
+Vrati zaglavlje – vraća se obračun u obradu za označenog radnika, 
+Vrati sve – vraćaju se obračuni u obradu za sve radnike, 
+Obriši zaglavlje – briše se obračun za označenog radnika, 
+Obriši sve – brišu se svi radnici iz obračuna, 
+Štampa – štampa isplatnog listića za označenog radnika. 
+ 
+ 
+ 
+ 
+BIZNISOFT TIM 

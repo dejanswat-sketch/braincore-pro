@@ -216,7 +216,14 @@ export async function createApiServer({ node, registry = null, keyIssuer = null,
     if (!url.pathname.startsWith('/v1/worker/') && !allowRate()) return send(429, { error: { code: 'RATE_LIMITED', message: 'Previše zahtjeva; pokušaj ponovo za minut.' } });
 
     try {
-      if (req.method === 'GET' && (url.pathname === '/health' || url.pathname === '/')) {
+      // Koren je do 12.10.2026 vraćao health JSON, pa je dugme „Gledaj živi roj" (vodi na
+      // https://live.braincore.pro) izgledalo kao prazna strana — korisnik nije video roj.
+      // Sada koren vodi na DASHBOARD (`/live`). `GET /health` ostaje JSON (nadzor i provjere).
+      if (req.method === 'GET' && url.pathname === '/') {
+        res.writeHead(302, { location: '/live', 'cache-control': 'no-store' });
+        return res.end();
+      }
+      if (req.method === 'GET' && url.pathname === '/health') {
         return send(200, { ok: true, service: 'braincore-pro-api', nodeId: node.nodeId, uptimeMs: Date.now() - startedAt, npmDependencies: 0 });
       }
       if (req.method === 'GET' && url.pathname === '/status') {

@@ -1,0 +1,453 @@
+ 
+PODSISTEM UPRAVLJANJE KADROVIMA 
+ 
+ 
+Postoje tri načina za pravilan unos zaposlenih radnika u Kadrovsku evidenciju: 
+▪ Preko eksporta (prethodno unetih) podataka u modulu Obračun zarada ili ručnim 
+unosom zaposlenih u tabelu Evidencija zaposlenih 
+▪ Preko ručnog unosa zaposlenih u Evidenciji 
+▪ Preko čitača LK, klikom na F2-Izmene a zatim na polje Čitač LK, Pročitaj podatke 
+ 
+Podaci za obračun zarada 
+ 
+Ukoliko se korisnik opredeli za prenos podataka iz modula Obračun zarada, postupak bi bio sledeći: 
+Klikom na funkciju Evidencija zaposlenih – dodatni podaci, zatim na Podaci za obračun zarada, u 
+glavnoj formi pojaviće se prazan ekran. Aktivacijom F2 – Izmene a zatim klikom na polje 
+Imp/Eksp pokrenućete proces importa podataka: 
+ 
+ 
+Na ekranu će se pojaviti sledeća forma dijaloga: 
+
+2 |  
+ 
+ 
+ 
+Izabraćete opciju Importuj podatke iz Matične knjige radnika u Evidenciju zaposlenih i potvrdite klikom 
+na polje OK. Sledi nova sistemska poruka Potvrdite dodavanje zaposlnih u Evidenciju zaposlenih, 
+potvrdite klikom na polje OK: 
+  
+Na ekranu će se pojaviti sledeće obaveštenje: 
+ 
+ 
+
+3 |  
+ 
+ 
+Preneti podaci će biti prikazani u glavnoj formi: 
+ 
+Dalje ažuriranje podataka o zaposlenima odvija se u formi Evidencija zaposlenih – osnovni podaci i 
+prikaz: 
+ 
+
+4 |  
+ 
+ 
+Evidencija zaposlenih – Osnovni podaci 
+ 
+Drugi način za unos podataka vrši se direktno u okviru ekrana Evidecija zaposlenih, klikom na polje 
+Izmene – F2. Pritiskom na taster F5 – Novi zaposleni, u zaglavlju forme otvoriće se prazan red za unos 
+podataka: 
+ 
+U ovom slučaju, unosimo: ime i prezime zaposlenog, JMBG, pol i podatak o datumu zasnivanja radnog 
+odnosa. Tasterom Enter prelazimo preko kolona Organizaciona jedinica, Radno mesto budući da još uvek 
+nismo formirali Sistematizacije radnih mesta. Klikom na polje Potvrdi – F4 u dnu forme definisaćemo 
+datum pod kojim će se uneti podaci sačuvati u bazi: 
+
+5 |  
+ 
+ 
+  
+ 
+ 
+U gornjem desnom delu ekrana, omogućen je unos dodatnih podataka o zaposlenom. Klikom na polje 
+Izmene - F2 unećemo dodatne podatke o zaposlenom koji je u prethodnom koraku selektovan u tabeli 
+klikom miša:  
+
+6 |  
+ 
+ 
+ 
+ 
+U polju Veroispovest, pritiskom na taster + na tastaturi, konsultuje se Šifarnik konfesija u kojoj je 
+potrebno najpre omogućiti izmene aktivacijom polja preko tastera F2 a zatim pritiskom na taster F5 – 
+Nov slog uneti odgovarajuću konfesiju: Pravoslavna, Rimokatolička, Islamska itd. 
+
+7 |  
+ 
+ 
+ 
+Nakon ažuriranja ovog šifarnika, selektovaćemo odgovarajuću konfesiju i pomoću tastera Escape ili 
+klikom na polje OK/Upiši uneti veroispovest za zaposlenog. 
+ 
+Pritiskom na taster + u polju Slava1 program konsultuje šifanik Verskih praznika koji ažuriramo po istom 
+principu: 
+
+8 |  
+ 
+ 
+ 
+U koloni Šifra konfesije, tasterom + pozivamo Šifarnik konfesija, selektujemo odgovarajuću šifru 
+konfesije i preko tastera Escape ili OK/Upiši, unosimo odgovarajuću šifru: 
+ 
+
+9 |  
+ 
+ 
+Zatim unosimo datum verskog praznika/slave, zadržaćemo obeležje Fiksno u chekbox-u i potvrditi unos 
+klikom na polje OK/Upiši: 
+ 
+Da bi program unete izmene upisao u bazu, neophodno je da kliknemo na polje Potvrdi – F4 u dnu 
+ekrana i sačuvamo pod određenim datumom. U ovoj formi, program podrazumevano nudi današnji 
+datum koji korisnik može da prekuca i unese pod prethodno zadatim datumom, izabranim u momentu 
+prvog upisa zaposlenog. 
+ 
+ 
+Klikom na polje Spisak promena u zaglavlju forme, program će u tabelarnom prikazu ponuditi hronološki 
+prikaz izmena za određenog zaposlenog: 
+
+10 |  
+ 
+ 
+ 
+Tab Kontakt podaci, u desnom delu ekrana namenjen je unosu podataka o prebivalištu i drugim kontakt 
+podacima zaposlenog: 
+
+11 |  
+ 
+ 
+ 
+Taster u dnu ekrana Odustani - F6 omogućuje povratak na kompletan spisak zaposlenih: 
+ 
+Da bismo pristupili daljem ažuriranju podataka, potrebno je sprovedemo ažuriranje sledećih grupa 
+šifarnika podsistema:  
+▪ Školske preme i kvalifikacije  
+▪ Ostali šifarnici kadrovske evidencije  
+▪ Organizaciona struktura i katalog poslova  
+▪ Vrste i šifarnici kurseva, treninga, obuka 
+▪ Vrste zahteva i rešenja 
+ 
+
+12 |  
+ 
+ 
+ 
+ 
+Školske spreme i kavlifikacije 
+ 
+Budući da je Šifarnik stepen Školske spreme je zajednički za sve baze. Korisniku je prilikom ulaska u ovaj 
+šifarnik već ponuđen popunjen šifarnik koji dalje može da ažurira pritiskom na taster F2 - Izmene i 
+prilagođava potrebama u skladu sa kadrovskim regulativama preduzeća: 
+ 
+
+13 |  
+ 
+ 
+ 
+ 
+Školska sprema 
+Šifrnik Školske spreme korisnik ažurira u skladu sa kadrovskim regulativama na nivou preduzeća, 
+pritiskom na taster F2 – Izmene a zatim pritiskom na taster F5 za unos novog sloga: 
+
+14 |  
+ 
+ 
+ 
+Po istom principu, održavaju se i ostali šifarnici u delu Školske spreme i kavlifikacije. 
+ 
+Ostali šifarnici kadrovske evidencije  
+ 
+U okviru stavke Ostali šifarnici, održavaju se sledeći šifarnici: 
+▪ Strani jezici 
+▪ Šifarnik konfesija 
+▪ Vrste zabeležbi 
+▪ Definisanje DMS dokumenata 
+ 
+Budući da je Šifarnik stranih jezika zajednički za sve firme, korisniku se pruža mogućnost da unosi 
+dodatne podatke ili menja postojeće (aktivacijom F2 – Izmene, odnosno unosom novog sloga pomoću 
+tastera F5) u skladu sa kadrovskim regulativama predzeća: 
+
+15 |  
+ 
+ 
+ 
+ 
+Postupak održavanja Šifarnika konfesija opisan je u oviru poglavlja Evidencija zaposlenih. 
+ 
+Definisanje DMS Dokumenata 
+ 
+Aktivacija ove opcije podrazumeva prethodnu obradu ugovora u podsistemu Odnosi sa klijentima, čiji 
+ćemo postupak objasniti na kraju ovog korisničkog uputstva.  
+ 
+Klikom na F2 – Izmene a zatim na F5 – Nov slog, unosimo šifru dokumenta, naziv i odgovarajuću šifru ID 
+DMS-a: 
+
+16 |  
+ 
+ 
+  
+Prelaskom u sledeći red pomoću tastera Enter, unosimo nov slog: 
+ 
+
+17 |  
+ 
+ 
+ 
+Organizaciona struktura i katalog poslova 
+ 
+Kroz grupu šifarnika Organizaciona struktura obrađuje se Sistematizacija radnih mesta. 
+Šifarnik radnih mesta održava se u skladu sa kadrovskim regulativama preduzeća. Klikom na checkbox ili 
+pristiskom na taster F2 – Izmene a zatim pritiskom na taster F5 za unos novog sloga: 
+ 
+ 
+Po istom principu prelazi se na ažuriranje Šifarnika složenosti poslova: 
+
+18 |  
+ 
+ 
+ 
+Prema istom principu ažurira se Šifarnik Organizacionih jedinica: 
+ 
+ 
+
+19 |  
+ 
+ 
+Sistematizacija radnih mesta 
+ 
+Sledeći korak odnosi se na formiranje Sistematizacije radnih mesta. Svaka nova Sistematizacija radnih 
+mesta, sastoji iz zaglavlja i stavki sistematizacije, unosi se čekiranjem F2 – Izmene i pritiskom na F5 - 
+Nova sistematizacija u dnu ekrana. U zaglavlju svake sistematizacije unosi se datum početka važenja 
+sistematizacije i organizacioni deo na koji se ta sistematizacija odnosi. Jedna sistematizacija se uvek 
+odnosi na samo jedan organizacioni deo! Za jedan datum i jednu organizacionu jedinicu, može postojati 
+najviše jedna sistematizacija: 
+ 
+ 
+Ukoliko je u okviru započete (nove) sistematizacije potrebno otvoriti novo radno mesto, pritiskom na 
+taster F6 – Novo radno mesto, otvara se nov red u donjem delu ekrana, u okviru kog se unose potrebni 
+podaci za novootvorenu poziciju: 
+
+20 |  
+ 
+ 
+ 
+ 
+
+21 |  
+ 
+ 
+Svaku sistematizaciju radnih mesta možete štampati klikom na polje Štampaj u dnu ekrana: 
+ 
+ 
+Vrste i šifarnik Kurseva/Obuka/Treninga 
+ 
+U ovom delu podsistema, održavaju se šifarnici o svim vrstama obuka zaposlenih.  
+Šifarnik vrsta Kurseva/Obuka/Treninga namenjen je evidenciji različitih vrsta treninga: In-house, 
+webinari, seminari itd: 
+ 
+ 
+U Šifarnik KOT-a unose se različite obuke prema nazivu organizatora, edukativnog centra itd: 
+ 
+
+22 |  
+ 
+ 
+ 
+ 
+Vrste zahteva i rešenja  
+ 
+U ovom delu podsistema, nalazi se nekoliko grupa rešenja (rešenja o radu, aneksi rešenja o radu, zahtevi 
+zaposlenih i rešenja o isplati novčane pomoći itd: 
+ 
+ 
+Evidencija zaposlenih – Dodatni podaci 
+ 
+Članovi porodice 
+ 
+Evidencija o članovima porodice unosi se kroz posebnu opciju Članovi porodice: datum upisa, JMBG 
+člana porodice, ime i prezime, datum rođenja, pol, srodstvo, zdravstveno osiguranje itd: 
+ 
+
+23 |  
+ 
+ 
+ 
+Spisak članova porodice za zaposlenog nalazi se u delu Izveštaji kadrovke evidencije – Spisak članova 
+porodice zaposlenih 
+ 
+ 
+Prethodno radno iskustvo 
+ 
+Prilikom evidentiranja prethodnog radnog iskustva unose se podaci vezani za rad u prethodnim 
+organizacijama: 
+
+24 |  
+ 
+ 
+ 
+Štampa radne biografije omogućena je klikom na polje Štampaj: 
+ 
+
+25 |  
+ 
+ 
+Podaci za obračun zarada 
+ 
+Postupak rada, detaljno je opisan na str. 1. 
+ 
+Kvalifikacije i stručno osposobljavanje 
+ 
+Evidencija o kvalifikacijama za svakog zaposlenog: 
+ 
+Podaci o obrazovnoj instituciji: 
+ 
+ 
+ 
+ 
+
+26 |  
+ 
+ 
+Podaci o stepenu znanja stranog jezika: 
+ 
+ 
+Evidencija rešenja i zahteva 
+ 
+U ovom delu podsistema, unose se ugovori i aneksi o radu, hronološki, za svakog zaposlenog: 
+ 
+ 
+Pregled rešenja o eventualnom odsustvu za zaposlenog: 
+
+27 |  
+ 
+ 
+ 
+ 
+Evidencija KOT 
+ 
+U ovom delu podsistema, evidentiraju se treninzi, obuke – razvoj novih ili usavršavanje postojećih 
+veština za svakog zaposlenog. Evidentiranje je podeljeno u dve nezavisne grupe – Izvan firme i treninzi U 
+firmi: 
+
+28 |  
+ 
+ 
+ 
+Po istom principu, u susednom tabu U firmi, evidentiraju se treninzi unutar kompanije: 
+ 
+Forma izveštaja o učesnicima treninga, dobija se klikom na polje Štampaj u dnu ekrana. 
+ 
+
+29 |  
+ 
+ 
+Evidencija zabeležbi 
+ 
+U ovom delu podsistema, omogućen je unos dodatnih napomena za zaposlene. 
+ 
+Sve evidencije unete u ovoj formi biće vidljive u formi Evidencija zaposlenih – Zabeležbe i prikazane u 
+pregledu za štampu klikom na polje Kartica: 
+ 
+ 
+ 
+ 
+
+30 |  
+ 
+ 
+Zdravstveno stanje radnika 
+ 
+Evidencija o zdravstvenom stanju zaposlenih evidentira se u različitim tabovima: Pojedinačni lekarski 
+pregledi, Bolesti, Ograničenja radne sposobnosti, Invalidnost, Sistematski pregledi itd: 
+ 
+ 
+Izveštaj o ovoj vrsti evidencije dobija se klikom na polje Štampaj: 
+
+31 |  
+ 
+ 
+ 
+ 
+Izveštaji kadrovske evidencije 
+ 
+Izveštaji koji se nalaze u ovom delu podsistema, standardno se formiraju prema određenom datumu (iz 
+tekuće/izabrane godine): 
+▪ Spisak zaposlenih radnika 
+▪ Spisak novozaposlenih radnika 
+▪ Spisak radnika koji su napustili firmu 
+▪ Spisak članova porodice 
+▪ Znanja i veštine pre dolaska u firmu 
+▪ Plan obrazovanja zaposlenih 
+▪ Radni staž zaposlenih / ukupni / i u organizaciji 
+ 
+
+32 |  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+33 |  
+ 
+ 
+Definisanje šablona dokumenata 
+ 
+U ovom uputstvu navešćemo osnovne korake za uvoz dokumenat a u podsistemu Odnosi sa klijentima 
+preko opcije Definisanje šablona dokumenata . U formi glavnog ekrana korisniku je na raspolaganju niz 
+dokumenata koji su zajednički za sve baze u BizniSoft -u. Ukoliko korisnik želi da doda nov dokument, 
+potrebno je da najpre aktivira F2 – Izmene u dnu ekrana a zatim pritiskom na taster F5 ili klikom na zeleni 
+plus u dnu ekrana, otvara se nov red za unos. Potrebno je unet naziv dokumenta i u koloni Dokument, 
+klikom na polje ...  odabrati odgovarajuću lokaciju na računaru na kojoj je prethodno snimljen dokument, 
+isključivo u .docx formatu! 
+ 
+
+34 |  
+ 
+ 
+ 
+Klikom na polje OK/Upiši uvezeni dokument biva upisan u bazi. 
+ 
+Klikom na funkciju Kreiranje dokumenta na osnovu šablona, u spisku ponuđenih šablona odaberite 
+odgovarajući tip ugovora, zatim pređite u desni deo ekrana, u tab Upravljanje kadrovima i selektujte 
+zaposlenog: 
+
+35 |  
+ 
+ 
+ 
+Klikom na polje u dnu ekrana Primeni parametre unećete sve parametre i promenjive koje ste 
+prethodno uneli prilikom uređivanja dokumenta. Detaljno korisničko uputstvo za rad sa BizniSoft DMS – 
+Kreiranje šablona, dostupno je klikom na link.  
+ 
+Prikaz ugovora sa odgovarajućim nazivom fajla možete snimiti klikom na polje Obrada dokumenta i 
+unosom odgovarajućeg naziva i opisa: 
+
+36 |  
+ 
+ 
+  
+ 
+
+37 |  
+ 
+ 
+Javlja se sledeća sistemska poruka, potvrdite sa OK kako biste dokument sačuvali u bazi dokumenata: 
+ 
+Pregled svih snimljenih dokumenata nalaze se u funkciji Pregled/izmena dokumenta: 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+BIZNISOFT TIM 

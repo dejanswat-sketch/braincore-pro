@@ -1,0 +1,42 @@
+BizniSOFT vi3 - wrew. biznisoft.com - o x
+S 2026 ~ Osnovnefunkcle 4® Pretraga GRO 2, Mo} vod [&) pomotak ~ 2 Kontakt ,) @=—— A | Teme: —_—e= MWMse » TT Panel Zatvorisve
+Perio¢y 01.03.26 v 19.08.26 v Fil - Potwedi Sp (Shft) F3 - Knjidenje > [*} Stomraj BK [> Preuzmi G Omatiy D torts & Pertnen Be Arti «=©OBRADA DOKUMENTA~
+PDV EVIDENCIJA | SEF < BIZNISOFTv13 izbzna fektu Opcje stocnrania 6_27502
+Opita POV Evidendje _ OB) |Broj raguns + Detum pro. Stomniraj knjiZenja i vrati u obradu Ibor daturra storno naloga ystava P.. Status Ukupno nos Fakturés... eFakture Stomo Fis... POP...|Vrste PDV prometa PDV Operater |0... ‘
+Fiektronska evidencija PDV 00 le 30.06.25 co 5 é . ; rat 23 pol 1.800,00 300,00 LS Sprenno (A) 3.2 Promet za koj je poreski DEO
+5 A Stornraj sve rw y FY =! Pen - 10.08 36 , |
+> Posebna PDV evidencija 0O1RNOO1100024 30.06.25 Se Ries moe ii aloga/Prometa: 19.08.26 Vv & prevoz ¥) 46 1.800,09 300,00 "3; Dolaument st 3.6 | Smangenge canovice, odnosno DExO
+Viste PDV promete CO1 RNOO110002%5 19.08.26 © Storniraj dokurnent | knjenja Datum wdavanja: 19.08.26 + = prevozr 201 12.000,00 2.000,00 |<" Peslato 6 3.2 Promet za hoz }# pores O&O
+Sifernik knjizenja u POV evidenci 97 |pnoo1100027 19.06.26 DatimPDV. 19.08.26 || |wprevoe vy % 12,000,00 2,000,090 |» Storirene 3.2 | Promet za koj je poreski DEMO |
+levrSi sinhronizadju eFoxture 001 RNODL100073 19.06.25 Samo formial now $ prevoz po 12,000,090 2.000,00 = Podato 3.2 Promet za koj je paresid DEMO
+ery hel a pistes 001 |RNOO1100030 19.06.26 é prevor “) 6 590.000,00 0,00 4) Sprenne 3.4 Promet za hop obveznk POY DEMO
+regied posiatih eFakture ~ 3 = . <= = ' ST > > a tae t @ ~ T
+Pregled spremnih nepostatih dok 001 RNOO1100031 19.06.25 Wrists PDV u stomo nalogu é prevoz poi 360,00 60,00 | Spremno 3.2 Promet za koj je poreski v DEMO |
+: 001 RNOO1L100032 19.06.25 4 prevoz “| 46 12.000,09 2,006,909 —  Dolaument str 3.6 Smanjenge canavice, ocnosno DEO
+Upravijanje fajlovime eFakture Xopira} s3 ongnainog naloga
+Pajedineéna evidendije POV - evi Toa gen oii
+Zdirna avidendjs POV-evidentit _| © Smanente/Povecanje neknade/POV Testenrsoy ,
+Evidencija prethodnag PDV - evic Ke & < Qiod25 > ; rg
+Rekspitulaaje PDV evidencije PRIKAZI SVE DOKUMENTE OK / Potvrdi [Ss MANDOTEX DOO PROKNJIZENO Osvez
+Definisanje Zuzetaka 24 CFAKUC \y
+Notifikacije storniranih dokurnen Stave Q okuments Valute p OVO JE NEPOVRATNA AKCDA! Knivenja Dogadaji Pola poze Vezridokumenti Serfskibrajew Obavestenja Garancje
+Obavestenje primaoca o prethoc RBR Sfra Nazy etka runner ae ru eeary patiewe Huwe wav ves ftosec TR |Vrednost Konto Nazw masta troska Nazy nosioca troska «=| POP... Vrsta DV prometa PDV... Vreme emene Operater
+> 1) 900002 |SAKSIJA0,45 1,00 12.900,00 9,00 0,00 12.000,00 13401 3.2 Promet za kop je poreshi 5 19.06.25 13:11:32 | DEMO
+iy OMILJENE FUNKCUE
+§ opsti SiFARNICI
+8 FINANSIISKO POSLOVANIJE
+TU} ROBNO -TRGOVINA
+SEPROIZVODNIA
+> FINANSUSKA OPERATIVA
+{a OBRACUN ZARADA }
+xe 0001 UKUPNO 24 COKUMENT 1,00 0,00 12.000,00
+(@> STALNA SREDSTVA | INVENTAR i © 1ed1 Pam cere coe eT ‘ ¢
+& J — = ee
+PSE IANE KADER OVI F5-Nova Obrisidokument Stempaj ¥v Obrifi stavke 9 - lern.cene ers P ‘
+SS UPRAVLIANJE DOKUMENTIMA ing pee i
+a 0... | Braj naloga Datum Part... (Naziv partnera Koléina Cena Prev... |[en.rabat [Pre.a... Tn.ake.r...|/Nab.cena [Proc RUC Imnos RUC | Cena bez...|\Cena se... VP Vredn...|MP Vredn...|Mesto TR Nosoc TR | Vreme ora Operater a
+iS SPECIFICNI PODSISTEMI 001/RNO01100025 19.08.26 04776 ONEVNIPAYAR 1,00; 10.000,00 0,00 0,00, 0,00 0,00 20.000,00 0,09 0,00 10.000,00 12.000,00 10.000,00' 12.000,00 19.08.26 12 |
+“> ADMINISTRACIIA 001)/RNOD1100029 | 19.08.26 04769 NIKOLA VIDAKOVIC PR URBAN STAN 1,00) 10.000,00 0,00 0,00) 0,00 0,00) 20.090,00 0,00 0,00/ 20.000,00) 12,000,00 10.000,00, 12.000,00 19.08.26 1553 DEMO: :
+sop, _ O01 RNOD1100021 22.07.76 04776 ONEVNT PAYAR 1,00 333,33 9,00 0,00, 0,00 9,00 333,33 0,00 33,33 333,33 400,00 333,33 400,00 72.07.26 13251 (OeMO
+“F001 R0901100005 | 22.04.26 _ 04766 | ONEVNI PAYAR 1,00 300.09 0,00 Occ) 6.00 9,00 300,00 0.09 0,00 300,00 360.09 309,00 0,00 22.04.26 11:21:05 | DEMO ’
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBINJCA | 101149299 | 06037402 290-1252-54 003 - PRODAVNICA BR.01 TRX &) F F

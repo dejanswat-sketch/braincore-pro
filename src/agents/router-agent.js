@@ -39,6 +39,7 @@ export function createRouter({ catalog, llm, embedder, logger, metrics } = {}) {
     const table = catalog.routingTable().map((a) => `- ${a.id} (${a.domain}): ${a.description}`).join('\n');
     const res = await llm.chat({
       model,
+      fast: true,            // HIBRID: rutiranje je kratko i deterministicko -> brzi model (gemma3:4b)
       temperature: 0,
       maxTokens: 200,
       responseFormat: { type: 'json_object' },

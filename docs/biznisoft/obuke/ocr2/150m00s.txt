@@ -1,0 +1,58 @@
+BizniSOFT v1i3 - ww. biznisoft.com = o x
+S 2026 ~ Osnovne funkcle 4& Pretraga Gap 2, Mo) Vodit [) Pomoénk ~ 2 Kontakt ,) @=—e 4 Teme: —<e= MWMse ~ ( [TE Panel Zatvorisve
+Parody 01.01.26 + 19.08.26  [ Stampa BK D tstortz & Petnen Ba arth
+ADMINISTRACIJA < BIZNISOFT v13 Konfiguresnje BznSoft-a x
+Konfigurisanje BizniSoft-a Konfigureconi paremetri Upravtenje sertifikativa Zz operatere Zafrmu/kwenta Zarednustanicu Zeubou Za obdjekat firme Zawstu dokumenta BantGoft
+en Integritete apes 1D Parametra | Maziv konfigureconog paremetra = Podrazumevana... * Ste Naz firme / Kfenta Mesto Adresa PIB :
+Zakijucavanje perioda ks seus 10011 Vesta Ztamoe Grafts 7 OBUKA 22.04.26 BEOGRAD NEGOSEVA 111 111222333
+> Upravijanje orhiviranjem podate 10405 (WMS Intecracys 8 NIXOUA VIOAKOVIC PR URBAN STAN LOZNICKOPOLIE «BRACE JUGOVICAt 115617352
+Upravijanje operaterime - y > 9 DASIGO 0.0.0. BEQGRAD BEOGRAD (ZEMUN) ALTINA GRIGORIIA BOZOVICA 9A 102749689
+om 10568 | WMS Intecracjs - op 2 os * ee f
+> Upravijanje izvestajime PEE RSS 20 OBUKA 22.07.2026 BEOGRAD NIEGOSEVA 19 111555333 |
+> Upravijanje transakeijama AV na! «_ VLADIMIR PANTELIC PR FRIZERSKI SALON HAIR BEOGRAD (NOVI Sa =
+ite - C:Ysers'fims » as EF e REO , JURIIA GAGARINA 219 A 105322239
+Upravijanje izgledom tabela 10409 WMS outanga fokdera IN a 2 tog | STYLE PANTELIC BEOGRAD BEOGRAD) :
+Uprevijenje sinhronizscjom tabe ay 93 SR TEST FIRMAT BEOGRAD LUKE CELOVICA TREBINICA 101193233
+> Nave pesiome godine TERE ES putas eT, Oh iipexcan 100 OBUKA 17.6,2026. BEOGRAD (SAVSKI LUKE CELOVICA TREBINICA 33 .
+BizniSoft stetusi i dnevnici 10407 WMS Sifra mageans o « « ¢€ 12015 > »9 D+ = ek tees bag
+> Brisanje entiteta bez promete sO IS pacorniary: oe 2 cereale lod nae ID Para... = ¥ Naz konfiguracionog perametre Entket Vred.entkets ¥ Vrednost Priorket |Napornena
+Definisanje opsega Sfarnike 11123 | efaktura - roy otpremnice je yednak bro dohumenta \ ¥rsta paramotra < Kanfiguracta
+Uskladivanje odnosa cena prerme NCS | efsktura - & or $3 + brosu fait : .
+Dat % sik ; oN ened Stren be bc ital lee v KlseSkadie : 101 Orne podedavarija
+ata termina eFakturs - Broj poeude/naruddbenice je jednak broju
+s0s01 | Ss - Eroj je) - Sas are a ¥ deent 2 posrednik:
+Postevi referentne objekte dolaumenta 210543 efekture - Informacom posrecnk Frmafizent 99 Bez posredrka
+TS ; - Pacura - 3 valutnom kisuz. > S5fb7EbS-3304-4
+levrdi sinhronizadju/replikadju i0ees primer os ha ene 0550 oFaktura -Xjut za autentifkacty Fimaftijent 99 bbs 333¢ 1d7da4
+Kontrolni broj po modulu 97 10SS0 s®akturs - Khut ze sut=nbficeqqu } 30552 effakture - Omoqusé bnsangje statuss dokuments Prmafijent 9s @ ‘
+Fiektronsko potpisvanje dokume 105S1 | afaktura -Korst DEMO omuzenje a 19fb35¢2-4717-43
+Uvoz-Izvoz podataka iz baze a LM4) cOtpremrica « hud za autentifkact Fimaktent 99 94-b435.c6576f8
+SQL Monit 10SS2 | ef'sktura - Omoqud breanje statusa doxumenta bbe
+‘ konitor -
+Podaci o praqramu i licens sited tintrae aN Bap erica process rake
+1081S eM akture - Tehud ratun Gta iz Sfarmka objexta
+10914 | eMakture - srhronizeqjs preuzma sato prmijena documenta
+11136 | eMad MznGof Cent
+a 11129 eal fIncomngPessnord
+pa = : 11127 | eMad/incomingFort 995
+OSTALA PODESAVANUA I PUNKCLIE ¥ 11125 | eMail /[IncomingFrotocal poPs
+11126 | eMail /IncomingServe
+yy OMILJENE FUNKCUE 11150 | eMail /IncomingUseSst
+b opéti SIFARNICH 11128 eMal fincomingUsermame
+11134 eMadOAuth2rovder Google
+fa FINANSUSKO POSLOVANIE 10123 | eMail /SMTP; Kost Sy2.beotose et
+[E) PDV EVIDENCIIA I SEF 10126 oMal SMTP: Paasword See
+=H 10124 | eMad SMTP: Port +65
+Dj ROBNO -TRGOVINA 10129 eMel/SMTP: SSL Mode Chent
+SEPROIZVODNIA 10128 | oMal SU4TP: SSL/TLS Method TLSvi.2
+10127 |eMaid SMTP: TLS Uselplot ILS
+& FINANSUSKA OPERATIVA 11231 eMail SMTP: Usesa
+{id OBRACUN ZARADA 11152 |eMail/STP: UseTLS
+(& STALNA SREDSTVA | INVENTAR 10125 |eMal ARP: Username Aaa ve
+Ie. UPRAVLIANJE KADROVIMA 11125 Mad AlseGraohart
+Sy UPRAVLIANJE DOKUMENTIMA 11133 | eMal Ase Auth?
+= SPECIFICNI PODSISTEMI 11141 | eCpremnca - Khut za autentfikeqju
+11142 | eOtremnica - Konst DEMO okruzenie .
+ADMINISTRACIIA « « € 1390d1144 >» » we = x oe * YT «& & <¢ 3004 > » D+ = ee OF a : ;
+{S> Prikazi pocatke Dodaj vrednost §=Obrisivrednost § Kopiraj Nalep Podraz.godine Upssi / Primeni
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBRUCA | 101549299 | 06037402  290-1252-44 002 - PRODAVNICA BR.01 TRX &) F a |

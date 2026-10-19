@@ -1,0 +1,391 @@
+www.biznisoft.com   Strana: 1 
+ 
+BizniSoft                              2026. god. 
+ 
+ 
+ 
+ 
+Formiranje finansijskih izveštaja za 2025. godinu 
+ 
+ 
+ 
+ 
+Sadržaj 
+ 
+ 
+PRIPREMNE RADNJE ............................................................................................................................................... 2 
+AKTIVNOSTI U 2024. godini .................................................................................................................................... 3 
+Uvoz obrazaca preko xml-a ................................................................................................................................................. 3 
+AKTIVNOSTI U 2025. godini .................................................................................................................................... 7 
+Bilans stanja ........................................................................................................................................................................ 8 
+Bilans uspeha ...................................................................................................................................................................... 9 
+Statistički izveštaj .............................................................................................................................................................. 10 
+Kontrola SET-a izveštaja .................................................................................................................................................... 11 
+Instalacija i korišćenje BizniSoft ekstenzije .......................................................................................................... 12 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+www.biznisoft.com   Strana: 2 
+ 
+PRIPREMNE RADNJE 
+ 
+ 
+Da bi  se mogli formirati finansijsk i izveštaji u programu, u kontnom planu mora da stoji oznaka KPL2021PDP ili 
+KPL2021DPL. Korisnici koji nisu odradili promenu kontnog plana u prethodnim godinama sa KPL2014PDP ili 
+KPL2014DPL, promenu mogu odraditi na osnovu uputstva koje se nalazi na našem sajtu: 
+https://www.biznisoft.com/PDF%20uputstva/Promena%20kontnog%20plana.pdf 
+ 
+Takođe, u Matični podaci firme mora se izabrati odgovarajuća opcija za razvrstavanje, u polju Razvrstavanje za FI. 
+ 
+ 
+Slika 1 - Razvrstavanje za finansijske izveštaje 
+ 
+Potrebno je preuzeti i šifarnike klikom na Uvoz najnovijih šifarnika i poruku potvrditi na OK.  
+ 
+ 
+Slika 2 - Uvoz najnovijih šifarnika 
+
+www.biznisoft.com   Strana: 3 
+ 
+AKTIVNOSTI U 2024. godini 
+ 
+ 
+1. Uđe se u 2024. godinu 
+2. Modul Finansijsko poslovanje – Propisani finansijski izveštaji – Propisani finansijski izveštaji 
+3. U zaglavlju se označi set za 2024 godinu 
+4. Klikne se na Prenesi set i obe poruke potvrde na OK 
+ 
+Slika 3 - Prenos seta iz prethodne godine 
+ 
+ 
+Uvoz obrazaca preko xml-a 
+ 
+ 
+Korisnici koji 2024. god. nisu radili u BizniSoft programu, pa samim tim nemaju ni obrasce za tu godinu u programu, iste 
+mogu preuzeti sa APR-a i uvesti u program. 
+Prvo je potrebno otvoriti prethodnu godinu. U 2025. god. ući u modul Administracija – Nova poslovna godina – Otvaranje 
+prethodne poslovne godine i sve poruke potvrditi na OK.  
+ 
+ 
+
+www.biznisoft.com   Strana: 4 
+ 
+ 
+Slika 4 - Otvaranje prethodne godine 
+ 
+Posle ovoga u zaglavlju se izabere 2024. god. i sačeka se da se izvrši sinhronizacija. 
+ 
+1. Modul Finansijsko poslovanje – Propisani finansijski izveštaji – Uvoz najnovijih šifarnika i poruka se potvrdi na OK. 
+Slika 5 - Uvoz šifarnika za finansijske izveštaje 
+
+www.biznisoft.com   Strana: 5 
+ 
+2. Uđe se u Propisani finansijski izveštaj i i u zaglavlju klikne na F5 – Novi set i potvrdi poruk a na OK, kako bi se 
+formiralo zaglavlje. 
+Slika 6 - Kreiranje seta u prethodnoj godini 
+ 
+3. Klikne se na odgovarajući obrazac, pa na Kreiraj Izabrani, poruk a koja posle toga izađe potvrdi  se na OK pa  se 
+klikne na Uvezi XML. 
+Slika 7 - Kreiranje obrazaca i uvoz istih 
+
+www.biznisoft.com   Strana: 6 
+ 
+4. Izabere se isti taj obrazac koji se prethodno sa APR-a preuzeo i sačuvao na desktop ili u nekom folderu i uveze se. 
+ 
+ 
+Slika 8 - Uvezeni obrazac 
+ 
+I tako se po istom principu uvezu i sledeći obrasci koji imaju u setu pa kad se svi uvezu klikne se na Prenesi set i obe poruke 
+potvrde na OK. 
+ 
+ 
+Druga mogućnost koja postoji je da se u Obrada naloga za glavnu knjigu u tabu Početno stanje unese ručno nalog početnog 
+stanja u 2024. god., da se kroz drugi nalog u tabu Ostali nalozi unese promet po svim kontima u toku godine (period 02.01. 
+– 31.12.24.) pa da se formiraju obrasci za 2024. god. u programu i onda prenesete set. 
+ 
+ 
+Treća opcija je da se nakon formiranja obrazaca u 2025. god. ručno popune kolone Krajnje stanje (Bilans stanja), odnosno 
+Prethodna godina (Bilans uspeha , Statistički izveštaj, Izveštaj o ostalom rezultatu, Izveštaj o tokovima gotovine ) i snime 
+izmene. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+www.biznisoft.com   Strana: 7 
+ 
+AKTIVNOSTI U 2025. godini 
+ 
+ 
+U modulu Finansijsko poslovanje – Finansijski rezultat i zatvaranje klasa,  izabere s e opcij a Utvrđivanje finansijskog 
+rezultata. Period u zaglavlju Bizni Soft-a treba da bude 01.01.2 5 do 31.12.25 godine. U ovom koraku javlja se poruka 
+„Korekcija poreza na dobit …“, gde korisnik treba da upiše obavezu za porez na dobit utvrđenu kroz Poreski bilans.  
+Potvrđivanjem poruke na OK  automatski se formira nalog FR -1 u Obrada naloga za glavnu  knjigu, koji je u statusu 
+Potvrđen. Potrebno je odraditi glavno knjiženje (modul Finansijsko poslovanje – Knjiženje naloga – OK / Obradi). 
+ 
+ 
+Slika 9 - Utvrđivanje rezultata i formiranje FR-1 naloga 
+ 
+Sledeći korak je da se izabere opcija Zatvaranje klasa prihoda i rashoda čime će se u glavnoj knjizi formirati nalog FR-2 u 
+statusu Potvrđen. Potrebno je odraditi glavno knjiženje (modul Finansijsko poslovanje – Knjiženje naloga – OK /Obradi). 
+ 
+ 
+Slika 10 - Zatvaranje klasa prihoda i rashoda i formiranje FR-2 naloga 
+ 
+Važna napomena: 
+Nalozi FR-1 i FR-2 se ne mogu stornirati, već klikom na dugme F11 – Potvrdi, isti se rasknjižavaju, a posle toga brišu, 
+kako bi se ponovo mogli formirati ukoliko za time bude bilo potrebe.  
+ 
+Finansijski izveštaji se formiraju u modulu Finansijsko poslovanje – Propisani finansijski izveštaji – Propisani finansijski 
+izveštaji. Klikne se na F5 – Novi set i potvrdi poruka za kreiranje novog seta na OK. Time će program automatski otvoriti u 
+zaglavlju novi set finansijskih izveštaja, kome će dodeliti šifru, opis i period na koji se odnosi. 
+
+www.biznisoft.com   Strana: 8 
+ 
+Bilans stanja 
+ 
+ 
+1. Klikne se na Bilans stanja koji se odnosi na mikro pravno lice ili koji se odnosi na MSFI za MSP ili drugo pravno lice 
+(u zavisnosti od kontnog plana i onoga šta je definisano u polju Razvrstavanje za FI). 
+2. Klikne se na Kreiraj Izabran, popuni se odgovarajuće polje PG KS (upisuje se šifra iz prethodne godine) pa se klikne 
+na dugme Preračunaj – OK. 
+Slika 11 - Kreiranje Bilansa stanja 
+ 
+3. U slučaju da nepostoji izveštaj iz prethodne godine u BizniSoft-u ili isti nije uvezen ili formiran u prethodnoj godini, 
+onda se ručno popunjava kolona za prethodnu godinu – Krajnje stanje. Kada se ručno popune polja Krajnje stanje, 
+obavezno treba kliknuti na polje Snimi izmene. 
+4. Iznosi na svim AOP -ima mogu da se menjaju i ručno unose. Ukoliko  se izmeni neki iznos , program će ponovo 
+izračunati zbirove ako se klikne na dugme Preračunaj pa na poruku ODUSTANI. Kada su svi podaci uneti i tačni 
+klikne se na Snimi izmene.  
+5. Ukoliko je potrebno obrisati kreirani izveštaj, isti se označi i klikne se na Obriši izveštaj – OK – OK. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+www.biznisoft.com   Strana: 9 
+ 
+Bilans uspeha 
+ 
+ 
+1. Klikne se na Bilans uspeha koji se odnosi na mikro pravno lice ili koji se odnosi na MSFI za MSP ili drugo pravno 
+lice (u zavisnosti od kontnog plana i onoga šta je definisano u polju Razvrstavanje za FI). 
+2. Klikne se na Kreiraj Izabran, popuni se odgovarajuće polje PG (upisuje se šifra iz prethodne godine) pa  se klikne 
+na dugme Preračunaj – OK. 
+Slika 12 - Kreiranje Bilansa uspeha 
+ 
+3. U slučaju da nepostoji izveštaj iz prethodne godine u BizniSoft-u ili isti nije uvezen ili formiran u prethodnoj godini, 
+onda se ručno popunjava kolona za prethodnu godinu – Prethodna godina. Kada se ručno popune polja Prethodna 
+godina, obavezno treba kliknuti na polje Snimi izmene. 
+4. Iznosi na svim AOP -ima mogu da se menjaju i ručno unose. Ukoliko se izmeni neki iznos , program će ponovo 
+izračunati zbirove ako se klikne na dugme Preračunaj pa na poruku ODUSTANI. Kada su svi podaci uneti i tačni 
+klikne se na Snimi izmene.  
+5. Ukoliko je potrebno obrisati kreirani izveštaj, isti se označi i klikne se na Obriši izveštaj – OK – OK. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+www.biznisoft.com   Strana: 10 
+ 
+Statistički izveštaj 
+ 
+ 
+1. Klikne se na Statistički izveštaj koji se odnosi na mikro pravno lice i na MSFI za MSP (Važi za sve) ili drugo pravno 
+lice (u zavisnosti od kontnog plana i onoga šta je definisano u polju Razvrstavanje za FI). 
+2. Klikne se na Kreiraj Izabran, popuni se odgovarajuće polje PG (upisuje se šifra iz prethodne godine), pa na dugme 
+Preračunaj – OK. 
+Slika 13 - Kreiranje Statističkog izveštaja 
+ 
+3. U ovom izveštaju postoje AOP-i koje korisnik mora sam da popuni, kao i da iskoriguje ako je nešto potrebno. 
+4. U slučaju da nepostoji izveštaj iz prethodne godine u BizniSoft-u ili isti nije uvezen ili formiran u prethodnoj godini, 
+onda se ručno popunjava kolona za prethodnu godinu – Prethodna godina. Kada se ručno popune polja Prethodna 
+godina, obavezno treba kliknuti na polje Snimi izmene. 
+5. Iznosi na svim AOP -ima mogu da se menjaju i ručno unose. Ukoliko se izmeni neki iznos, program će ponovo 
+izračunati zbirove ako se klikne na dugme Preračunaj pa na poruku ODUSTANI. Kada su svi podaci uneti i tačni 
+klikne se na Snimi izmene.  
+6. Ukoliko je potrebno obrisati kreirani izveštaj, isti se označi i klikne se na Obriši izveštaj – OK – OK. 
+ 
+Objašnjenje za polja PG, PG PS i PG KS :  
+1. “PG” – redni broj izveštaja za “Prethodna godina”  
+2. “PG PS” – redni broj izveštaja za “Prethodna godina – početno stanje”  
+3. “PG KS” – redni broj izveštaja za “Prethodna godina – Krajnje stanje” 
+U odgovarajuće polje upisujete RBR istog izveštaja iz seta iz prethodne godine, koji može da se razlikuje od firme do 
+firme. 
+ 
+ 
+Pored Bilansa stanja, Bilansa uspeha i Statističkog izveštaja, u programu se mogu formirati i Izveštaj o ostalom rezultatu i 
+Izveštaj o promenama na kapitalu.  
+Izveštaj o tokovima gotovine je samo delimično odrađen tako da se ovaj izveštaj mora korigovati i ručno popuniti. 
+
+www.biznisoft.com   Strana: 11 
+ 
+Kontrola SET-a izveštaja 
+ 
+ 
+Kad su formirani svi potrebni obrasci, klikne se na dugme Kontrola, kako bi se proverila ispravnost SET-a izveštaja. 
+Slika 14 - Kontrola ispravnosti SET-a izveštaja 
+ 
+ 
+ 
+U pregledu će se pojaviti Tip poruke: da li je u pitanju Upozorenje ili Greška, broj ID pravila i Poruka/Greška kontrolnog 
+pravila. 
+ 
+Objašnjenje za polje Poruka/Greška kontrolnog pravila: 
+A = AOP 
+prva četiri broja u nastavku predstavljaju broj AOP-a 
+poslednji 5 broj predstavlja kolonu u izveštaju 
+ 
+Primer: A90086 = A00036  
+Značenje: AOP 9008 kolona 6 mora biti jednak AOP-u 0003 kolona 6 
+ 
+Primer: A90444 = (A00315+A00375)  
+Značenje: AOP 9044 kolona 4 mora biti jednak zbiru AOP-a 0031 kolona 5 + AOP 0037 kolona 5 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+www.biznisoft.com   Strana: 12 
+ 
+Svaki izveštaj (Bilans stanja, Bilans uspeha, Statistički izveštaj…) se može posebno izvoziti iz programa tako što se klikne 
+na njega i na opciju Izvezi podatke, zapamti se negde na računaru i onda se ti xml fajlovi uvoze na sajtu APR -a. Pored 
+ovoga, omogućen je uvoz pomoću BizniSoft ekstenzije za pretraživače Chrome, Opera i Edge čije uputstvo sledi, ako već 
+nemate instaliranu ekstenziju. 
+ 
+ 
+Instalacija i korišćenje BizniSoft ekstenzije 
+ 
+ 
+Da bi s e maksimalno automatizovao postupak prenosa podataka iz BizniSoft -a u aplikaciju APR -a, razvi jen je posebni 
+dodatak (tzv. “ekstenzij a”) za Chrome, Opera i Edge browsere. Ova ekstenzija komunicira sa BizniSoft -om i popunjava 
+potrebne finansijske izveštaje bez potrebe za importom/eksportom svakog pojedinačnog XML fajla posebno. Ekstenzija 
+automatski popunjava i obrazac “Posebni podaci” (u koliko su podaci u BizniSoft -u pripremljeni sa svim neophodnim 
+elementima). Detaljno uputstvo za instalaciju ekstenzije na vašem pretraživaču (ukoliko istu nemate instaliranu) se nalazi 
+na našem sajtu na linku https://www.biznisoft.com/ekstenzija 
+ 
+Trenutna verzija ekstenzije je 3.1. Verzije ekstenzije se menjaju u zavisnosti od prilagođavanja iste izmenama na portalima 
+Poreske uprave (ESF) i APR. 
+ 
+ 
+Slika 15 - Verzija BizniSoft ekstenzije 
+ 
+Napomena:  
+Ekstenzija ne radi na pretraživaču Mozila Firefox. 
+ 
+ 
+ 
+Važna napomena:  Prilikom kreiranja zahteva za predaju finansijskih izveštaja, APR je omogućio opciju Prepisivanje 
+obrazaca, kako bi se automatski popunila prethodna godina u istim. Ukoliko se odlučite da ovu opciju čekirate i iskoristite, 
+onda treba da znate da nećete moći uvoziti obrasce ni preko xml fajla, ni preko BizniSoft ekstenzije, jer će isti biti obrisani 
+kad se obrasci učitaju, kao što i piše u njihovom obaveštenju. Onda obrasce popunjavate ručno u aplikaciji APR. 
+ 
+
+www.biznisoft.com   Strana: 13 
+ 
+ 
+Slika 16 - APR - Prepisivanje obrazaca 
+ 
+ 
+Da bi se omogućila komunikacija sa portalom APR-a neophodno je da se u BizniSoft-u aktivira poseban servis čije se dugme 
+(APR) za aktivaciju nalazi u donjem delu forme Propisanih finansijskih izveštaja. Ovo dugme je podrazumevano isključeno 
+kad se uđe u formu Propisanih finansijskih izveštaja pa je potrebno da se pre importa uključi (klikom miša na desnu stranu). 
+ 
+ 
+Slika 17 - Aktivacija servisa APR 
+ 
+
+www.biznisoft.com   Strana: 14 
+ 
+Prilikom prvog uključivanja javiće se poruka (samo prvi put) na koju je potrebno kliknuti na ”Allow access” 
+ 
+ 
+Slika 18 - Dozvola pristupa 
+ 
+Kad se otvori Poseban informacioni sistem Agencije za predaju finansijskih izveštaja, u donjem desnom delu prozora biće 
+dugme ”Uvezi podatke iz BizniSoft-a”. 
+ 
+ 
+Slika 19 - opcija Uvezi podatke iz BizniSoft-a 
+ 
+
+www.biznisoft.com   Strana: 15 
+ 
+Klikom na Uvezi podatke iz BizniSoft-a u donjem levom uglu će izaći poruka Pozivanje APR server za upit nad izveštajima, 
+a na sredini prozor za uvoz izveštaja. Izveštaje možete uvesti izborom Svi izveštaji, pa Uvezi ili klikom na padajući meni gde 
+možete da izaberete svaki posebno, pa Uvezi. 
+ 
+ 
+Slika 20 - Uvoz izveštaja 
+ 
+Ukoliko, posle klika na polje Uvezi izađe poruka da je došlo do greške prilikom povezivanja sa serverom, to znači da ni je 
+omogućena komunikaciju sa portalom APR-a, odnosno da nije aktivirano dugme APR u propisanim finansijskim izveštajima 
+u BizniSoft-u. 
+ 
+ 
+Slika 21 - Nije aktivno dugme APR u BizniSoft-u 
+
+www.biznisoft.com   Strana: 16 
+ 
+Ako izađe poruka da se ne podudara matični broj firme, to znači da na APR -u firma u koju  se pokušavaju uvesti obrasci 
+nije ista kao firma u BizniSoft-u iz koje se pokušavaju izvesti obrasci. 
+ 
+ 
+Slika 22 - Nije ista firma na APR kao u BizniSoft-u 
+Ukoliko je sve u redu, u donjem levom uglu izaći će obaveštenje za svaki obrazac da je uvezen i na kraju koliko je obrazaca 
+uvezeno od obaveznih. 
+ 
+ 
+Slika 23 - Uspešno uvezeni izveštaji 
+Posle toga klikne se na dugme Proveri greške, kako bi se još jednom odradila kontrola svih obrazaca. 
+ 
+BIZNISOFT TIM 

@@ -1,0 +1,59 @@
+www.biznisoft.com      Strana: 1  
+  
+BizniSoft                                2024. god.  
+  
+  
+  
+ 
+Formiranje PPP-PO obrasca 
+  
+ 
+  
+Formiranje, štampanje i slanje na mail PPP-PO obrasca za 2023.godinu je potrebno izvršiti u 2023.godini. 
+ 
+U PPP -PO obrazac upisuju se obračuni kojima je datum valute u osnovnim parametrima iz godine za koju štampamo 
+obrazac. U obrazac za 2023.godinu će biti upisani svi obračuni kod kojih je datum valute u Obračun zarada iz 2023.godine. 
+ 
+U okviru Obračuna zarada u opciji Pojedinačna poreska prijava kliknuti na Obrazac PPP-PO.  
+U tom prozoru godina u donjem desnom i gornjem levom uglu je 2023. i ukoliko želimo da obrazac šaljemo na email 
+potrebno je kliknuti na Formiraj za sve. Ukoliko želimo samo da štampamo nije neophodno kliknuti na Formiraj za sve, već 
+samo na PPP-PO za sve. 
+Program će na ekranu prikazati sva lica koja su imala isplate u toku godine. Tabela sa radnicima nije podložna izmenama, 
+jer ih sistem neće konsultovati na štampi i slanju na email. 
+ 
+Ukoliko u podacima firme postoji uvezena slika pečata firme i ukoliko na operateru postoji uvezena slika potpisa operatera, 
+automatski će biti ubačeni na štampi obrasca i videće se prilikom slanja na email. 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+www.biznisoft.com      Strana: 2  
+  
+ 
+ 
+ 
+Mogući problemi kod obrasca PPP-PO:    
+    
+1. Ne upisuje isplate licima van radnog odnosa (dividende, zakupe, ugovore o delu...).    
+Proverite da li ste u 2023.godini. Ne prikazuje ih ukoliko obrazac štampamo u 2024.godini.    
+       
+2. Ostala lična primanja nisu upisana u obrascu.    
+Proverite u Vezna tabela oznaka prihoda iz radnog odnosa da li postoje redovi sa slike. Ako ne postoje na F5 ih upišite 
+i onda štampajte PPP-PO obrazac.    
+ 
+ 
+    
+ 
+  
+  
+  
+  
+  
+BIZNISOFT TIM  
+  

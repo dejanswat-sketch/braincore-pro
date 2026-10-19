@@ -296,6 +296,17 @@ export function buildSystemPrompt(spec, { context = {}, tenant = null, tools = [
   }
 
   if (context.factsText) parts.push(`\n## Trajne činjenice\n${context.factsText}`);
+
+  // RAG: nase znanje (docs/*.md) — kratak rezime u svakom promptu.
+  // Testirano 04.10.2026: RAG sa 24B daje tacne brojeve, fine-tune 3B izmislja.
+  if (context.znanjeText) {
+    parts.push(
+      `\n## Znanje (RAG)\n` +
+      `Koristi SAMO ove podatke za brojke i pravila. Ako broj nije ovdje — reci da nije poznat, NE izmišljaj.\n\n` +
+      `${context.znanjeText}`,
+    );
+  }
+
   if (context.episodesText) {
     parts.push(
       `\n## Kako smo slične slučajeve rješavali ranije (koristi kao primjer, ne kopiraj slijepo)\n${context.episodesText}`,

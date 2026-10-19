@@ -31,7 +31,17 @@
       "maxSteps": 14,
       "budget": { "runUsd": 1.5, "monthlyUsd": 200 },
       "rateLimitPerMin": 120,
-      "businessHoursOnly": false
+      "businessHoursOnly": false,
+      "mcp": {
+        "$comment": "NMQ FULL VIDLJIVOST vrata (dodato 12.10.2026): sve je ČITANJE/MJERENJE (low) → prolazi bez odobrenja; sve što nije na allow je zabranjeno. Objava, pisanje po sajtovima, restart i shell NE POSTOJE kao komande.",
+        "nmq-fv-vrata": {
+          "tools": {
+            "allow": ["stanje-masine", "provera-cuvara", "asov", "citation-lock", "ghost-demand", "roj-stanje", "testovi", "pokreni-test", "llms"],
+            "deny": ["*"],
+            "requireApproval": []
+          }
+        }
+      }
     },
     "demo-shop": {
       "$comment": "Primjer strogog tenanta: samo alati za support prodavnice, sve ostalo zabranjeno.",

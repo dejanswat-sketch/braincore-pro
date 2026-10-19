@@ -1,0 +1,44 @@
+BizniSOFT v1i3 - wrew.biznisoft.com - 4 x
+S 2026 ~ Osnovnefunkcle 4& Pretraga Gap 2, Mo} Yoo [&) Pomoiak ~ 3 Kontakt.) @=——e A Teme: —e= Wise» & [TE Panel Zatvorisve
+Period> 01.01.26 ¥ 19.08.26»  [ Stampa Fil -Potwdi 4p (Shft) F3-Kajifenje ~ G8 stomray BK | [> Preuzmy G! Omatiy © stort & Petnen Bg Artki = OBRADA DOKUMENTA~
+PDV EVIDENCIJA | SEF < BIZNWISOFT v13 ibzna fektura-ratun x
+Opsta POV Evidendje OB) |Broj raduns = Detum pro...|Datum 2... Kupac|Nazv partnera - kupce Broj Gokum... [Datum PDV Dostava P.. Status Ukupno tnos Fakturse... eFakture Stomo Fis... POP...|Vrste PDV prometa PDV ‘| Operater |0... “
+Eiektronska evidencija PDV 001 RNOD1100018 07.04.26 07.04.26 00080 | MANDOTEX DOO 26-RNDWDSOWA | 07,04,26 Neg prevoz | 6 20,00 3,33 %} Sprenne 3,2 Promet za koj je poreski DEMO
+> Posebna POV evidendje 001 /RNOOL100019 20.05.25 20.05.26 01774 | UNIQA NEZIVOTNO OSIGURANEE » 20.05.26 Nad prevoz pol 3.600,00 600,00 “}U rads © 3.2 | Promet za hog je poresid DE“O
+Vrste POV promete 001 RNOO1100020 30.06.26 22.07.25 00080 | MANDOTEX 000 30.06.26 Ned prevor “| 1.800,00 300,00 [*_ Stormranc 3.2 Promet za kop jt poresia oe“O
+Sifern & knjizenja u POV evidenci “991 /Re9001100021 22.07.25 22.07.25 0776 | DNEWAEPAYAR 22.07.26 Ned prevoz ¥) 02 1,200,00 200,00 _ 3 Ne registuje © 3.2 Promet ze koj je poreski DEMO
+cisetys nhror eal eFoxture 001 |RNOOL100022 30.06.25 22.07.26 00080 | MANDOTEX 000 30.05.26 Nad prevoz v) 4 1.600,00 300,00 "32 Dokument str 3.6 | Smangenje canoviee, odnosno DEMO
+Bb adel a Pista co oe 90.06.25 | 22.07.26 0080 | MANDOTEX 000 30.06.26  Yorn= 23 “301 1.800,06 300,09 (18 Spremne (A) 3.2 | Promet ze kop j= poresia DEMO
+7 bf E Wh SY ‘ we - ndok 202 RD01100024 90.06.25 |22.07.26 00080 | MANDOTEXDOC 30.06.26 Nad prevoz ¥) -1,800,00 _-300,00 |x Dokument st 3.6 | Smangerje csnovice, odnosno DEMO
+regied spremnih neposieth dok > > T
+i 9 - 4 fait bet ae oO” 901 |ROI001100025 19.06.25 19.08.25 04776 DNEWT PAYAR 19.08.26 Nad prevoz v] 02 12.450,00 2,075,009 3 Ne registuje & 3.2 | Promet za kof je poresid D=“O |
+pravijanje fajlovime eFakture Hasta intotaioar | |
+Pojedinaéna evidencije POV - evi 001 [iccoz MMMM 19.06.26 | 19.08.26 cedeD | MANDOTEX 0c 29.08.26 Nee prevor Bo 12.006,03 2.000,00 bE Srrenro | @ 3.2 |Prometzekojjeporesa =| | DEMO
+Zbdirna evidendjs PDV - evidentir “
+da ++ : l= 4 << of
+Evidencija prethodnog pov-evc ' “ < 3iod3i : SDS Re PES
+Rekepituladjc iN evidencife PRIKAZI SVE DOKUMENTE 3 MANDOTEX DOO U OBRADI Osve2
+Definisanje Zuzetaka 24 CFAKtUl ee
+Notifikacije storniranih dokurnen: Stavee é okuments Valute placanja Avansniracuni Napomena Specilixacja/POS eOtprernice Paking Bta Knigenja Dogadaji Pola poze Vernidokumenti Seriski brojew Obavestenia Garancje
+Obavestenje primaoca o prethoc RER [Sirs Nazy artke Koléna  (Cens % R...|Iznosrab, |Mesto TR Nosoc TR |Vrednost Konto Naz masta troske Nazy nosioca troska =| POP... Vrsta DV prometa PDV... Vreme emene Operater
+> 1, 900002 |SAKSIJA 0,45 1,00 12.900,00 9,00 0,00 12.000,00 13401 3.2 Promet za kof je pores 5 19.06.25 13:10:58 (DEMO
+‘a > ,
+way OMILJENE FUNKCUE
+© opsti Sirarnici
+a FINANSUSKO POSLOVANIE
+PDV EVIDENCIIA I SEF
+TF ROBNO -TRGOVINA
+SEPROIZVODNIA
+&» FINANSUSKA OPERATIVA
+{ha OBRACUN ZARADA I
+a 0001 UKUPNO 24 DOKUMENT. 1,00 0,00 12.000,09
+(@ STALNA SREDSTVA | INVENTAR i © 10d1 ° jg aay coe h* > —_ * %
+wv J id =
+Oe DERAVLIANIE KADROVIMA F5-Nova Obrisidokument Stempaj + Obrifi stavke 9 - lern.cene 23 | Ai ,
+5 UPRAVLIANJE DOKUMENTIMA pusaicesie SHO -
+0... |Braj maloga = [Datum Part... |Naziv partnera Kol¢ina Cena Pree... |en.rabat [Prce.a... Ten.ake.r...|Nab.cena |Prc.RUC Imnos RUC |Cena bez...|\Cena se... VP Vredn...|MP Vredn...|\Mesto TR Nosoc TR | Vremne oramies Operator a
+OO1/RNOO1100025 19.08.26 04776 ONEVNIPAYAR 1,00) 10,000,00 0,00 0,00) 6,00 9,00) 20.000,00 6,99 0,09) 20.009,00) 12,000,003  10.000,00' —22.000,00 19.08.25 12S SEO
+“> ADMINISTRACIIA 001/RN0D1100021 [22.07.26 04776 DNEVNIPAYAR 1,00, 333,33 0,00 0,00; 0,00 0,00| 333,33) 0,00 33,33 333,33,  $00,00 333,33 300,00 22.07.26 1SESE ON OEMO : 4
+sip, _ O01) RNOO1100005 22.04.26 04766 |ONEVNT PAYAR 1,06 300,00 0,00 0,00 0,00 9,00 300,00 0,00 9,00 300,00 360,00 300,00 30,00 22.04.25 L21205 (OeMo
+WF 0011 h89001099993 |20.02.26 COORD /MANDOTEK COO 1,00) 8.333.353 0,00 0co!| 0.00 0,00) 8.333,33 0,00 8.333.353) 4.333,33) 10,000.09 8. 333,33) 29.000,c0 20.02.25 13:36:42 |OEMO ¥
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBIWICA | 101549299 | 06037402 290-1252-44 003 - PRODAVNICA BR.01 TRX &)

@@ -10,13 +10,14 @@ export function createPatternHelpers({ llm, cost, tracer, logger, metrics }) {
    * LLM poziv sa automatskim cost tracking-om i budžetom.
    * @returns {Promise<{text, usage, costUsd, model, provider}>}
    */
-  async function callLlm(ctx, { messages, tools = [], temperature = 0.1, maxTokens = 700, model, responseFormat, onDelta, role = 'pattern' }) {
+  async function callLlm(ctx, { messages, tools = [], temperature = 0.1, maxTokens = 700, model, responseFormat, onDelta, role = 'pattern', fast = false }) {
     const estimate = cost.estimate({ promptChars: JSON.stringify(messages).length, maxOutTokens: maxTokens, model: model ?? 'default' });
     ctx.budget?.assertCanContinue({ estimatedUsd: estimate, label: role });
     ctx.budget?.addStep();
     const span = ctx.trace ? tracer.span(ctx.trace, `llm:${role}`, { model: model ?? 'default' }) : null;
     try {
-      const res = await llm.chat({ messages, tools, temperature, maxTokens, model, responseFormat, onDelta, signal: ctx.signal, tenantId: ctx.tenantId });
+      // HIBRID: `fast` proslijedi do LLM sloja (brzi model za kratke/deterministicke pozive)
+      const res = await llm.chat({ messages, tools, temperature, maxTokens, model, responseFormat, onDelta, fast, signal: ctx.signal, tenantId: ctx.tenantId });
       const rec = await cost.record({
         tenantId: ctx.tenantId,
         agentId: ctx.agentId ?? role,

@@ -1,0 +1,46 @@
+BizniSOFT v13 - wrew.biznisoft.com = 4 x
+S 2026 ~ Osnovnefunkcle 4® Pretraga SO 3, Mo} Vodit [&) Pomotak ~ 2 Kontakt ,) @=—= A Tema: —_—e= Mise » (& ([Fpanel Zatvorisve
+Perio¢y 01.03.26 v 19.08.26 v Fil - Potwedi Pp (Shft) F3 - Knjdenje ~ [= Stomraj BK [> Preuzmi G! Omativ D istorte & Petnen By Artki = OBRADA DOKUMENTA~
+PDV EVIDENCIJA I SEF ¢ BIZNISOFT v13__tetazna faktura - 1] OPAC stornranja 7502
+= oes Sto a njverja yratiu ved " dl re stor > NAOoe - |
+OpSta POV Evidencije OB3|Broj ratun2 + Detum pro...|D © Stocriraj enjdenja ivrati v obrade Ichor datuma stomo nslog a P.. Status Ukupno tos Fakturss... eFakture Stomo Fis... POP.../Vrste PDV prometa PDV | Operater |o... s
+Fiektronska evidencija PDV 001 |/RNO01100022 30.06.25 2 Storniraj sve i forrniraj navi vor v\ 4 -1,800,00 -300,00 _ 3 Dokument ett 3.6 | Smanjenje csrovice, odnesre DEMO
+> Posebna POV evidenaje 00 mien 30.06.25 z SNoniraj dokument i knjdenja 3 301 1.800,00 300,00 (a Spromno (A) 3.2 | Promet za hog Jo poresid DEMO
+Vite POV promete COT*RNOO1100024 90.06.26 2 “as voz “| % “1.800,00 300,00 _ 3) Dokument st 3.6 | Smanyenye osnowce, o¢nose DEMO
+Sifernik knjZenja u POV evidenci “o91 |Rpo1i00026 19.08.25 | 1 vot 301 12,000,00 2,000,00 (=' Podlato © 32 | Promet za koj je poreski DEMO
+Lwrai sir »| ' cs 4 1 +
+lzr3i sinhronizaciju eFoxtu 001 RNOOL100027 19.06.25 I Samo formiraj novi 4y0z v\ « 12.060,00 2,000,00 = Posato 3.2 | Pramet za hog je poresid DEMO
+Racer Re aS eee 002 |RNO01100028 19.06.25 ¥ voz 301 12.000,00 2,000,090 [= Fosato 3.2 Promet ze kop j¢ poresia DEMO
+3 Bt paige a Y ; aS ‘ ndox 202 /RNDOI10000 19.06.25 | Wrste POV u storno nalogu yor “\46 _550,000,00 0,00 *) Spresne 3.4 | Promet za koj obvernk POY DEMO i
+regled spremnih nepasiatih dok = . = = 7 pa |
+001 | RN 3 .08.28 ' coprat 3 “0 0 360,00 50,00 *| Spremno 2 | Promet za ip pores @ ou
+Upravijanje fajlovime eFakture 1 RNOOLIOO031 19.06.25 1 Xopiral se ongnsinog naloga oz Pi 60,00 6 prox 3. Frome? za hog je poresid / Bae) |
+Pojedinetna evidendje POV - evi o Smanjeme/Povecante naknade/POV } 1.176.860,00 .
+Zdirna evidendjs PDV - evidentir t ¢
+< 4 3: « r > > ~
+Evidencija prethodnag PDV - evic KK < 210024 > » 2
+Rekepituladje POV evidencife PRIKAZI SVE DOKUMENTE ORs Dore MANDOTEX DOO PROKNJIZENO Osved
+Definisanje Zuzetaka 24 CF AKU ne y NEDOVRAT “CIA
+Notifikacise storniranih dokumens Stave Gokuments Valute placar CFD JE REE OVE A HLA DRCHBI Werja Dogaedaji Pola poze Vermidokument Seriskibrojew Obavestenja Garancje
+Obavestenje primaoca o prethoc RER Sra Nazy ertke Kol€na (Cena % R..,|znosrab, |Mesto TR Mosec TR |Vrednost Konto Nazw masta troske Nazy nosioca troska «= POP... Vrsta SDV orometa PDV... Vreme emene Operater
+> 1) 000002 |SAKSIJA 0,45 1,00 12.900,00 9,00 0,00 12.000,09 13401 3.2 — Promet za kof je poreshi 5 19.06.25 13:11:32 | DEO
+iy OMILJENE FUNKCUE
+© opsti SiFaRNICI
+8 FINANSUSKO POSLOVANIJE
+5 ROBNO -TRGOVINA
+SEPROIZVODNIA
+> FINANSUSKA OPERATIVA
+{a OBRACUN ZARADA
+&E 0001 UKUPNO 24 DOKUMENT 1,00 0,00 12.000,00
+(@> STALNA SREDSTVA | INVENTAR ; > ew ‘ ‘
+© ledl 1+ - a a
+& J ee
+Oe CERNE IANTE KAD BOVINA F5-Nova Obrididokument Stempaj ¥ Obridi stavke 9 - Lrn.cene 23 d ,
+Sh UPRAVLIANJE DOKUMENTIMA — i
+a 0... | Braj naloga Datum Part... (Naziv partnera Koléina Cena Prov... |en.rabat |Pre.a... Ln.ake.r...|Nab.cena |Prc.RUC Tmos RUC |Cena bez...\Cena se... VP Vredn...|MP Vredn...|\Mesto TR Nosoc TR | Vreme orate Overater a
+ial SPECIFICN! PODSISTEMI OOL|RNOO11O0025 (19.08.26 O47 76 CNEVNIPAYAR 1,00) 10,000,039 0,00 0,00 6,09 9,00) 20.000,c0 6,99 0,09) 20.000,00) 12.000,00 10.000,00' 12.000,00 18.05.20 120804 (CEM
+% ADMINISTRACIIA O01) RNODL100029 (19.08.25 04769 | NIKOLA VIDAKOVIC PR URBAN STAN 1,00| 10,000,00 0,00 0,00) 0,00 0,00) 20,090,00 0,00 0,00) 20.000,00 12,000,00 10.000,00) —22,000,00 19.08.25 1553 }OEMO i J
+pm «COL RNOO1100021 22.07.26 04776 ONEVNTPAYAR 1,00 333,33. 0,00 0,00) 0,00 9,00 333,33 0,00 33,33 333,33 400,00 333,33 400,00 22.07.26 1:32:51 (CeMO
+oy
+“F601 R901100005 | 22.04.26 _ C4766 | ONEVNIPAYAR 1,00 200.00 -0,00 0,co!) 0.09 0,00 300,00 0,00 9,09 300,00 360.00 300,00 360,00 22.04.26 11:21:05 |OEMC y
+99 | SR"TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBINJCA | 101549299 | 06037402  290-1252-54 001 - PRODAVNICA BR.01 TRX &) F F

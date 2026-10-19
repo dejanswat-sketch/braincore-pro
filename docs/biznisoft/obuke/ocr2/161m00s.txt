@@ -1,0 +1,42 @@
+BizniSOFT vi3 - wrew.biznisoft.com - a x
+S 2026 ~ Osnovnefunkcle AA Pratraga Ga 2, Mo} Yodit [&) Pomeéak ~ 3 Kontakt) @=——m A | Tema: —_—<e= MWMse » © [Panel Zatvorisve
+Period> 01.01.26 ¥ 19.08.26»  [ Stampx F1l-Potwdi “p (Shft) F3-Kajifenje ~ [ Stomray BK "> Preuzm’ G Omatix © store & Petnen fy Art) =OBRADA DOKUMENTA~
+PDV EVIDENCIJA | SEF < BIZNISOFT v13 tena fektura-ratun x
+OpSta POV Evidendje OBJ|Broj ratuns = Datum pro...|Datum @... Kupac|Nazv partnera - kupce Broj Gokum... [Datum PDV Dostava P.. Status Ukupno tnos Fakturée... eFakture Stomo Fis... POP...|Vrste PDV prometa PDV ‘| Operater |0... “
+Fiektronska evidencija PDV 001 |RNOD1100022 30.06.25 22.07.26 00080 MANDOTEXD00 30,065.26 Nad prevoz v) -1.800,00 -300,00 33 Dokument st 3.6 | Smanjenie osnovice, odnesne DEMO
+Posebna POV evidencije 00 aes 30.06.25 272.07.% 00060 | MANDOTEX N00 30.05.26  Yozat 23 >01 1.800,00 300,00 [iS Spromno (A) 3.2 | Promet za hog Je poresid n=O
+Vrste POV promete CO17RNO01100024 30.06.26 22.07.25  — OOCEO | MANDOTEX 000 30.06.26 NaS prevoz “\% -1.800,00 -200,00 _Dokumentst) &@ 3.6 | Smanyenje osnowce, o¢nosne DEMO
+Sifernik knyiZenja u POV evidenci “oo [Rag01100025 19.06.25 19.08.25 03776 DNEVNEPAYAR 19.08.26 Ned prevor v} 02 12.450,00 -2.075,00 _ 2 Ne registruje 5 3.2 | Promet za koj je porenki / a)
+©
+lari $i nhror <a eFokture 001 |RNOOLICO025 19.06.25 19.09.25 00060 MANDOTEXD00 19.06.26 Nad prevoz 301 12,000,009 —_-2.000,09 |=" Podato & 3.2 | Promet za bog jo paresid neo
+Abe at 8 Potbinaaig 001 |RNO01100027 19.06.26 18.08.26  C008O MANSOTEX 500 19.08.26 Ne prevoz 301 12.000,08 —-2.000,00 [=% Posdato 3.2 Promet ze kop j¢ poresia DEMO
+ss : fo i SOR 4 s a < don 001 8401100028. 19.08.25 | 19.08.25 00080 | MANDOTEXDO0 19.08.25 Ned prevoz 301 12.000,00 _2,000,00 |=" Podato 3.2 |Promet za kj je poveski pexo— |
+regied spremnih nepasieth dok = t
+U 4 8 + fail = or p01 |RNDO1100029 19.06.25 19.08.26 04769 | NIKOLA VIDAKOVIC PR URBAN ST# 19.08.26 Nad prevor “| 46 12.000,00 2,000,009 3 Ne registuge 3.2 | Promet za kof Je pores pexO | |
+Pojedinséna evidencija POV - evi 601/RND01100090 19,0625 [1908.2 ccoB0 | MANSOTEX OOo RENEE 23.93.25 Nek prevor “ @x $90.000,03 600 Spence | @ 3.4  |PrometzekopobvernkPov | @® vero
+Zbirna evidendjs PDV - evidentir
+é l= 4 < 2 .
+Evidencija prethodnag PDV - evic KK «€ < 350035 . o* *
+Rekepitulaaje POV evidencije PRIKAZI SVE DOKUMENTE 3 MANDOTEX DOO PROKNJIZENO Osve2i
+Definisanje Zuzetaka 24 CFaKtUC en
+Notifikacije storniranih dokurnen Stave dokuments Valute plganja Avansniracuni Napomena Specificacja/POS eOtpremmice Paking &ta Knrigenja Dogadaji Pola poze Veridokurment’ Seriskibrojew Obavestenja Garancje
+Obavestenje primacca 0 prethoc RER  |Sifra Nay artkie Koléna  (Cens %) R...|22nosrab, |Mesto TR Mosec TR |Vrednost Konto Nazw masta troske Nav nosioca troska =| POP... Vrsta PDV orometa SDV... Vreme emene Operater
+> 1) ORD03 | USLUGA 1,00} 550.000,00) 9,00 0,00 550,000,090 61421 3.4 — Promet za kof obvemie POV | AE20 19.06.25 13:14:31 | DEMO
+wa OMILJENE FUNKCUE
+& opsti SiFaRNici
+2 FINANSUSKO POSLOVANIJE
+fa] mare RGOVINA
+TEPROIZVODNIA
+& FINANSUSKA OPERATIVA
+(fo) OBRACUN ZARADA
+" 0001 UKUPNO 24 COKUMENT 1,00 0,00 550.000,00
+(@ STALNA SREDSTVA | INVENTAR i © 10d1 agtt ee coe” YT — :
+& J — = a. Be
+Oe UERAEIANIE KADROVINA F5-Nova Obrisidokument Stempaj ¥ Obridi stavke 9 - Izrn.cone er j A
+2 UPRAVLIANJE DOKUMENTIMA Cerner Se eee
+‘4 0... (Braj malaga =| Datum Part... |Naziv partnera Kolina Cena Pre... |Een.rabat [Pre.a... ln.ake.r...|Nab.cena |PrcRUC nos RUC | Cena bez...|\Cena se... VP Vredn...|MP Vredn...|\Mesto TR Nosoc TR | Vremne eThene ie [Operater J
+Se SPECIFICNI PODSISTEMI
+%, ADMINISTRACIIA
+<Neme podetaks zs prkaz>
+{3}
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBINICA | 101149299 | 06037402  290-1252-44 003 - PRODAVNICA BR.01 TRX &) F

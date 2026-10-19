@@ -1,0 +1,47 @@
+BiZniSOFT v13 - wrew. biznisoft.com = 4s x
+© 2026 ~ osnovne funkcje A® Pretraqa co 76} 2, Mo} yout [) pometiak ~ 2 Kontakt; @=——m A Tema: —_——<e= MWMse - & [ES panel Zatvorisve
+Parody 01.03.26 ¥ 19.08.26» [Stampa F1l-Potwrdi “jf! (Shift) F3-Knjifenje ~ fF Stomra BK = [*¥ Prevzm GI Omatiy © Lstorge & Peter By Artki OBRADA DOK|NENTAY}
+PDV EVIDENCIJA | SEF < BIZNISOFT v13_ tzbzna fektura-racun x OBRADA DOKUMENTA ?
+OpSta POV Evidencije OBJ|Brojratun2 + Detum pro...|Datum @... Kupac|Nazv partnera - kupce Broj cokum... [Datum PDV Dostava P.. Status Ukupno tos Faktures... eFaktui CITAC/DATA TERMINAL > PDV ‘| Operater |0... ‘
+Fiektronska evidencija PDV 001 RNOD1100020 30.06.25 22.07.25 0008 |_MANDOTEX 00 30.05.25 Ned prevoz v4 1.800,00 200,00 |» Stor STATUS DOXUMENTA > DEMO
+> Posebna PDV evidenaje 001 | RNOOL100021 22.07.25 72.07.25 04776 DNEVNT PAYAR 22.07.26 Wad prevoz /| 02 1.200,00 200,09 “yNer UPRAVLJANIE ESAKTURAMA . DExO
+Veste PDV promete (01 |RNO01100022 30.06.25 22.07.26 COORD | MANDOTEX 00 30.06.26 Ned prevoz } 46 -1,800,00 “200,09 _ 3 Dols ue 5 cb 0 DEMO
+Sifernik Injizenja u POV evidenci igen 30.06.25 22.07.25 00080 | MANDOTEXD00 30.05.26 Vorat 23 301 1,800,00 200,00 LE spre = RAD NALOZI ? DEMO
+lavrdi sinhronizaGju eFakture OOL*RNOOLIOOO24 = 30.06.25 22.07.25 CO0ED | MANDOTEX 900 30.05.26 Nad prevor v\« 1.600,00 300,09 3 Dala BRZA STAMPA > “no Deo
+Pregled primijenth eFaktura eal eas - “ <a nay. (famee DAYAR a ~ pana n> > OO 2075.00 Neer a .
+Pregled poslatih eFakture 001 |RNOO1100025 19.06.26 19.08.25 04776 DNEWEPAYAR 19.08.26 Nez prevoz ‘J 02 12.480,00 .2.075,00 _).Ne ZVOZ DOKUMENTA , 2 oxo |
+001 RNOD1100025 19.06.25 19.08.26 00080 | MANDOTEX DOC 19,083.26 Neé prevoz gol 12,000,090 2,000,090 I=" Post DEMO
+Pregled spremnih neposletih dok > <5 = KOPIRA) STAVKE DOKUMENTA |
+Upravijanse fajlovima eFaktura 001 RNO01100027 19.05.25 19.08.25 C0060 MANDOTEX 900 19.08.26 Nad prevoz 301 12.000,00 —-.000,00 L=! Fod UPIRAD STA v D=xO
+Pojedineéna evidencija POV - evi GO1 | RNO01100023 19.08.26 19.08.26  — O00E0 | MANDOTEX 500 19.08.26 Ned prevor ol 12.000,00 2.000,09 Spre NALEPT STAVKE DOKUMENTA (oso | l|
+Zdirna evidendjs PDV - evidentir N OBRACUMA) NABAVKU PO STAVKAMA -
+Evidencija prethodnag PDV - evic IK «& < 330d 33 ee’ oT ets aa Bi
+¥ = PRERAQUNA) ZBIRNE AKCDE
+Rekapituladje PDV evidencije PRIKAZI SVE DOKUMENTE 2 MANDOTEX DOO U OBRADI Osvez
+Definisanje Guzetaka 24 CFaktuC DODATII RABAT PO DOKUMENTU
+Notifikacise storniranih dokumens Stave Gomuments Valute pladanja Avansniracun’ Nagomena Specifixacja/POS eOtpremnice Paking ta Knivenja Dogadaji Poba poze Vermidokument Ser CENA JE PROCENAT NA NABAVNU
+Obavestenje primaoca o prethoc RBR _ |Sfra Nay etki Koléna (Cena %)R...|Iznosrab, [Mesto TR Mosec TR |Vrednost Konto Nazw masta trosks | Ee as °DV... Vreme omene Operater
+> | 1) 900002 [SAKSTIA 0,45 1,00 12.000,00| 0,00 0,00 12.060,00 13401 CRF - IZMERA IZNOSA 5 19.06.25 13:12:15 |DEMO
+KONTROLNA LISTA
+SERDSKI BROJEVI >
+STAMPA DEKLARACDA >
+POSAU! REPLIKACDOM
+ya OMILJENE FUNKCUE
+& opsti SiFARNICI
+8 FINANSUISKO POSLOVANIJE
+TF ROBNO -TRGOVINA
+SEPROIZVODNIA
+& FINANSUISKA OPERATIVA
+(a OBRACUN ZARADA
+vs 0001 UKUPNO 24 COKIMENT 1,00 0,00 12.000,03
+(@> STALNA SREDSTVA | INVENTAR : 7 ; 2 uw ; ¢
+K «€ < Ledl le =< a a —
+te — ae
+URINE ANUG ADOT F5-Nova Obrididokument Stempaj ¥v Obrifi stavke 9 - ern.cone ez: f
+2 UPRAVLIANJE DOKUMENTIMA neg eee ap
+a 9... |Broj naloga Datum Part... (Naziv partnera Koldina Cena Prev... [en.rabat [Pre.a... Tn.ake.r...|Nab.cena [Pro RUC nos RUC | Cena bez...\Cena se... VP Vredn...|MP Veedn...|Mesto TR Nosoc TR | Vreme ora Operter a
+iat SPECIFICN PODSISTEMI QOL) RNOO1100025 (29.08.28 OS776 ONEVNIPATAR 1,00; 10,000,009 0,00 0,00; 06,09 9,00) 20.000,00 6,00 0,00) 20.009,00) 12,000,039 10.009,00/ —22.000,00 19.08.26 tee EMS |
+“> ADMINISTRACIIA 001)RN0D1100021 [22.07.26 04776 |DNEVNIPAYAR 1,00; 333,33 0,00 0,00; 0,00 0,00| 333,33) 0,00 33,33 333,33, 400,00 333,33 30,00 22.07.26 11ESS ENN DEMS 4
+sp, COL RNOOL100005 22.04.26 C4766 |ONEVNT PAYAR 1,06 300,00 © 0,00 0,00, 0,00 9,00 300,00 0,00 9,00 300,00 360,00 300,00 360,00 22.04.25 L215 OeMO
+Ww! 001001099999 |20.02.26 _C008O /MANDOTEK COO 100 8.333.353 0,00 0,co) 0.09 0,00) 8,333,355 0,00 8.333,33) 8.353,33 10,000.00 8. 333,33) 20.000,c0 20.02.25 13:36:42 |OEMO 7
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBIWICA | 101149299 | 06037402  290-1252-54 00) - PRODAVNICA BR.01 TRX &) f

@@ -1,0 +1,53 @@
+BizniSoft — Osnovna obuka l 19.08.2026. (191 minuta, 3 dela)
+Pristup: https://obuke.biznisoft.com/ (90 dana od 07.09.2026)
+Video: Osnovna-obuka-19.08.2026.mp4 (1,45 GB)
+============================================================
+  - Osnovna obuka l 19.08.2026.
+  - Last updated: 03.09.2026.
+
+I DEO
+  - Logovanje
+  - Izgled glavnog ekrana
+  - Osnovna pravila u Biznisoft-u
+  - Otvaranje firme
+  - Otvaranje objekata/magacina firme
+  - Šifarnik poslovnih partnera/Kupci i dobavljači
+  - Šifarnik artikala
+  - Ulaz robe – Kalkulacija trgovačke robe
+  - Izlaz robe – Izlazna faktura
+  - Unos napomene u dokumentu
+  - Knjiženje naloga i pregled knjiženja u evidencijama
+  - Storniranje i vraćanje naloga u obradu
+  - Profaktura i formiranje izlaznog računa od profakture
+  - Interni prenos robe – prenos robe iz jednog objekta u drugi
+  - Stanje zaliha objekta
+
+II DEO
+  - Unos početnog stanja kroz robno i finansijsko
+  - Obrada dnevnih pazara – Finansijsko
+  - Obrada dnevnih pazara – Robno
+  - Unošenje računa troškova sa pravom odbitka PDV
+  - Izvodi banaka
+  - Izveštaji iz finansijskog poslovanja
+  - Izveštaji iz robnog prometa
+  - Knjiga primljenih/izdatih računa
+  - Obračun PDV-a i formiranje naloga za knjiženje
+  - Backup/Arhiviranje podataka
+
+III DEO
+  - BizniSoft konfigurator
+  - Podešavanje parametara za eFakture
+  - Sinhronizacija eFaktura – pregled primljenih i poslatih eFaktura
+  - Slanje / registracija eFakture
+  - eOtpremnice
+  - Formiranje računa troška i kalkulacije
+
+PROGRAM
+  - 1 Section
+  - 1 Lesson
+  - 90 Days
+  - Skupi sve odeljke
+  - Osnovna obuka 19.08.2026.
+  - 1
+  - Osnovna obuka l 19.08.2026.
+  - 191 Minutes

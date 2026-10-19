@@ -7,6 +7,7 @@ import { createLongTermMemory } from './longterm.js';
 import { createVectorStore } from './vector.js';
 import { createEmbeddings } from './embeddings.js';
 import { createEpisodicMemory } from './episodic.js';
+import { createZnanje } from '../llm/znanje.js';
 import { redactPii } from '../core/policy.js';
 
 export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) {
@@ -15,6 +16,8 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
   const longterm = createLongTermMemory({ dataDir, logger, piiKinds });
   const vectors = createVectorStore({ dataDir, embeddings: embedder, logger });
   const episodic = createEpisodicMemory({ dataDir, vectors, embeddings: embedder, logger });
+  // RAG: nase znanje iz docs/*.md (kratak rezime ide u svaki prompt)
+  const znanje = createZnanje({ dataDir, logger });
 
   return {
     sessions,
@@ -22,6 +25,7 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
     vectors,
     episodic,
     embedder,
+    znanje,
     isSemantic: embedder.useReal,
 
     /** Upis jednog događaja u sva tri sloja gdje ima smisla. */
@@ -30,13 +34,19 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
     },
 
     /** Kontekst za prompt: relevantni fragmenti + trajne činjenice + slične prošle epizode. */
-    async recall(tenantId, query, { k = 6, maxChars = 4000, includeFacts = true, includeEpisodes = true, episodesK = 3 } = {}) {
+    async recall(tenantId, query, { k = 6, maxChars = 4000, includeFacts = true, includeEpisodes = true, episodesK = 3, includeZnanje = true } = {}) {
       const [ctx, facts, events, episodesText] = await Promise.all([
         vectors.contextFor(tenantId, query, { k, maxChars }),
         includeFacts ? longterm.readFacts(tenantId) : Promise.resolve({}),
         longterm.search(tenantId, { query, k: 3 }),
         includeEpisodes ? episodic.fewShotText(tenantId, query, { k: episodesK }) : Promise.resolve(''),
       ]);
+      // RAG: nase znanje (docs/*.md) — kratak rezime (~350 tokena) u svakom promptu.
+      // Testirano 04.10.2026: RAG sa 24B daje tacne brojeve, fine-tune 3B izmislja.
+      let znanjeText = '';
+      if (includeZnanje && znanje) {
+        try { znanjeText = znanje.rezime() || ''; } catch { /* znanje je opciono */ }
+      }
       return {
         kb: ctx.text,
         citations: ctx.hits,
@@ -45,6 +55,7 @@ export function createMemory({ dataDir, llm, env = {}, logger, piiKinds } = {}) 
           .map((f) => `- ${f.key}: ${typeof f.value === 'string' ? f.value : JSON.stringify(f.value)} (pouzdanost ${f.confidence})`)
           .join('\n'),
         episodesText,
+        znanjeText,
         recentEvents: events.map((e) => ({ ts: e.ts, type: e.type, content: redactPii(String(e.content ?? '').slice(0, 300)) })),
       };
     },

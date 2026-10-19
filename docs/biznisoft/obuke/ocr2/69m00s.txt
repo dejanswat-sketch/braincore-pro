@@ -1,0 +1,56 @@
+BizniSOFT v13 - wrew. biznisoft.com - o x
+S 2026 ~ Osnovnefunkcle 4% Pretaga @ 3, Mol Yodit [) Pomofak ~ 3 Kontakt « =m 2 Tema: =——e= MWMse »- (& [Panel Zatvorisve
+Perio¢~ 02.01.26 ¥ 19.08.26 v F1l - Potwrdi Sp (Shft) F3 - Knjenje ~ (= Stomrai BK [> Preuzmé’ G! Omatix D iteorgs & Pertnen By Arti) = OBRADA DOKUMENTA~
+ROBNO .TRGOVINA < BIZNISOFT v13 Profaktura-rezervacja lzbzna faktura-racun x Planer Info Za Stampu ?
+> Artikli i Sfarnici *  OBJ}Broj ragunz Detum pro...|Datumm 2... Kupac | Nazv partnera - kupce Broj cokum... |Datum PDV Dostava P.. Status Ukupno tos Fakturse... eFakture Stemo POP...|Vrsta PDV prometa PDV ‘| Operater |0... += PODACI O ENTITETU a
+> Cenovnici 007 |RNOO7000001 10.06, 25 19.08.26 0008) MANDOTEX DOC 20.08.26 Nes prevoz v}\ 46 7,200.00 1,200,00 ©) Sprenne 3.2 | Promet za hog je poreski DEMO Sifra articls 095222
+Prijerr robe 007 RNOO7000002 = 19.06.25 19.08.26 CO0ED MANDOTEX 900 09.08.26 Nad prevoz “| «4 156,00 7,00 * Spremno 3.2 Promet za hog je pares DE¥O Nazty artkia COCA COLA
+v ldavenje robe CO? RNOO7DO00NS 19.06.26 19.08.26 COORD MANDSOTEX DOO PrOoMNNN1 «| «13.08.26 Ned prevor 201 1.560, 260,00 _}U radu 3.2 Promet ze kog je pores pe“o | JMR /POV stops =XOM/ 20%
+Tlazna fakture - radur Cenovnik Ostal kupd
+Olpremnice robe 2 - PINANSUSKI PODACI STAYKE
+. = SANS COR » |
+Avensni recun Yrecnost artis 2.300,00
+Profektura - rezervadje | Vrednost za kupca 1.560,00 §
+Ratun sopstvenih troskove Cena za kuoca 130,00
+Nelog za izdavanje robe Cena za kupca ... 146,00
+Periodiéno fakturisanje Taw POY 260,00
+» Tzvoz robe i usivga 6 - PINANSLISKE PODACI PARTNERA
+<i « ” - Q . “x D .
+» Tlaz robe - akajski rebat IK ¢ < 3043 * * Y Sfre pertrere 00080
+> Interni prenosi PRIKAZI SVE DOKUMENTE 2 MANDOTEK DOO U OBRADI OsveZi Uhpna poral... 569,064,453
+NarudzZbine i trebovanje ny Dospela potrad.. 569.064,43
+> Povracaj robe kupea Stavke dokumenta Valute pldanja Avansniracuni Napomena Specifixeacja/POS eOtpremmice Paking &ta Knigenja Dogadaji Pola pole Vermidokurnenti Seriski brojew Obavestenja Garancje 9 - STATIS B A ~ 19.06.26
+> Povradaj robe dobavijacu BiniSoft Dokurmmenta Exsterna dokumenta Lokacha dokumenta Protriizeno stanje 99,00
+> Elektronske olpremnice Bro naloga BieniSoft funkcja Datum Sifra i naziv partnera Dokument veza | nos A... |Gru...,Godina |Operater dok. Operater gov. | Vreme mene Raspolotivo sta... 79,00
+Nivelecija cene Raspoloztvo sa .. 93,00
+Popis robe \ Stanje u fini 109,00
+> Olpis robe u objektu . Fakturna cena 109,06
+Zadrya nab.cens 100,00 |
+Transtormecije artikale - |
+WS Na Prosetna na0.¢.. 100,00
+Fakturisanje bez obracune ne Cena bez POY 130,00 |
+> Kornisiono poskivanje Cena sa POV 15,00
+Tuda robs na zalihama SERUC NBC 30,00
+» Roba na obradi/doredi AUC VPC 23,08
+Poslovenje sa kooperantime Uhupno uaz 150,00
+> Evidencija armnbalaze ; Uhupne izlaz 51,00
+= aoe ete x Prethodna nedeya 1,06
+= ——$_____-__- * Pre 4necebe 51,00
+oy OMILJENE FUNKCUE Neto nabavna c.. 100,00 §
+. Hin — AS. Neto prodapa ... 130,00
+© opsti Sirarnica ema podataka ze priaz> Zechyansbevks | 19.08.26 (50,00)
+8 FINANSUSKO POSLOVANIJE Negv dobavijeta MANDOTEK coo
+Zadhnia procaya £9.08, 26
+[E] PDV EVIDENCIJA | SEF Nezv kupca MANDOTEK DOO
+@ ROBNO TRGOVINA Stanjelipromatinctia 005227
+TEPROIZVODNIA
+> FINANSUSKA OPERATIVA
+(a OBRACUN ZARADA >
+(o> STALNA SREDSTVA | INVENTAR a /
+J@. UPRAVLIANJE KADROVIMA
+8 UPRAVLIANJE DOKUMENTIMA : eda
+ime SPECIFICNI PODSISTEMI < ocd VS TES Ko we l rH .
+%, ADMINISTRACIIA Doda Dodaj uf ype Uklani iz grupe Obi sve = Dadaj u NG Prouarr Prilag uz eFakturu Prikazi | } \
+AS | .
+{S} F5-Nova Obrisidokument Stempaj » Obrisi stavke £9 - Lm.cene or3 1 i | g 9 K F
+99 | SR" TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBIUCA | 101149299 | 06037402  290-1252-44 007 - VELEPRODAJA CENTRALNI MAGACIN TRX &) F

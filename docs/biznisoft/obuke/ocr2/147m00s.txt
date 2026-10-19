@@ -1,0 +1,66 @@
+BizniSOFT v13 - wrew.biznisoft.com - o x
+& 2026 ~ Osnovnefunkcle 4® Pretraga Gap 2q Boj Vout [&) Pomoéak ~ GS Kontakt , @=—= 4 Teme: —_—e= MWMse ~ & [TE panel Zatvorive
+Parody 01.01.26 4 19.08.26» [ Stampa BK ® storgz & Petnen i Arti
+ADMINIS TRACIJA < BIZNISOFT v13  Konfigursanje BenSoft-a x
+Konfigurisanje BizniSoft-a Konfigurecon| paremetri Upravtanje sertifikatira Za operatere Zafrmu/ kkenta Zarednu stanicu Zsulbou Za cdjekat firme Zavestu dckumenta Bantoft
+ig Integr iets apse 1D Parametra | Mazi konfigurecionoo paremetra = Podramumevana... “ Korsnitko ime Ime | prezine Matitni bro OB)
+“8 ws I x eevee 11063 | Cornerstone oisty t=mnal - COM port CEMO OPERATER O60 000
+alata arhin . NOH POSRS 11083 Ostum rade za perametar 22082 je telcudi datum JELENA JEENAE ono
+pravijanje operaterime = Nov NOVI OPERATER 300
+47 |F c za reid
+> Upravijanje izvestajime Soe Roce pecan 2 Mipak ups 2s even eee rea OPER GI2NISOPT ADMINISTRATOR 000
+>» Upravijanje transakcijama 10025 |Oodatne I'S potweds pogresne Se THILOB2 THRCB2 900
+Upravijanje izgledom tabela 10383 | 2 je odjavs operatera
+Upravijanje sinhronizecijom tabe 10995 |f7 - Ostale copays placarys su podrazumevene
+» Nove posiowne godine 10077 Fiksiraj objekat ariSolt POS-2 0
+BizniSoft stetusi i dnevnici 10684 |Forma za naplatu POS raduna je uvek vidliva IK 1led5 > > mt = F Koa
+> Brisenje entiteta bez promete 11199 |Forsiraj izbor vrste plete kar tice prileom naplate raduns f ID Param... = [az konfiguracionog perametre Entket Vred.entket2  Vrednost Priorket |Napomena “
+»fini« . orig aA 5
+Definisanje opseqa Sfarnike 11017 |e Bez pramene cone pritkom oromane veste POY , O13! Porad orvu sobodnu Sfru « arth Fimakijent 99
+Uskladivanje odnosa cena preme z 2 eV fl
+eats a = ta Je pocrazm — $013) Poeud prvu siobocnu Afry « arth Fimafkijent = 100 f
+Data terminal 10028 | Ignore creshe kod izdswarya fisxalnog secka
+P de Paap whieh? $0132 Porud arwu siobodnu Afru - partner Firmafijent 100
+odevi referentne objekte 10024 Igreré minusno stante ~
+levrai sin frep j - 19223 Omegud evicendju pasath mail-ova Firmadtjent 3
+in Si sinhronizadju/replikadju 70029 Fi copie belie 9 iy
+lniciraj forrmiranje niveladje po ¢ = 0549 oFaktura - Informacion’ poswednk FAmakijernt 9 Bez posredrika
+SR ay 10317 | Ignore sernsxe brojeve
+Kontrolni broj po modulu 97 apres ; 10549 oFaktura « Informacior’ posrednik Firmafitent 10 Bez posredaka
+sko potpisiv » dokume 10440 | Ignore terrace berkocove 2
+Elektronsko potpisivanse dokume = : = 00550 eFaktura - Mqut za autentifkactu Fimafijent 10
+Uvor-Izvoz podataka @ beze 1032 Levelta) oredieda KASA promets oricenuje i stave £3
+agg ool 2 cesta 96 85fb 7663-88044
+Q v 10505 | Kagel knmercjalistu pritom insiierja kasa prometa 20550 eFakiure -jud 24 sulentifkediu Firmafijent 99 bbsé. ae 137004
+Podeci o pragramu i licence = x3
+10095 Knja robei promet po operaterima OSS oFaktwa «Kortst DEO okudenje Fimafiient 99
+10536 |Xnj transformadjy kao razcudenge u robrom WOS52 eFaktura « Omogué brisange statusa dokumenta Fimaijent 10
+10575 Kansultus VP conovnik za oatale kupco WOSS2 oFaktura « Gmogud brisanje status dokumenta Firmakijent 99
+024 Konsultys a sa cone Cai conow 5 S * | ase .
+, = ‘ 11 Konsultus artide sa conom 0 u prodainin conovnicma 20869 aie to dete ane pambenih efsktura u Operater JRLENA
+AL ¥ F 10686 | Kansultus barand komerorainag pakovanja = Saar. = ar aed ~s
+OSTALA POOESAVANUA I PUNKCLIE ¥ wwe brewer rere were r ere etre we rere errr errr errr rrr Terre rrerererreres <q Gnemogud promeny statusa primhonih eFaetura u = @
++ 10338 |Konsultus cone reforentnog objekta ' R069 "Pregeceno” orikom shrorizedje Cpereter Dem of
+oy OMILJENE FUNKCHE 10564 Konsultuge defnigane weste POY prameta na nivou a 20330 BanGoft Safeguard - konsritko ime BanGof
+fe) opSti SIFARNICI 10959 |Loyalty akoye se primenjuju | na artide sa rabatom 20332 BnGoft Ssfequerc - lomks BanGoft
+10185 Loyalty program » Unod se kod 20932 Biznoft Safequerd - vreme arhroranjs faznGoft 13:00000
+a FINANSLISKO POSLOVANJE terhdielen
+10186 |Loyalty program « postoje procaine akoje 20935 tiznGGoft Ssfequerd - bez table KASA BmGoft
+PDV EVIDENCIJA | SEF -
+5 11196 | Loyalty program » poatog evidencia dbodova 20336 BimGoft Safeguard - omogud brisanje arhve fanGoft
+1 ROBNO -TRGOVINA 10924 Loyalty program » Stampay infoemaciu o usted 20337 Biznboft Safequerd - vreme arhrwrarya 2 GanGoft
+it PROIZVODNIA 10802 Merns vags - COM port com: LL141 eOtpremrice - Khué zs sutentfkecu frmafisert 10
+% FINANSUSKA OPERATIVA 10143 Mema vaya -likadja | neziv faga se podacine Sealine 19135c2-4717-$3
+xt SLi4i cOtpremmica » Mju za autentifkacty Firmafijent = 100 9443+ 06576f8
+(8 OBRACUN ZARADA 10144 Mema vags -loxeqja i nazv programa zs progremiranje Sscoyien izer a SAS
+ne ~ b3Sc2-f717-43
+fe STALNA SREDSTVA | INVENTAR 10145 |Merna vaga - tip Bizerda 962 L141 cOtpremrica - Mud za autentifkacty Fimaiiens 9 94-6434 06576f8
+RE GISTAR: P46Se
+IG. UPRAVLIANJE KADROVIMA 10037 |Nazv dodetth podataks REGISTARSA
+= , EROJ: 21141 eOtpremnica - Mhué zs sutentfkecnu frmaftient 9
+£ UPRAVLUANJE DOKUMENTIMA 10033 Ne prikazuj ravate u POS~u 21242 eOtpremnice - Kons DEMO obrudenj= firmsfkisent 100
+Sm SPECIFICNI PODSISTEMI 11064 |Ne wii grupiganje arlixals pritkom izdavanja fiexalhog raduns 21242 eOtpremraca -Konst DEMO olcugenje firmakhent 99
+RSuininctin nn marianne connimin san faowient 11s oricabe -
+ADMINISTRACIIA « « < 2200d1144 > » I+ = ar a hd «& & <¢ Dos > »9 met = x, one ¥ t i
+{S> Pnkazi podatke Dodaj vrednast §=Obrisivrednost = Xopiraj Nalep Podraz.godine Ups / Primeni
+99 | SR"TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBUCA | 101149299 | 06037402  290-1252-64 003 - PRODAVNICA BR.01 TRX &) F RL IN

@@ -1,0 +1,60 @@
+BizniSOFT v13 - wrew.biznisoft.com - o x
+S 2026 ~ Osnovne funkcle 4 Pretraga GD 2_ Mo} Vodit [) Pomeéak ~ GS Kontakt , @=——=— 4 Teme: —e= Wise ~ ( [TF Panel Zatvorisve
+Parody 01.01.26» 19.08.26»  [ Stampx BK D tstortz & Petnen Be arth
+ADMINIS TRACIJA < BIZNISOFT v13 Konfigurssnje BenSoft-a x
+Konfigurisanje BizniSoft-a Konfigureconl paremetri Upravienje sertfikatina Z2 operatere Z2frmu/ keenta Zarednu stanicu Zaubou Za ocdjekat firme Zawstu dokumente Bantoft
+Bhs Integritete Fae 1D Parametra |Mazhv konfigureconog paremetra = Podrazumevana... * Ste  NazW firme / Kifjenta Mesto Adresa PB :
+Zakljucavanje perioda ks soci 10653 Port W/berked skenera 0 7 OBUKA 22.04.26 BEOGRAD NXEGOSEVA 111 111222333
+> - Uprevijanye:arhnsrenjem podate 10226 Poslowni partnen -pretrags po maksmaing} rezoluay 8 NIXOLA VIDAKOVIC PR URBAN STAN LOZNIGXOPOLIE BRACE JUGOVICA 1 115617352
+Upravijanje operaterime ots 9 DASIGO 0.0.0. BEQGRAD BEOGRAD (Z=MUN) _ ALTINA GRIGORIIA BOZOVICA 94 102749689
+PF 100$2 |Posloyni partnen - pretraga samo nave — . =
+> Upravijanje izvestajime 30 OBUKA 22.07.2026 BEOGRAD NEEGOSEVA 19 111555333
+> Upravijanje transakeijama 10324 |Pretraga onkaz.je samo artide sa stanjem ’ «_ VLADIMIR PANTELIC PR FRIZERSKI SALON HAIR BEOGRAD (NOVI JURIIA GAGARINA 2
+ia FS SF sacl . JA GAGARINA 219 A 105822239
+Upravijanje izgledom tabela 10524 Prevod na Gribcu podrazumevs prevod svi Hemensta { STYLE PANTELIC SEQGRAD BEOGRAD) \
+Upravijenje BROS OS toon tab 7S" lizvetaga 93 SR “TEST FIRMA™ BEOGRAD LUKE CELOVICA TREBINICA, 101199293
+, Nove posioms godine 111 ee a 200 OBLKA 17.6,2026, BEOGRAD (SAVSKT LiKe CELOVICA TREBINICA 33 -
+BizniSoft stetusi i dnevnici 10288 | PrikaS proseinu nabeymu cenu u Sfarriku article « «€ € 12015 > » 9 + = # Ke *
+> Brisenje entiteta bez promete 11145 Pricad samo fekture ze operatera (parameter 11087) ID Pare... = ¥ Waz konfiguracionog parametre Entket Vrec.entkete VY Vrecnost Priorket Napomena
+eee Ie ear g8 meme 10996 |Prosetnu nabavnu cenu radunaj na osnovu Prerad.NC \ esta parametra : Kanfiguracya
+sklaGivanje odnosa cena preme -
+Dat 5 9 ' = a 1os79 Progetnu nabavnu conu za abjekte kod se vode po nadawnim v KlasSkaoje : 101 Cano wns podedavarija
+ala termina 0529 | -, F eclaen sary
+Postavi referentne objekte aot Fuh = 10543 effektura - Informadon posrecnk Firmazent 99 Bez posredrks N
+osevi referentne objekte 10966 Provere erick hres oriikom zatveranjs gruprng 85fb76b3-3304-4 as
+lzvr3i sinhronizadju/replikadju == amg ope 0550 oFaktura - Xjut za autentifkacty Fimakijent 9 boéasad-1d7d04
+lniciraj formiranje nivelacija po « 11022 Provera stanja zatha « konadtuy potvrdene naloge 64034
+Fiektronsko potpisivanje dokume 10428 RMD AWC bo uredjs Nema wana nnnnnnnnnnns
+Uvaz-Izvoz podataka @ baze 10005 Rado weme od 06:00:00
+SQL Manitor 11095 Sinhrowzadje eFakturs - ne aluriraj statue daneinjh faxtura
+Podeci o pragramu i licenc 1093 Snhronzacya primijenh « Preuzei GUN tz Adrese firme,
+“* plspomens, Intemog brows za rutraqye
+11186 | Specificnost poslovargs YUO
+10013 Standardni tip dostave 2
+10386 Univerzaing pretrage - rannak je procenst
+QQ > < a : »
+= 10654 Uriverzaing pretrage 92 wii barkod citadem
+OSTALA PODESAVANUA I PUNKCLIE » ioges Wremensho ogranenje trajanja Tarsaecje (minimum 30, x00
+makamum 999 sekund)
+iy OMILVJENE FUNKCUE 10011 | Weta Stampe Grafitks
+10405 | WMS Integraci
+f) opsti Sirarnica renee
+10568 WMS Integracijs - Sp 2
+8 FINANSUSKO POSLOVANIE 10406 | WMS okstenaija
+[5] PDV EVIDENCIIA | SEF 10408 | WMS putarga foldere 2M moa
+TF ROBNO -TRGOVINA civines'
+= < ID408 | WMS putanga folders OUT mS seat tach
+ZEPROIZVODNIA a5 SE ==
+10507 WMS fifra megedns 0
+& FINANSUSKA OPERATIVA 10015 | Zaveruzenje ne 2 dedimele kod nabavce
+{ij OBRACUN ZARADA 11123 | eFakturs - Broj olpremnice je jednak broju dokuments
+( STALNA SREDSTVA | INVENTAR 11009 eFakture - Broj olpremnice je jednak broju faxture
+oF altura « Braj panudenaructberice je jecnak bropy
+{@. UPRAVLIANJE KADROVIMA Fr probed enlrea ab “ok
+#, UPRAVLIANJE DOKUMENTIMA i0gag | 38'S - Doxumente 3 valutnom kisuzviom regetruj u
+eee Strano) vakutt
+Se SPECIFICNI PODSISTEMI 10S48 efaktura - Informaconi posredhik Ne postogobavezs
+TES) aR alters 0 ve as tanlifirarine
+ADMINISTRACIIA « « < S13B0d1144 > » we = x oe * «& & < 3063 , it =- @ Xo & he : :
+{S} Prikazi podatke Dodaj vrednost §=Obrisivrednost = KXopiraj Nalep Podraz.godine Upssi / Primeni
+99 | SR "TEST FIRMA” | BEOGRAD | LUKE CELOVICA TREBIWICA | 101149299 | 06037402 290-1252-64 003 - PRODAVINICA BR.01 TRX &) F :

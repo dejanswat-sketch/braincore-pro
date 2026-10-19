@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Pošalji račun</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+         background: #0f172a; color: #f8fafc; min-height: 100vh;
+         display: flex; flex-direction: column; align-items: center; padding: 24px 18px 40px; }
+  h1 { font-size: 21px; margin: 8px 0 4px; }
+  .sub { color: #94a3b8; font-size: 14px; text-align: center; margin-bottom: 18px; }
+  .card { background: #1e293b; border-radius: 14px; padding: 18px; width: 100%; max-width: 420px; }
+  .pib { font-size: 15px; color: #cbd5e1; margin-bottom: 12px; text-align: center; }
+  .pib b { color: #38bdf8; }
+  label.big { display: block; background: #2563eb; color: #fff; text-align: center;
+              padding: 18px; border-radius: 12px; font-size: 17px; font-weight: 600;
+              margin-bottom: 12px; cursor: pointer; }
+  label.big.alt { background: #334155; }
+  input[type=file] { display: none; }
+  button { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px;
+           font-weight: 700; background: #22c55e; color: #052e16; }
+  button:disabled { background: #475569; color: #94a3b8; }
+  .msg { margin-top: 14px; padding: 12px; border-radius: 10px; font-size: 14px; display: none; }
+  .ok { background: #064e3b; color: #6ee7b7; display: block; }
+  .err { background: #7f1d1d; color: #fecaca; display: block; }
+  .list { margin-top: 14px; font-size: 14px; color: #cbd5e1; }
+  .list div { padding: 6px 0; border-top: 1px solid #334155; }
+  .foot { margin-top: 20px; color: #64748b; font-size: 12px; text-align: center; }
+  img.preview { width: 100%; border-radius: 10px; margin-top: 12px; display: none; }
+</style>
+</head>
+<body>
+  <h1>📄 Pošalji račun</h1>
+  <div class="sub">Slikaj račun i pošalji — knjigovođa ga odmah vidi.</div>
+
+  <div class="card">
+    <div class="pib" id="pibLine">Firma: <b id="pibVal">—</b></div>
+
+    <label class="big" for="cam">📷 Slikaj račun</label>
+    <input type="file" id="cam" accept="image/*" capture="environment">
+
+    <label class="big alt" for="gal">🖼️ Izaberi iz galerije</label>
+    <input type="file" id="gal" accept="image/*,application/pdf">
+
+    <img class="preview" id="prev" alt="pregled">
+    <button id="send" disabled>Pošalji</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="foot">Knjigovođa Pro · siguran upload</div>
+
+<script>
+(function () {
+  var params = new URLSearchParams(location.search);
+  var pib = (params.get('pib') || '').replace(/\D/g, '');
+  var fajl = null;
+
+  var pibVal = document.getElementById('pibVal');
+  var msg = document.getElementById('msg');
+  var btn = document.getElementById('send');
+  var prev = document.getElementById('prev');
+
+  if (!pib) {
+    pibVal.textContent = 'nije poznat';
+    msg.className = 'msg err';
+    msg.textContent = '⚠️ Nedostaje firma u linku. Skenirajte QR kod koji vam je dao knjigovođa.';
+    return;
+  }
+  pibVal.textContent = pib;
+
+  function izaberi(f) {
+    if (!f) return;
+    fajl = f;
+    btn.disabled = false;
+    if (f.type && f.type.indexOf('image/') === 0) {
+      var r = new FileReader();
+      r.onload = function (e) { prev.src = e.target.result; prev.style.display = 'block'; };
+      r.readAsDataURL(f);
+    } else {
+      prev.style.display = 'none';
+    }
+    msg.className = 'msg';
+  }
+
+  document.getElementById('cam').addEventListener('change', function (e) { izaberi(e.target.files[0]); });
+  document.getElementById('gal').addEventListener('change', function (e) { izaberi(e.target.files[0]); });
+
+  btn.addEventListener('click', function () {
+    if (!fajl) return;
+    btn.disabled = true;
+    btn.textContent = 'Šaljem…';
+    msg.className = 'msg';
+
+    var fd = new FormData();
+    fd.append('pib', pib);
+    fd.append('file', fajl, fajl.name || 'racun.jpg');
+
+    fetch('api/upload', { method: 'POST', body: fd })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.ok && res.j.ok) {
+          msg.className = 'msg ok';
+          msg.textContent = '✅ Poslato! Knjigovođa će videti račun.';
+          fajl = null; prev.style.display = 'none';
+          btn.textContent = 'Pošalji još jedan';
+          btn.disabled = false;
+        } else {
+          throw new Error((res.j && res.j.error) || 'greška');
+        }
+      })
+      .catch(function (e) {
+        msg.className = 'msg err';
+        msg.textContent = '❌ Nije poslato: ' + e.message + '. Probajte ponovo.';
+        btn.disabled = false; btn.textContent = 'Pošalji';
+      });
+  });
+})();
+</script>
+</body>
+</html>
